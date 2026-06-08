@@ -1,9 +1,30 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { getSupabaseClient } from '../../lib/supabase';
+
+let alertThreshold = 70;
+let apiKey = '************************';
+try {
+  const supabase = getSupabaseClient(Astro.cookies);
+  const { data: authData } = await supabase.auth.getUser();
+  if (authData?.user) {
+    const { data: project } = await supabase.from('projects').select('alert_threshold, api_key').eq('user_id', authData.user.id).limit(1);
+    if (project && project.length > 0) {
+      if (project[0].alert_threshold !== null) {
+        alertThreshold = project[0].alert_threshold;
+      }
+      if (project[0].api_key) {
+        apiKey = project[0].api_key;
+      }
+    }
+  }
+} catch (e) {
+  console.error("Failed to fetch settings", e);
+}
 ---
 
 <DashboardLayout title="Settings">
-  <div class="max-w-[800px] pb-20">
+  <div class="max-w-[800px]">
     
     <div class="bg-bg-surface border border-border-default rounded-[16px] overflow-hidden flex flex-col divide-y divide-border-faint">
       
@@ -37,8 +58,16 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
           <div class="text-[14px] font-medium text-text-primary mb-0.5">API Key</div>
           <div class="text-[13px] text-text-secondary">Used to authenticate the Mindphor server SDK</div>
         </div>
-        <div class="flex items-center gap-3">
-          <input type="password" value="************************" class="w-[260px] bg-bg-subtle border border-border-default rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none focus:border-border-strong text-left font-mono shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] tracking-widest" readonly />
+        <div class="flex items-center gap-2">
+          <input type="password" value={apiKey} id="api-key-input" class="w-[260px] bg-bg-subtle border border-border-default rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none focus:border-border-strong text-left font-mono shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] tracking-widest transition-colors" readonly />
+          
+          <button id="reveal-key-btn" class="px-3 py-1.5 border border-border-default rounded-md text-[12px] font-medium text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-colors">
+            Reveal
+          </button>
+          
+          <button id="regenerate-key-btn" class="px-3 py-1.5 border border-border-default rounded-md text-[12px] font-medium text-text-secondary hover:text-red-500 hover:border-red-500/30 hover:bg-red-500/10 transition-colors">
+            Regenerate
+          </button>
         </div>
       </div>
 
@@ -93,6 +122,27 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         </div>
       </div>
 
+      <!-- Alert Threshold Row -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="alert_threshold">
+        <div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Alert Threshold</div>
+          <div class="text-[13px] text-text-secondary">Create an alert when output score drops below this value</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="number" min="1" max="99" value={alertThreshold} class="w-[180px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" readonly data-setting-input />
+          
+          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
+          </button>
+          
+          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity" data-save-btn>
+            Save
+          </button>
+          
+          <span class="hidden text-green-500 text-[12px] font-medium ml-2" data-success-msg>Saved!</span>
+        </div>
+      </div>
+
       <!-- Danger Zone Group Header -->
       <div class="px-5 py-1.5 bg-bg-subtle border-t border-border-faint">
         <div class="text-[10px] font-medium tracking-[0.1em] text-text-secondary uppercase">Danger Zone</div>
@@ -117,6 +167,50 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // API Key Logic
+    const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement;
+    const revealBtn = document.getElementById('reveal-key-btn');
+    const regenerateBtn = document.getElementById('regenerate-key-btn');
+
+    if (revealBtn && apiKeyInput) {
+      revealBtn.addEventListener('click', () => {
+        if (apiKeyInput.type === 'password') {
+          apiKeyInput.type = 'text';
+          apiKeyInput.classList.remove('tracking-widest');
+          revealBtn.textContent = 'Hide';
+        } else {
+          apiKeyInput.type = 'password';
+          apiKeyInput.classList.add('tracking-widest');
+          revealBtn.textContent = 'Reveal';
+        }
+      });
+    }
+
+    if (regenerateBtn && apiKeyInput) {
+      regenerateBtn.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to regenerate your API key? Your old key will stop working immediately.')) {
+          try {
+            const res = await fetch('/api/keys/generate', { method: 'POST' });
+            const data = await res.json();
+            if (data.success && data.api_key) {
+              apiKeyInput.value = data.api_key;
+              if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                apiKeyInput.classList.remove('tracking-widest');
+                if (revealBtn) revealBtn.textContent = 'Hide';
+              }
+              apiKeyInput.classList.add('border-green-500', 'bg-green-500/10');
+              setTimeout(() => apiKeyInput.classList.remove('border-green-500', 'bg-green-500/10'), 2000);
+            } else {
+              alert('Failed to regenerate key');
+            }
+          } catch (e) {
+            alert('Error regenerating key');
+          }
+        }
+      });
+    }
+
     const rows = document.querySelectorAll('[data-setting-row]');
     
     rows.forEach(row => {
@@ -137,7 +231,29 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
         input.focus();
       });
       
-      saveBtn.addEventListener('click', () => {
+      saveBtn.addEventListener('click', async () => {
+        const rowId = row.getAttribute('data-setting-row');
+        const successMsg = row.querySelector('[data-success-msg]') as HTMLSpanElement;
+        
+        if (rowId === 'alert_threshold') {
+          const val = parseInt(input.value);
+          if (!isNaN(val)) {
+            try {
+              const res = await fetch('/api/settings', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ alert_threshold: val })
+              });
+              if (res.ok && successMsg) {
+                successMsg.classList.remove('hidden');
+                setTimeout(() => successMsg.classList.add('hidden'), 2000);
+              }
+            } catch (err) {
+              console.error("Failed to save settings", err);
+            }
+          }
+        }
+        
         if (input.tagName === 'SELECT') {
           input.setAttribute('disabled', 'true');
         } else {

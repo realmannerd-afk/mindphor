@@ -1,52 +1,141 @@
 ---
 layout: ../../layouts/DashboardLayout.astro
-title: "Quickstart Guide"
+title: "Docs"
 ---
 import CodeBlock from '../../components/ui/CodeBlock.astro';
 
-<div class="max-w-[700px] -mt-8">
+<div class="max-w-[660px]">
 
-<p class="text-[15px] text-text-secondary mb-8 leading-relaxed">
-  Get started with Mindphor in under 5 minutes. The <span class="bg-bg-elevated px-1.5 py-0.5 rounded-md border border-border-faint text-text-primary">mindphor</span> SDK automatically captures inputs, outputs, and memory states for your LLM calls.
-</p>
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h1 class="text-[18px] font-medium text-text-primary mb-2">Quickstart Guide</h1>
+  <p class="text-[14px] text-text-secondary leading-[1.7]">Get started with Mindphor in under 5 minutes. The mindphor SDK automatically captures inputs, outputs, and memory states for your LLM calls.</p>
+</div>
 
-<h2 class="text-[18px] font-medium text-text-primary mb-4 mt-12">1. Installation</h2>
-<p class="text-[15px] text-text-secondary mb-4 leading-relaxed">
-  Install the Python SDK via pip:
-</p>
+{/* SECTION */}
+<div class="mb-[48px]">
+  <div class="text-[11px] uppercase text-text-muted mb-1">01</div>
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Installation</h2>
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">Install the Python SDK using pip or directly from GitHub:</p>
+  
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-2">Label: "Via PyPI (recommended)"</p>
+  <CodeBlock lang="bash" code={`pip install mindphor`} />
+  
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-2 mt-4">Label: "Via GitHub (latest)"</p>
+  <CodeBlock lang="bash" code={`pip install git+https://github.com/realmannerd-afk/mindphor.git#subdirectory=sdk`} />
+  
+  <p class="text-[12px] text-text-muted mt-2">Requires Python 3.8 or above.</p>
+</div>
 
-<CodeBlock lang="bash" code={`pip install mindphor`} />
+{/* SECTION */}
+<div class="mb-[48px]">
+  <div class="text-[11px] uppercase text-text-muted mb-1">02</div>
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Configuration</h2>
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">Get your API key from the Settings page in your dashboard and set it in your environment:</p>
+  
+  <CodeBlock lang="bash" code={`export MINDPHOR_API_KEY="mp_your_key_here"`} />
+  
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4 mt-4">Or use it directly in code:</p>
+  
+  <CodeBlock lang="python" code={`import os
+api_key = "mp_your_key_here"`} />
+</div>
 
-<h2 class="text-[18px] font-medium text-text-primary mb-4 mt-12">2. Configuration</h2>
-<p class="text-[15px] text-text-secondary mb-4 leading-relaxed">
-  Set your API key as an environment variable. You can find this in your Mindphor dashboard under <strong>Project Settings</strong>.
-</p>
+{/* SECTION */}
+<div class="mb-[48px]">
+  <div class="text-[11px] uppercase text-text-muted mb-1">03</div>
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Track your AI calls</h2>
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">Add the @track decorator to any function that calls an LLM. Mindphor captures the input, output, and latency automatically.</p>
+  
+  <CodeBlock lang="python" code={`from mindphor import track
+import openai
 
-<CodeBlock lang="bash" code={`export MINDPHOR_API_KEY="your_api_key_here"`} />
-
-<h2 class="text-[18px] font-medium text-text-primary mb-4 mt-12">3. Usage</h2>
-<p class="text-[15px] text-text-secondary mb-4 leading-relaxed">
-  Simply import the <span class="bg-bg-elevated px-1.5 py-0.5 rounded-md border border-border-faint text-text-primary">@track</span> decorator and wrap any function that calls an LLM. Mindphor will intercept the call, send the trace to our Edge API, and asynchronously score the output.
-</p>
-
-<CodeBlock lang="python" code={`import openai
-from mindphor.tracker import track
-
-@track(project_id="proj_123")
-def generate_summary(text: str) -> str:
-    response = openai.ChatCompletion.create(
+@track(
+    api_key="mp_your_key_here",
+    model="gpt-4",
+    user_id="user_123"
+)
+def ask_ai(question: str) -> str:
+    response = openai.chat.completions.create(
         model="gpt-4",
-        messages=[{"role": "user", "content": f"Summarize: {text}"}]
+        messages=[
+            {"role": "user", "content": question}
+        ]
     )
     return response.choices[0].message.content
 
-# This call is now tracked and scored on your dashboard!
-summary = generate_summary("Mindphor is an AI monitoring platform...")`} />
+# This call is now tracked and scored
+answer = ask_ai("What is the refund policy?")`} />
+</div>
 
-<h2 class="text-[18px] font-medium text-text-primary mb-4 mt-12">Next Steps</h2>
-<ul class="list-disc pl-5 text-[15px] text-text-secondary space-y-2">
-  <li>Learn how to use <a href="#" class="text-text-primary underline hover:text-accent transition-colors">Memory Tracking</a>.</li>
-  <li>Setup <a href="#" class="text-text-primary underline hover:text-accent transition-colors">Custom Alerts</a>.</li>
-</ul>
+{/* SECTION */}
+<div class="mb-[48px]">
+  <div class="text-[11px] uppercase text-text-muted mb-1">04</div>
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Track user memory</h2>
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">Use the Memory class to store and monitor user context. Mindphor automatically detects when memory keys go stale or contradict each other.</p>
+  
+  <CodeBlock lang="python" code={`from mindphor import Memory
+
+mem = Memory(api_key="mp_your_key_here")
+
+# Store user context before AI call
+mem.set(
+    user_id="user_123",
+    key="plan",
+    value="pro"
+)
+
+# Retrieve all memory for a user
+keys = mem.get(user_id="user_123")
+
+# Delete a specific key
+mem.delete(user_id="user_123", key="plan")`} />
+</div>
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <div class="text-[11px] uppercase text-text-muted mb-1">05</div>
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Understanding scores</h2>
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">Every AI output is scored 0–100 by a judge model across three dimensions.</p>
+  
+  <table class="w-full text-left border-collapse mb-4">
+    <thead>
+      <tr class="border-b border-border-faint">
+        <th class="py-2 text-[11px] uppercase text-text-muted font-normal">Score range</th>
+        <th class="py-2 text-[11px] uppercase text-text-muted font-normal">Status</th>
+        <th class="py-2 text-[11px] uppercase text-text-muted font-normal">Meaning</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-b border-border-faint">
+        <td class="py-3 text-[13px] text-text-secondary">80–100</td>
+        <td class="py-3 text-[13px] text-text-secondary">Active</td>
+        <td class="py-3 text-[13px] text-text-secondary">High quality output</td>
+      </tr>
+      <tr class="border-b border-border-faint">
+        <td class="py-3 text-[13px] text-text-secondary">60–79</td>
+        <td class="py-3 text-[13px] text-text-secondary">Active</td>
+        <td class="py-3 text-[13px] text-text-secondary">Acceptable output</td>
+      </tr>
+      <tr>
+        <td class="py-3 text-[13px] text-text-secondary">Below 60</td>
+        <td class="py-3 text-[13px] text-text-secondary">Flagged</td>
+        <td class="py-3 text-[13px] text-text-secondary">Quality drop alert</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <p class="text-[14px] text-text-secondary leading-[1.7]">Scores below your alert threshold (default: 70) automatically create an alert and flag the trace. You can change this threshold in Settings.</p>
+</div>
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h2 class="text-[18px] font-medium text-text-primary mb-4">Next Steps</h2>
+  <div class="flex flex-col gap-3">
+    <a href="/dashboard" class="text-[14px] text-text-secondary hover:text-text-primary transition-colors">→ View your Dashboard</a>
+    <a href="/dashboard/settings" class="text-[14px] text-text-secondary hover:text-text-primary transition-colors">→ Set up Alert Threshold in Settings</a>
+    <a href="https://github.com/realmannerd-afk/mindphor" class="text-[14px] text-text-secondary hover:text-text-primary transition-colors">→ Star us on GitHub</a>
+  </div>
+</div>
 
 </div>

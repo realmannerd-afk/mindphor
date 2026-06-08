@@ -91,19 +91,27 @@ No markdown. No backticks. Just raw JSON:
     // Init Supabase with service key
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const { data: project } = await supabase
+      .from('projects')
+      .select('alert_threshold')
+      .eq('id', projectId)
+      .single();
+
+    const threshold = project?.alert_threshold ?? 70;
+
     // Update trace with real score
     await supabase
       .from('traces')
       .update({
         score: result.overall,
         score_reason: result.reason,
-        status: result.overall < 70
+        status: result.overall < threshold
           ? 'flagged' : 'active'
       })
       .eq('trace_id', traceId);
 
     // Alert if score below threshold
-    if (result.overall < 70) {
+    if (result.overall < threshold) {
       await supabase
         .from('alerts')
         .insert({
