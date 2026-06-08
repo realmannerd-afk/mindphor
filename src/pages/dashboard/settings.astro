@@ -3,18 +3,32 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import { getSupabaseClient } from '../../lib/supabase';
 
 let alertThreshold = 70;
-let apiKey = '************************';
+let apiKey = 'No key found';
+let projectName = 'Production App';
+let activeProject: any = null;
+
 try {
   const supabase = getSupabaseClient(Astro.cookies);
   const { data: authData } = await supabase.auth.getUser();
   if (authData?.user) {
-    const { data: project } = await supabase.from('projects').select('alert_threshold, api_key').eq('user_id', authData.user.id).limit(1);
-    if (project && project.length > 0) {
-      if (project[0].alert_threshold !== null) {
-        alertThreshold = project[0].alert_threshold;
+    const { data: projects } = await supabase.from('projects').select('id, name, alert_threshold, api_key').eq('user_id', authData.user.id);
+    
+    if (projects && projects.length > 0) {
+      const cookieProjectId = Astro.cookies.get('mindphor_project_id')?.value;
+      if (cookieProjectId) {
+        activeProject = projects.find(p => p.id === cookieProjectId) || projects[0];
+      } else {
+        activeProject = projects[0];
       }
-      if (project[0].api_key) {
-        apiKey = project[0].api_key;
+    }
+
+    if (activeProject) {
+      projectName = activeProject.name || 'Production App';
+      if (activeProject.alert_threshold !== null) {
+        alertThreshold = activeProject.alert_threshold;
+      }
+      if (activeProject.api_key) {
+        apiKey = activeProject.api_key;
       }
     }
   }
@@ -40,7 +54,7 @@ try {
           <div class="text-[13px] text-text-secondary">The display name for your current workspace</div>
         </div>
         <div class="flex items-center gap-2">
-          <input type="text" value="Production App" class="w-[260px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
+          <input type="text" value={projectName} class="w-[260px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
           
           <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
@@ -154,7 +168,7 @@ try {
           <div class="text-[14px] font-medium text-text-primary mb-0.5">Delete Project</div>
           <div class="text-[13px] text-text-secondary">Permanently delete this project and all traces. This cannot be undone.</div>
         </div>
-        <button class="px-5 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400 text-[13px] font-medium hover:bg-red-500/20 transition-colors whitespace-nowrap">
+        <button id="delete-project-btn" data-project-id={activeProject?.id} class="px-5 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400 text-[13px] font-medium hover:bg-red-500/20 transition-colors whitespace-nowrap">
           Delete Project
         </button>
       </div>
@@ -163,6 +177,24 @@ try {
 
     </div>
   </div>
+
+  <!-- Delete Project Modal -->
+  <dialog id="delete-project-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-0 bg-bg-surface border border-border-default rounded-[12px] shadow-2xl p-0 backdrop:bg-black/50 backdrop:backdrop-blur-sm w-full max-w-[400px]">
+    <div class="flex flex-col">
+      <div class="p-6 pb-2">
+        <h2 class="text-[18px] font-medium text-red-500 mb-1">Delete Project?</h2>
+        <p class="text-[13px] text-text-secondary">This action cannot be undone. This will permanently erase your project, along with all traces, alerts, and settings.</p>
+      </div>
+      
+      <div class="p-6 flex justify-end gap-3">
+        <button type="button" id="btn-cancel-delete" class="px-4 py-2 text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
+        <button type="button" id="btn-confirm-delete" class="px-4 py-2 bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20 text-[13px] font-medium rounded-md transition-colors flex items-center gap-2">
+          <span>Delete Project</span>
+        </button>
+      </div>
+    </div>
+  </dialog>
+
 </DashboardLayout>
 
 <script>
@@ -265,5 +297,54 @@ try {
         editBtn.classList.remove('hidden');
       });
     });
+
+    // Delete Project Logic
+    const deleteBtn = document.getElementById('delete-project-btn');
+    const deleteModal = document.getElementById('delete-project-modal') as HTMLDialogElement;
+    const cancelDeleteBtn = document.getElementById('btn-cancel-delete');
+    const confirmDeleteBtn = document.getElementById('btn-confirm-delete');
+
+    if (deleteBtn && deleteModal && cancelDeleteBtn && confirmDeleteBtn) {
+      deleteBtn.addEventListener('click', () => {
+        deleteModal.showModal();
+      });
+
+      cancelDeleteBtn.addEventListener('click', () => {
+        deleteModal.close();
+      });
+
+      confirmDeleteBtn.addEventListener('click', async () => {
+        const projectId = deleteBtn.getAttribute('data-project-id');
+        if (!projectId) return;
+        
+        const originalText = confirmDeleteBtn.textContent;
+        confirmDeleteBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Deleting...`;
+        confirmDeleteBtn.setAttribute('disabled', 'true');
+        
+        try {
+          const res = await fetch('/api/projects', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: projectId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            localStorage.removeItem('mindphor_project_id');
+            document.cookie = 'mindphor_project_id=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            window.location.href = '/dashboard';
+          } else {
+            alert(data.error || 'Failed to delete project');
+            confirmDeleteBtn.textContent = 'Delete Project';
+            confirmDeleteBtn.removeAttribute('disabled');
+            deleteModal.close();
+          }
+        } catch (e) {
+          alert('Network error deleting project');
+          confirmDeleteBtn.textContent = 'Delete Project';
+          confirmDeleteBtn.removeAttribute('disabled');
+          deleteModal.close();
+        }
+      });
+    }
   });
 </script>

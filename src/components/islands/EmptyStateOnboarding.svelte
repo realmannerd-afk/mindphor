@@ -29,7 +29,7 @@
   }
 
   function skipOnboarding() {
-    document.cookie = "skipped_onboarding=true; path=/; max-age=31536000";
+    document.cookie = `skipped_onboarding_${projectId}=true; path=/; max-age=31536000`;
     window.location.reload();
   }
 
@@ -60,21 +60,22 @@
 const data = await response.json();
 console.log(data);`;
 
-  $: pythonSnippet = `import requests
+  $: pythonSnippet = `from mindphor import track
+import openai
 
-response = requests.post(
-    "http://localhost:4321/api/ingest",
-    json={
-        "api_key": "${apiKey}",
-        "input": "What is the capital of France?",
-        "output": "The capital of France is Paris.",
-        "model": "gpt-4o",
-        "user_id": "user_123",
-        "latency_ms": 450
-    }
+@track(
+    api_key="${apiKey}",
+    model="gpt-4",
+    user_id="user_123"
 )
+def ask_ai(question: str) -> str:
+    response = openai.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": question}]
+    )
+    return response.choices[0].message.content
 
-print(response.json())`;
+answer = ask_ai("What is the refund policy?")`;
 
   function copyCodeSnippet() {
     const textToCopy = activeTab === 'curl' ? curlSnippet : (activeTab === 'node' ? nodeSnippet : pythonSnippet);
@@ -195,21 +196,22 @@ console.log(data);
         </div>
       {:else if activeTab === 'python'}
         <div class="text-[#D4D4D4] font-mono text-[13px] overflow-x-auto whitespace-pre leading-relaxed custom-scrollbar pb-2 pr-24">
-<span class="text-[#C586C0]">import</span> requests
+<span class="text-[#C586C0]">from</span> mindphor <span class="text-[#C586C0]">import</span> track
+<span class="text-[#C586C0]">import</span> openai
 
-response = requests.post(
-    <span class="text-amber-300">"http://localhost:4321/api/ingest"</span>,
-    json=&lbrace;
-        <span class="text-amber-300">"api_key"</span>: <span class="text-amber-300">{`"${apiKey}"`}</span>,
-        <span class="text-amber-300">"input"</span>: <span class="text-amber-300">"What is the capital of France?"</span>,
-        <span class="text-amber-300">"output"</span>: <span class="text-amber-300">"The capital of France is Paris."</span>,
-        <span class="text-amber-300">"model"</span>: <span class="text-amber-300">"gpt-4o"</span>,
-        <span class="text-amber-300">"user_id"</span>: <span class="text-amber-300">"user_123"</span>,
-        <span class="text-amber-300">"latency_ms"</span>: <span class="text-[#B5CEA8]">450</span>
-    &rbrace;
+<span class="text-[#569CD6]">@track</span>(
+    api_key=<span class="text-amber-300">{`"${apiKey}"`}</span>,
+    model=<span class="text-amber-300">"gpt-4"</span>,
+    user_id=<span class="text-amber-300">"user_123"</span>
 )
+<span class="text-[#569CD6]">def</span> <span class="text-[#DCDCAA]">ask_ai</span>(question: <span class="text-[#4EC9B0]">str</span>) -> <span class="text-[#4EC9B0]">str</span>:
+    response = openai.chat.completions.create(
+        model=<span class="text-amber-300">"gpt-4"</span>,
+        messages=[&lbrace;<span class="text-amber-300">"role"</span>: <span class="text-amber-300">"user"</span>, <span class="text-amber-300">"content"</span>: question&rbrace;]
+    )
+    <span class="text-[#C586C0]">return</span> response.choices[<span class="text-[#B5CEA8]">0</span>].message.content
 
-<span class="text-[#DCDCAA]">print</span>(response.json())
+answer = ask_ai(<span class="text-amber-300">"What is the refund policy?"</span>)
         </div>
       {/if}
     </div>

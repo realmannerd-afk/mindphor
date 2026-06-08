@@ -17,17 +17,30 @@ let projectId = null;
 let apiKey = null;
 
 if (userData?.user) {
-  // Get or create project
-  let { data: projects } = await supabase.from('projects').select('id, api_key').eq('user_id', userData.user.id).limit(1);
-  let project = projects?.[0];
+  // Get all projects
+  const { data: projects } = await supabase.from('projects').select('id, api_key').eq('user_id', userData.user.id).order('created_at', { ascending: true });
+  
+  let project = null;
+  if (projects && projects.length > 0) {
+    const cookieProjectId = Astro.cookies.get('mindphor_project_id')?.value;
+    if (cookieProjectId) {
+      project = projects.find(p => p.id === cookieProjectId) || projects[0];
+    } else {
+      project = projects[0];
+    }
+  }
   
   if (!project) {
     // Generate new secure key and create default project
-    const newApiKey = "sk_live_" + crypto.randomUUID().replace(/-/g, '');
+    const rawKey = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').substring(0, 16);
+    const newApiKey = `mp_live_${rawKey}`;
     const { data: newProject } = await supabase.from('projects').insert({
       user_id: userData.user.id,
       name: 'Default Project',
-      api_key: newApiKey
+      api_key: newApiKey,
+      retention_days: 30,
+      memory_prune_limit: 5000,
+      alert_threshold: 70
     }).select('id, api_key').single();
     project = newProject;
   }
@@ -51,7 +64,7 @@ if (userData?.user) {
   }
 }
 
-const skippedOnboarding = Astro.cookies.has('skipped_onboarding');
+const skippedOnboarding = Astro.cookies.has(`skipped_onboarding_${projectId}`);
 ---
 
 {(hasTraces || skippedOnboarding) ? (

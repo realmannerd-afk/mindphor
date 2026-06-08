@@ -10,17 +10,39 @@ const { user, profileName = "User" } = Astro.props;
 const pathname = new URL(Astro.request.url).pathname;
 
 let alertsCount = 0;
+let projectsList: any[] = [];
+let activeProject: any = null;
+let projectId = null;
+
 try {
   const supabase = getSupabaseClient(Astro.cookies);
-  let projectId = null;
+  
   if (user) {
-    const { data: projects } = await supabase.from('projects').select('id').eq('user_id', user.id).limit(1);
-    projectId = projects?.[0]?.id;
+    const { data: projects } = await supabase.from('projects').select('id, name, api_key').eq('user_id', user.id).order('created_at', { ascending: true });
+    
+    if (projects && projects.length > 0) {
+      projectsList = projects;
+      
+      // Resolve active project
+      const cookieProjectId = Astro.cookies.get('mindphor_project_id')?.value;
+      if (cookieProjectId) {
+        activeProject = projects.find(p => p.id === cookieProjectId);
+      }
+      
+      // Fallback
+      if (!activeProject) {
+        activeProject = projects[0];
+        Astro.cookies.set('mindphor_project_id', activeProject.id, { path: '/', maxAge: 31536000 });
+      }
+      
+      projectId = activeProject.id;
+    }
   } else {
     const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
     const isGuestCookie = Astro.cookies.has('guest_mode');
     if (isGuestQuery || isGuestCookie) {
       projectId = "guest_project";
+      activeProject = { id: "guest_project", name: "Guest Demo" };
     }
   }
 
@@ -29,7 +51,7 @@ try {
     alertsCount = count || 0;
   }
 } catch (e) {
-  console.error("Failed to check alerts", e);
+  console.error("Failed to fetch sidebar data", e);
 }
 
 const isAlertsPage = pathname === '/dashboard/alerts' || pathname.startsWith('/dashboard/alerts/');
@@ -38,7 +60,7 @@ let unreadCount = 0;
 if (isAlertsPage) {
   unreadCount = 0;
 } else {
-  const lastSeen = parseInt(Astro.cookies.get('last_seen_alerts_count')?.value || '0');
+  const lastSeen = parseInt(Astro.cookies.get(`last_seen_alerts_${projectId}`)?.value || '0');
   unreadCount = Math.max(0, alertsCount - lastSeen);
 }
 
@@ -53,7 +75,6 @@ const navItems = [
 ---
 
 <aside class="w-[220px] flex-shrink-0 bg-bg-base border-r border-border-default flex flex-col">
-  <!-- 48px height to perfectly align with Topbar -->
   <div class="h-[48px] flex items-center px-6">
     <a href={user ? "/dashboard" : "/"} class="text-[15px] font-medium text-text-primary tracking-tight hover:opacity-80 transition-opacity">Mindphor</a>
   </div>
@@ -62,23 +83,31 @@ const navItems = [
     <details id="app-selector" class="relative group cursor-pointer">
       <summary class="list-none flex items-center justify-between w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg hover:border-border-strong transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20">
         <div class="flex items-center gap-2 overflow-hidden">
-          <div class="w-5 h-5 bg-accent/20 text-accent rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-bold">M</div>
-          <span class="text-[13px] font-medium text-text-primary truncate">Memory AI</span>
+          <div class="w-5 h-5 bg-accent/20 text-accent rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
+            {activeProject ? activeProject.name.charAt(0).toUpperCase() : 'M'}
+          </div>
+          <span class="text-[13px] font-medium text-text-primary truncate">
+            {activeProject ? activeProject.name : 'No App'}
+          </span>
         </div>
         <svg class="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
       </summary>
       
       <div class="absolute left-0 right-0 top-[calc(100%+4px)] bg-bg-surface border border-border-default rounded-lg shadow-xl overflow-hidden z-[100]">
-        <div class="p-1">
-          <div class="px-2 py-1.5 flex items-center gap-2 hover:bg-bg-subtle rounded-md transition-colors cursor-pointer">
-            <div class="w-5 h-5 bg-accent/20 text-accent rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-bold">M</div>
-            <span class="text-[13px] font-medium text-text-primary">Memory AI</span>
-            <svg class="w-3 h-3 text-accent ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-          </div>
+        <div class="p-1 max-h-[76px] overflow-y-auto [&::-webkit-scrollbar]:w-[2px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border-strong [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-text-muted">
+          {projectsList.map(p => (
+            <button data-project-select={p.id} class={`w-full text-left px-2 py-1.5 flex items-center gap-2 rounded-md transition-colors ${activeProject?.id === p.id ? 'bg-bg-subtle cursor-default' : 'hover:bg-bg-subtle cursor-pointer'}`}>
+              <div class="w-5 h-5 bg-accent/20 text-accent rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-bold">{p.name.charAt(0).toUpperCase()}</div>
+              <span class="text-[13px] font-medium text-text-primary truncate">{p.name}</span>
+              {activeProject?.id === p.id && (
+                <svg class="w-3 h-3 text-accent ml-auto flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+              )}
+            </button>
+          ))}
         </div>
         <div class="h-[1px] bg-border-faint w-full"></div>
         <div class="p-1">
-          <button onclick="window.location.href='/dashboard'" class="w-full px-2 py-1.5 flex items-center gap-2 hover:bg-bg-subtle rounded-md transition-colors text-text-secondary hover:text-text-primary">
+          <button id="btn-create-app" type="button" class="w-full px-2 py-1.5 flex items-center gap-2 hover:bg-bg-subtle rounded-md transition-colors text-text-secondary hover:text-text-primary">
             <svg class="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             <span class="text-[13px] font-medium">Create App</span>
           </button>
@@ -139,15 +168,107 @@ const navItems = [
   </div>
 </aside>
 
+<!-- Create App Modal -->
+<dialog id="create-app-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-0 bg-bg-surface border border-border-default rounded-[12px] shadow-2xl p-0 backdrop:bg-black/50 backdrop:backdrop-blur-sm w-full max-w-[400px]">
+  <form id="create-app-form" class="flex flex-col">
+    <div class="p-6 border-b border-border-faint">
+      <h2 class="text-[18px] font-medium text-text-primary mb-1">Create New App</h2>
+      <p class="text-[13px] text-text-secondary">Each app has its own API key and separate monitoring data.</p>
+    </div>
+    
+    <div class="p-6">
+      <label class="block text-[13px] font-medium text-text-primary mb-2">App Name</label>
+      <input type="text" id="new-app-name" required maxlength="50" placeholder="e.g. Customer Support Bot" class="w-full bg-bg-base border border-border-default rounded-[8px] px-3 py-2 text-[14px] text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all" />
+    </div>
+    
+    <div class="p-6 pt-0 flex justify-end gap-3">
+      <button type="button" id="btn-cancel-app" class="px-4 py-2 text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
+      <button type="submit" id="btn-submit-app" class="px-4 py-2 bg-text-primary text-bg-base text-[13px] font-medium rounded-md hover:opacity-90 transition-opacity flex items-center gap-2">
+        <span>Create App</span>
+      </button>
+    </div>
+  </form>
+</dialog>
+
 <script>
-  // Close the dropdown when clicking outside of it
-  document.addEventListener('click', (e) => {
+  document.addEventListener('DOMContentLoaded', () => {
+    // Dropdown toggle logic
     const details = document.getElementById('app-selector');
-    if (details && details.hasAttribute('open')) {
-      // If the click is not inside the details element
-      if (!details.contains(e.target as Node)) {
-        details.removeAttribute('open');
+    document.addEventListener('click', (e) => {
+      if (details && details.hasAttribute('open')) {
+        if (!details.contains(e.target as Node)) {
+          details.removeAttribute('open');
+        }
       }
+    });
+
+    // Project Selection
+    const projectButtons = document.querySelectorAll('[data-project-select]');
+    projectButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = (e.currentTarget as HTMLElement).getAttribute('data-project-select');
+        if (id) {
+          localStorage.setItem('mindphor_project_id', id);
+          document.cookie = `mindphor_project_id=${id}; path=/; max-age=31536000`; // 1 year
+          window.location.reload();
+        }
+      });
+    });
+
+    // Modal Logic
+    const modal = document.getElementById('create-app-modal') as HTMLDialogElement;
+    const btnCreate = document.getElementById('btn-create-app');
+    const btnCancel = document.getElementById('btn-cancel-app');
+    const form = document.getElementById('create-app-form') as HTMLFormElement;
+    const btnSubmit = document.getElementById('btn-submit-app') as HTMLButtonElement;
+
+    if (btnCreate && modal) {
+      btnCreate.addEventListener('click', () => {
+        if (details) details.removeAttribute('open');
+        modal.showModal();
+      });
+    }
+
+    if (btnCancel && modal) {
+      btnCancel.addEventListener('click', () => {
+        modal.close();
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('new-app-name') as HTMLInputElement;
+        const name = input.value.trim();
+        if (!name) return;
+
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-bg-base" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Creating...`;
+
+        try {
+          const res = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+          });
+          const data = await res.json();
+          
+          if (data.success && data.project) {
+            const id = data.project.id;
+            localStorage.setItem('mindphor_project_id', id);
+            document.cookie = `mindphor_project_id=${id}; path=/; max-age=31536000`;
+            window.location.reload();
+          } else {
+            alert(data.error || 'Failed to create app');
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Create App';
+          }
+        } catch (err) {
+          alert('Failed to connect to server');
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Create App';
+        }
+      });
     }
   });
 </script>
