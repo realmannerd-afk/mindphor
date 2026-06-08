@@ -1,0 +1,46 @@
+---
+---
+
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+<script is:inline>
+  window.showToast = (message, type = 'success') => {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `
+      transform translate-y-8 opacity-0 transition-all duration-300 ease-out
+      flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg backdrop-blur-md min-w-[280px]
+      ${type === 'success' 
+        ? 'bg-bg-base/95 border-border-default text-text-primary' 
+        : 'bg-[#FEF2F2] border-[#FCA5A5] text-[#991B1B] dark:bg-[#450A0A] dark:border-[#7F1D1D] dark:text-[#FECACA]'}
+    `;
+
+    const icon = type === 'success'
+      ? `<div class="flex-shrink-0 w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center">
+          <svg class="w-3.5 h-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+         </div>`
+      : `<div class="flex-shrink-0 w-5 h-5 rounded-full bg-red-500/10 flex items-center justify-center">
+          <svg class="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+         </div>`;
+
+    toast.innerHTML = `
+      ${icon}
+      <p class="text-[14px] font-medium m-0 leading-none flex-1">${message}</p>
+    `;
+
+    container.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => {
+      toast.classList.remove('translate-y-8', 'opacity-0');
+    });
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+      toast.classList.add('translate-y-8', 'opacity-0');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  };
+</script>

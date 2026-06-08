@@ -1,0 +1,153 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Settings">
+  <div class="max-w-[800px] pb-20">
+    
+    <div class="bg-bg-surface border border-border-default rounded-[16px] overflow-hidden flex flex-col divide-y divide-border-faint">
+      
+      <!-- Project Settings Group Header -->
+      <div class="px-5 py-1.5 bg-bg-subtle">
+        <div class="text-[10px] font-medium tracking-[0.1em] text-text-secondary uppercase">Project Configuration</div>
+      </div>
+      
+      <!-- Row 1 -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row>
+        <div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Project Name</div>
+          <div class="text-[13px] text-text-secondary">The display name for your current workspace</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="text" value="Production App" class="w-[260px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
+          
+          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
+          </button>
+          
+          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity" data-save-btn>
+            Save
+          </button>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group">
+        <div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">API Key</div>
+          <div class="text-[13px] text-text-secondary">Used to authenticate the Mindphor server SDK</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <input type="password" value="************************" class="w-[260px] bg-bg-subtle border border-border-default rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none focus:border-border-strong text-left font-mono shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] tracking-widest" readonly />
+        </div>
+      </div>
+
+      <!-- Data & Retention Group Header -->
+      <div class="px-5 py-1.5 bg-bg-subtle border-t border-border-faint">
+        <div class="text-[10px] font-medium tracking-[0.1em] text-text-secondary uppercase">Data & Retention</div>
+      </div>
+      
+      <!-- Row 3 -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row>
+        <div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Trace Retention</div>
+          <div class="text-[13px] text-text-secondary">How long to store full interaction logs</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <select disabled class="w-[180px] bg-transparent border border-transparent rounded-[6px] pl-3 pr-8 py-1.5 text-[13px] text-text-primary focus:outline-none appearance-none cursor-default transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong data-[editing=true]:cursor-pointer" data-setting-input>
+              <option>7 Days</option>
+              <option>14 Days</option>
+              <option selected>30 Days</option>
+              <option>90 Days</option>
+            </select>
+            <svg class="w-4 h-4 text-text-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path></svg>
+          </div>
+          
+          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
+          </button>
+          
+          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity" data-save-btn>
+            Save
+          </button>
+        </div>
+      </div>
+
+      <!-- Row 4 -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row>
+        <div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Memory Auto-Pruning</div>
+          <div class="text-[13px] text-text-secondary">Maximum memory items before oldest are archived</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="number" value="5000" class="w-[180px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" readonly data-setting-input />
+          
+          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
+          </button>
+          
+          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity" data-save-btn>
+            Save
+          </button>
+        </div>
+      </div>
+
+      <!-- Danger Zone Group Header -->
+      <div class="px-5 py-1.5 bg-bg-subtle border-t border-border-faint">
+        <div class="text-[10px] font-medium tracking-[0.1em] text-text-secondary uppercase">Danger Zone</div>
+      </div>
+      
+      <!-- Row 5 -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group">
+        <div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Delete Project</div>
+          <div class="text-[13px] text-text-secondary">Permanently delete this project and all traces. This cannot be undone.</div>
+        </div>
+        <button class="px-5 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400 text-[13px] font-medium hover:bg-red-500/20 transition-colors whitespace-nowrap">
+          Delete Project
+        </button>
+      </div>
+
+    </div>
+
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const rows = document.querySelectorAll('[data-setting-row]');
+    
+    rows.forEach(row => {
+      const input = row.querySelector('[data-setting-input]') as HTMLInputElement | HTMLSelectElement;
+      const editBtn = row.querySelector('[data-edit-btn]') as HTMLButtonElement;
+      const saveBtn = row.querySelector('[data-save-btn]') as HTMLButtonElement;
+      
+      if (!input || !editBtn || !saveBtn) return;
+      
+      editBtn.addEventListener('click', () => {
+        input.removeAttribute('readonly');
+        input.removeAttribute('disabled');
+        input.setAttribute('data-editing', 'true');
+        
+        editBtn.classList.add('hidden');
+        saveBtn.classList.remove('hidden');
+        
+        input.focus();
+      });
+      
+      saveBtn.addEventListener('click', () => {
+        if (input.tagName === 'SELECT') {
+          input.setAttribute('disabled', 'true');
+        } else {
+          input.setAttribute('readonly', 'true');
+        }
+        input.removeAttribute('data-editing');
+        
+        saveBtn.classList.add('hidden');
+        editBtn.classList.remove('hidden');
+      });
+    });
+  });
+</script>

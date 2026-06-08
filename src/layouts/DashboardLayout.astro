@@ -1,0 +1,65 @@
+---
+import RootLayout from './RootLayout.astro';
+import Sidebar from '../components/layout/Sidebar.astro';
+import Topbar from '../components/layout/Topbar.astro';
+import { getSupabaseClient } from '../lib/supabase';
+
+interface Props {
+	title?: string;
+  frontmatter?: {
+    title: string;
+  };
+}
+
+const { title, frontmatter } = Astro.props;
+const pageTitle = title || (frontmatter && frontmatter.title) || 'Dashboard';
+
+const supabase = getSupabaseClient(Astro.cookies);
+let user = null;
+let profileName = "User";
+
+try {
+  const { data } = await supabase.auth.getUser();
+  user = data?.user;
+
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
+    if (profile?.name) {
+      profileName = profile.name;
+    } else if (user.user_metadata?.name) {
+      profileName = user.user_metadata.name;
+    }
+  }
+} catch (err) {
+  console.error("Dashboard layout Supabase error:", err);
+}
+
+const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
+const isGuestCookie = Astro.cookies.has('guest_mode');
+const isGuest = isGuestQuery || isGuestCookie;
+
+
+if (!user && isGuest) {
+  profileName = "Guest User";
+}
+---
+
+<RootLayout title={pageTitle}>
+  <div class="flex h-[100dvh] overflow-hidden bg-bg-base text-text-secondary">
+    <!-- Left sidebar: 220px fixed -->
+    <Sidebar user={user} profileName={profileName} />
+    
+    <!-- Main content area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <!-- Topbar inside dashboard (Height: 48px) -->
+      <Topbar title={pageTitle} user={user} profileName={profileName} />
+      
+      <!-- Content: fills remaining space, max-width fills remaining, padding 40px -->
+      <main class="flex-1 overflow-y-auto relative">
+        <div class="px-10 pb-10 pt-6 min-h-full flex flex-col">
+          <slot />
+        </div>
+      </main>
+    </div>
+  </div>
+</RootLayout>

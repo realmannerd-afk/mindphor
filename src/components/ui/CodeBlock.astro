@@ -1,0 +1,65 @@
+---
+import { Code } from 'astro:components';
+
+interface Props {
+  code: string;
+  lang: any;
+}
+const { code, lang } = Astro.props;
+---
+
+<div class="relative group my-8 border border-border-default rounded-[8px] overflow-hidden bg-bg-subtle">
+  <button class="absolute top-3 right-3 p-1.5 bg-bg-surface hover:bg-bg-elevated border border-border-default rounded-md opacity-0 group-hover:opacity-100 transition-all z-10 copy-btn shadow-sm" data-code={code} title="Copy to clipboard">
+    <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"></path>
+    </svg>
+  </button>
+  <div class="code-light">
+    <Code code={code} lang={lang} theme="github-light" />
+  </div>
+  <div class="code-dark" style="display: none;">
+    <Code code={code} lang={lang} theme="github-dark" />
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const code = btn.getAttribute('data-code');
+      if (code) {
+        await navigator.clipboard.writeText(code);
+        const originalHtml = btn.innerHTML;
+        // Checkmark icon
+        btn.innerHTML = `<svg class="w-4 h-4 text-[#2ea043]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10"></path></svg>`;
+        setTimeout(() => {
+          btn.innerHTML = originalHtml;
+        }, 2000);
+      }
+    });
+  });
+</script>
+
+<style is:global>
+  /* Ensure Shiki code block looks beautiful and clean */
+  .astro-code {
+    padding: 16px !important;
+    font-size: 13px !important;
+    line-height: 1.7 !important;
+    margin: 0 !important;
+    background-color: transparent !important; /* Managed by parent bg-bg-subtle */
+    font-family: 'Geist Mono', monospace !important; /* Same exact design, but monospaced for correct indent spacing! */
+  }
+  
+  .astro-code code,
+  .astro-code span {
+    font-family: 'Geist Mono', monospace !important;
+  }
+
+  /* Theme toggling based on html.dark */
+  html.dark .code-light {
+    display: none !important;
+  }
+  html.dark .code-dark {
+    display: block !important;
+  }
+</style>

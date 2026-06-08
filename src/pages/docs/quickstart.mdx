@@ -1,0 +1,52 @@
+---
+layout: ../../layouts/DashboardLayout.astro
+title: "Quickstart Guide"
+---
+import CodeBlock from '../../components/ui/CodeBlock.astro';
+
+<div class="max-w-[700px] -mt-8">
+
+<p class="text-[15px] text-text-secondary mb-8 leading-relaxed">
+  Get started with Mindphor in under 5 minutes. The <span class="bg-bg-elevated px-1.5 py-0.5 rounded-md border border-border-faint text-text-primary">mindphor</span> SDK automatically captures inputs, outputs, and memory states for your LLM calls.
+</p>
+
+<h2 class="text-[18px] font-medium text-text-primary mb-4 mt-12">1. Installation</h2>
+<p class="text-[15px] text-text-secondary mb-4 leading-relaxed">
+  Install the Python SDK via pip:
+</p>
+
+<CodeBlock lang="bash" code={`pip install mindphor`} />
+
+<h2 class="text-[18px] font-medium text-text-primary mb-4 mt-12">2. Configuration</h2>
+<p class="text-[15px] text-text-secondary mb-4 leading-relaxed">
+  Set your API key as an environment variable. You can find this in your Mindphor dashboard under <strong>Project Settings</strong>.
+</p>
+
+<CodeBlock lang="bash" code={`export MINDPHOR_API_KEY="your_api_key_here"`} />
+
+<h2 class="text-[18px] font-medium text-text-primary mb-4 mt-12">3. Usage</h2>
+<p class="text-[15px] text-text-secondary mb-4 leading-relaxed">
+  Simply import the <span class="bg-bg-elevated px-1.5 py-0.5 rounded-md border border-border-faint text-text-primary">@track</span> decorator and wrap any function that calls an LLM. Mindphor will intercept the call, send the trace to our Edge API, and asynchronously score the output.
+</p>
+
+<CodeBlock lang="python" code={`import openai
+from mindphor.tracker import track
+
+@track(project_id="proj_123")
+def generate_summary(text: str) -> str:
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": f"Summarize: {text}"}]
+    )
+    return response.choices[0].message.content
+
+# This call is now tracked and scored on your dashboard!
+summary = generate_summary("Mindphor is an AI monitoring platform...")`} />
+
+<h2 class="text-[18px] font-medium text-text-primary mb-4 mt-12">Next Steps</h2>
+<ul class="list-disc pl-5 text-[15px] text-text-secondary space-y-2">
+  <li>Learn how to use <a href="#" class="text-text-primary underline hover:text-accent transition-colors">Memory Tracking</a>.</li>
+  <li>Setup <a href="#" class="text-text-primary underline hover:text-accent transition-colors">Custom Alerts</a>.</li>
+</ul>
+
+</div>

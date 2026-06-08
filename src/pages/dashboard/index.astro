@@ -1,0 +1,82 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import RootLayout from '../../layouts/RootLayout.astro';
+import MetricCards from '../../components/islands/MetricCards.svelte';
+import ScoreChart from '../../components/islands/ScoreChart.svelte';
+import TraceTable from '../../components/islands/TraceTable.svelte';
+import MemoryViewer from '../../components/islands/MemoryViewer.svelte';
+import AlertsFeed from '../../components/islands/AlertsFeed.svelte';
+import EmptyStateOnboarding from '../../components/islands/EmptyStateOnboarding.svelte';
+import { getSupabaseClient } from '../../lib/supabase';
+
+const supabase = getSupabaseClient(Astro.cookies);
+const { data: userData } = await supabase.auth.getUser();
+
+let hasTraces = false;
+let projectId = null;
+let apiKey = null;
+
+if (userData?.user) {
+  // Get or create project
+  let { data: projects } = await supabase.from('projects').select('id, api_key').eq('user_id', userData.user.id).limit(1);
+  let project = projects?.[0];
+  
+  if (!project) {
+    // Generate new secure key and create default project
+    const newApiKey = "sk_live_" + crypto.randomUUID().replace(/-/g, '');
+    const { data: newProject } = await supabase.from('projects').insert({
+      user_id: userData.user.id,
+      name: 'Default Project',
+      api_key: newApiKey
+    }).select('id, api_key').single();
+    project = newProject;
+  }
+
+  if (project) {
+    projectId = project.id;
+    apiKey = project.api_key;
+    
+    // Check if any traces exist
+    const { count } = await supabase.from('traces').select('*', { count: 'exact', head: true }).eq('project_id', project.id);
+    hasTraces = (count || 0) > 0;
+  }
+} else {
+  const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
+  const isGuestCookie = Astro.cookies.has('guest_mode');
+  const isGuest = isGuestQuery || isGuestCookie;
+  if (isGuest) {
+    projectId = "guest_project";
+    apiKey = "sk_guest_demo_key";
+    hasTraces = true;
+  }
+}
+
+const skippedOnboarding = Astro.cookies.has('skipped_onboarding');
+---
+
+{(hasTraces || skippedOnboarding) ? (
+  <DashboardLayout title="Overview">
+    <MetricCards client:load projectId={projectId} />
+    <ScoreChart client:load projectId={projectId} />
+    <TraceTable client:load projectId={projectId} overviewLink={true} />
+
+    <!-- Memory + Alerts Row -->
+    <div class="flex flex-col lg:flex-row gap-[16px] mb-10 w-full">
+      <!-- Left: Memory viewer (55%) -->
+      <div class="w-full lg:w-[55%] h-[400px]">
+        <MemoryViewer client:load projectId={projectId} overviewLink={true} />
+      </div>
+      
+      <!-- Right: Alerts feed (45%) -->
+      <div class="w-full lg:w-[45%] h-[400px]">
+        <AlertsFeed client:load projectId={projectId} overviewLink={true} />
+      </div>
+    </div>
+  </DashboardLayout>
+) : (
+  <RootLayout title="Welcome">
+    <div class="min-h-screen w-full bg-bg-base flex items-center justify-center p-6">
+      <EmptyStateOnboarding client:load apiKey={apiKey} projectId={projectId} />
+    </div>
+  </RootLayout>
+)}

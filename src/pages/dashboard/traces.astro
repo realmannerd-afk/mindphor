@@ -1,0 +1,27 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import TraceTable from '../../components/islands/TraceTable.svelte';
+import { getSupabaseClient } from '../../lib/supabase';
+
+const supabase = getSupabaseClient(Astro.cookies);
+const { data: userData } = await supabase.auth.getUser();
+
+let projectId = null;
+if (userData?.user) {
+  let { data: project } = await supabase.from('projects').select('id').eq('user_id', userData.user.id).single();
+  projectId = project?.id;
+} else {
+  const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
+  const isGuestCookie = Astro.cookies.has('guest_mode');
+  const isGuest = isGuestQuery || isGuestCookie;
+  if (isGuest) {
+    projectId = "guest_project";
+  }
+}
+---
+
+<DashboardLayout title="Traces">
+  <div class="absolute inset-0 px-10 pb-10 pt-6 flex flex-col min-h-0">
+    <TraceTable client:load projectId={projectId} />
+  </div>
+</DashboardLayout>

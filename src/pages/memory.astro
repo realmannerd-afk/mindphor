@@ -1,0 +1,15 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import MemoryViewer from '../components/islands/MemoryViewer.svelte';
+---
+
+<DashboardLayout title="Agent Memory">
+  <div class="mb-8">
+    <h1 class="text-2xl font-medium text-white mb-2">Memory State</h1>
+    <p class="text-zinc-400">View and manage long-term memory key-values across different user sessions. Identify stale or contradictory data.</p>
+  </div>
+  
+  <div class="bg-white/5 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden min-h-[500px]">
+    <MemoryViewer client:load />
+  </div>
+</DashboardLayout>

@@ -1,0 +1,30 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import AlertsFeed from '../../components/islands/AlertsFeed.svelte';
+import { getSupabaseClient } from '../../lib/supabase';
+
+const supabase = getSupabaseClient(Astro.cookies);
+const { data: userData } = await supabase.auth.getUser();
+
+let projectId = null;
+if (userData?.user) {
+  let { data: project } = await supabase.from('projects').select('id').eq('user_id', userData.user.id).limit(1);
+  projectId = project?.[0]?.id;
+} else {
+  const isGuest = Astro.url.searchParams.get('guest') === 'true' || Astro.cookies.has('guest_mode');
+  if (isGuest) {
+    projectId = "guest_project";
+  }
+}
+
+if (projectId) {
+  const { count } = await supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('project_id', projectId);
+  Astro.cookies.set('last_seen_alerts_count', (count || 0).toString(), { path: '/' });
+}
+---
+
+<DashboardLayout title="Alerts">
+  <div class="w-full lg:w-[70%] flex flex-col max-h-[calc(100vh-140px)]">
+    <AlertsFeed client:load projectId={projectId} expanded={true} />
+  </div>
+</DashboardLayout>

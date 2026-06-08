@@ -1,0 +1,15 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import TraceTable from '../components/islands/TraceTable.svelte';
+---
+
+<DashboardLayout title="Traces">
+  <div class="mb-8">
+    <h1 class="text-2xl font-medium text-white mb-2">Evaluation Traces</h1>
+    <p class="text-zinc-400">Deep dive into individual LLM requests, their inputs, outputs, and automated quality scores.</p>
+  </div>
+  
+  <div class="bg-white/5 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden min-h-[500px]">
+    <TraceTable client:load />
+  </div>
+</DashboardLayout>

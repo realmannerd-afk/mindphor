@@ -1,0 +1,153 @@
+---
+import { getSupabaseClient } from '../../lib/supabase';
+
+interface Props {
+  user?: any;
+  profileName?: string;
+}
+
+const { user, profileName = "User" } = Astro.props;
+const pathname = new URL(Astro.request.url).pathname;
+
+let alertsCount = 0;
+try {
+  const supabase = getSupabaseClient(Astro.cookies);
+  let projectId = null;
+  if (user) {
+    const { data: projects } = await supabase.from('projects').select('id').eq('user_id', user.id).limit(1);
+    projectId = projects?.[0]?.id;
+  } else {
+    const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
+    const isGuestCookie = Astro.cookies.has('guest_mode');
+    if (isGuestQuery || isGuestCookie) {
+      projectId = "guest_project";
+    }
+  }
+
+  if (projectId) {
+    const { count } = await supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('project_id', projectId);
+    alertsCount = count || 0;
+  }
+} catch (e) {
+  console.error("Failed to check alerts", e);
+}
+
+const isAlertsPage = pathname === '/dashboard/alerts' || pathname.startsWith('/dashboard/alerts/');
+let unreadCount = 0;
+
+if (isAlertsPage) {
+  unreadCount = 0;
+} else {
+  const lastSeen = parseInt(Astro.cookies.get('last_seen_alerts_count')?.value || '0');
+  unreadCount = Math.max(0, alertsCount - lastSeen);
+}
+
+const navItems = [
+  { name: 'Overview', href: '/dashboard' },
+  { name: 'Traces', href: '/dashboard/traces' },
+  { name: 'Memory', href: '/dashboard/memory' },
+  { name: 'Alerts', href: '/dashboard/alerts', badgeCount: unreadCount },
+  { name: 'Settings', href: '/dashboard/settings' },
+  { name: 'Docs', href: '/docs/quickstart' }
+];
+---
+
+<aside class="w-[220px] flex-shrink-0 bg-bg-base border-r border-border-default flex flex-col">
+  <!-- 48px height to perfectly align with Topbar -->
+  <div class="h-[48px] flex items-center px-6">
+    <a href={user ? "/dashboard" : "/"} class="text-[15px] font-medium text-text-primary tracking-tight hover:opacity-80 transition-opacity">Mindphor</a>
+  </div>
+  
+  <div class="px-4 mt-6 mb-4 relative z-50">
+    <details id="app-selector" class="relative group cursor-pointer">
+      <summary class="list-none flex items-center justify-between w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg hover:border-border-strong transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20">
+        <div class="flex items-center gap-2 overflow-hidden">
+          <div class="w-5 h-5 bg-accent/20 text-accent rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-bold">M</div>
+          <span class="text-[13px] font-medium text-text-primary truncate">Memory AI</span>
+        </div>
+        <svg class="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+      </summary>
+      
+      <div class="absolute left-0 right-0 top-[calc(100%+4px)] bg-bg-surface border border-border-default rounded-lg shadow-xl overflow-hidden z-[100]">
+        <div class="p-1">
+          <div class="px-2 py-1.5 flex items-center gap-2 hover:bg-bg-subtle rounded-md transition-colors cursor-pointer">
+            <div class="w-5 h-5 bg-accent/20 text-accent rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-bold">M</div>
+            <span class="text-[13px] font-medium text-text-primary">Memory AI</span>
+            <svg class="w-3 h-3 text-accent ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+          </div>
+        </div>
+        <div class="h-[1px] bg-border-faint w-full"></div>
+        <div class="p-1">
+          <button onclick="window.location.href='/dashboard'" class="w-full px-2 py-1.5 flex items-center gap-2 hover:bg-bg-subtle rounded-md transition-colors text-text-secondary hover:text-text-primary">
+            <svg class="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span class="text-[13px] font-medium">Create App</span>
+          </button>
+        </div>
+      </div>
+    </details>
+  </div>
+  
+  <nav class="flex flex-col gap-1 px-4">
+    {navItems.map(item => {
+      const isActive = item.href === '/dashboard' ? pathname === '/dashboard' || pathname === '/dashboard/' : pathname.startsWith(item.href);
+      return (
+        <a 
+          href={item.href} 
+          class={`flex items-center justify-between px-3 py-2.5 text-[13px] rounded-md transition-colors ${
+            isActive 
+              ? 'bg-accent-subtle text-accent font-medium' 
+              : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
+          }`}
+        >
+          {item.name}
+          {item.badgeCount !== undefined && item.badgeCount > 0 && (
+            <div class="px-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white flex items-center justify-center text-[11px] font-bold leading-none">
+              {item.badgeCount > 99 ? '99+' : item.badgeCount}
+            </div>
+          )}
+        </a>
+      );
+    })}
+  </nav>
+  
+  <div class="mt-auto px-4 pb-6">
+    {user ? (
+      <a href="/dashboard/profile" class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-bg-elevated border border-transparent hover:border-border-default transition-all group">
+        <div class="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+          <span class="text-accent font-medium text-[13px]">{profileName.charAt(0).toUpperCase()}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-[13px] font-medium text-text-primary truncate leading-tight">{profileName}</p>
+          <p class="text-[11px] text-text-secondary truncate mt-0.5">{user.email}</p>
+        </div>
+        <svg class="w-4 h-4 text-text-muted group-hover:text-text-primary transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+      </a>
+    ) : (
+      <a href="/" data-astro-reload onclick="document.cookie = 'guest_mode=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';" class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-bg-elevated border border-transparent hover:border-border-default transition-all group">
+        <div class="w-8 h-8 rounded-full bg-border-strong flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-text-muted group-hover:text-text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-[13px] font-medium text-text-primary truncate leading-tight">Exit Guest Mode</p>
+          <p class="text-[11px] text-text-secondary truncate mt-0.5">Return to homepage</p>
+        </div>
+      </a>
+    )}
+  </div>
+</aside>
+
+<script>
+  // Close the dropdown when clicking outside of it
+  document.addEventListener('click', (e) => {
+    const details = document.getElementById('app-selector');
+    if (details && details.hasAttribute('open')) {
+      // If the click is not inside the details element
+      if (!details.contains(e.target as Node)) {
+        details.removeAttribute('open');
+      }
+    }
+  });
+</script>

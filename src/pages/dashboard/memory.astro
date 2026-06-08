@@ -1,0 +1,25 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import MemoryViewer from '../../components/islands/MemoryViewer.svelte';
+import { getSupabaseClient } from '../../lib/supabase';
+
+const supabase = getSupabaseClient(Astro.cookies);
+const { data: userData } = await supabase.auth.getUser();
+
+let projectId = null;
+if (userData?.user) {
+  let { data: project } = await supabase.from('projects').select('id').eq('user_id', userData.user.id).limit(1);
+  projectId = project?.[0]?.id;
+} else {
+  const isGuest = Astro.url.searchParams.get('guest') === 'true' || Astro.cookies.has('guest_mode');
+  if (isGuest) {
+    projectId = "guest_project";
+  }
+}
+---
+
+<DashboardLayout title="Memory">
+  <div class="w-full lg:w-[70%] flex flex-col max-h-[calc(100vh-140px)]">
+    <MemoryViewer client:load projectId={projectId} />
+  </div>
+</DashboardLayout>

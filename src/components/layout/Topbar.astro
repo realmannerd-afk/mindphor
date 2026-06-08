@@ -1,0 +1,104 @@
+---
+interface Props {
+  title: string;
+  user?: any;
+  profileName?: string;
+}
+
+const { title, user, profileName = "User" } = Astro.props;
+---
+
+<header class="h-[48px] flex-shrink-0 flex items-center justify-between px-10 border-b border-border-default bg-bg-base">
+  <h2 class="text-[15px] font-medium text-text-primary">{title}</h2>
+  
+  <div class="flex items-center gap-4">
+    <!-- Light/Dark/System Toggle Dropdown -->
+    <div class="relative group">
+      <button 
+        class="w-8 h-8 rounded-md flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
+        aria-label="Theme selection"
+      >
+        <!-- Sun icon (shows in light mode) -->
+        <svg id="theme-toggle-light-icon" class="hidden w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+        </svg>
+        <!-- Moon icon (shows in dark mode) -->
+        <svg id="theme-toggle-dark-icon" class="hidden w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+        </svg>
+        <!-- System icon (shows in system mode) -->
+        <svg id="theme-toggle-system-icon" class="hidden w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M9 18l6 0" /><path d="M12 15l0 3" />
+        </svg>
+      </button>
+
+      <div class="absolute right-0 top-full pt-2 hidden group-hover:block w-36 z-50">
+        <div class="bg-bg-surface border border-border-default rounded-[8px] shadow-lg p-1">
+          <button class="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-bg-subtle rounded-md text-text-primary transition-colors theme-btn" data-theme="light">
+            <svg class="w-4 h-4 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
+            Light
+          </button>
+          <button class="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-bg-subtle rounded-md text-text-primary transition-colors theme-btn" data-theme="dark">
+            <svg class="w-4 h-4 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
+            Dark
+          </button>
+          <button class="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-bg-subtle rounded-md text-text-primary transition-colors theme-btn" data-theme="system">
+            <svg class="w-4 h-4 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6 0" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 15l0 3" /></svg>
+            System
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Avatar -->
+    {user && (
+      <a href="/dashboard/profile" class="w-7 h-7 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-accent group">
+        <span class="text-accent font-medium text-[13px] group-hover:scale-105 transition-transform">{profileName.charAt(0).toUpperCase()}</span>
+      </a>
+    )}
+  </div>
+</header>
+
+<script>
+  // Add inline toggle logic for client-side interactivity
+  const darkIcon = document.getElementById('theme-toggle-dark-icon');
+  const lightIcon = document.getElementById('theme-toggle-light-icon');
+  const systemIcon = document.getElementById('theme-toggle-system-icon');
+  const themeBtns = document.querySelectorAll('.theme-btn');
+
+  function updateIcons() {
+    const theme = localStorage.getItem('theme') || 'dark';
+    darkIcon?.classList.add('hidden');
+    lightIcon?.classList.add('hidden');
+    systemIcon?.classList.add('hidden');
+
+    if (theme === 'light') {
+      darkIcon?.classList.remove('hidden');
+    } else if (theme === 'dark') {
+      lightIcon?.classList.remove('hidden');
+    } else {
+      systemIcon?.classList.remove('hidden');
+    }
+  }
+
+  // Initial load
+  updateIcons();
+
+  themeBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLButtonElement;
+      const theme = target.getAttribute('data-theme') || 'dark';
+      
+      localStorage.setItem('theme', theme);
+      
+      const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      
+      updateIcons();
+    });
+  });
+</script>

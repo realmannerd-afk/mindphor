@@ -1,0 +1,19 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import AlertsFeed from '../components/islands/AlertsFeed.svelte';
+---
+
+<DashboardLayout title="Alerts">
+  <div class="mb-8">
+    <h1 class="text-2xl font-medium text-white mb-2">System Alerts</h1>
+    <p class="text-zinc-400">Review automated alerts triggered by quality score drops, stale memory keys, or evaluation failures.</p>
+  </div>
+  
+  <div class="bg-white/5 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden min-h-[500px] p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-semibold text-white">Active Alerts</h3>
+      <button class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-sm font-medium rounded-lg text-white transition-colors">Resolve All</button>
+    </div>
+    <AlertsFeed client:load expanded={true} />
+  </div>
+</DashboardLayout>
