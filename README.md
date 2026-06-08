@@ -1,46 +1,147 @@
-# Astro Starter Kit: Basics
+# Mindphor
 
-```sh
-npm create astro@latest -- --template basics
+> Know when your AI breaks. Before your users do.
+
+Mindphor is a production monitoring platform for AI applications.
+Track every LLM call, score outputs in real time, detect memory
+drift, and get alerted when quality drops — before your users
+notice.
+
+---
+
+## Why Mindphor
+
+When a normal app breaks in production, you get an error log.
+When an AI app breaks, you get nothing. The app didn't crash.
+It just gave a wrong answer. Silently. To a real user.
+
+Mindphor fixes that.
+
+---
+
+## Features
+
+- **Output scoring** — every AI call scored 0–100 for
+  relevance, accuracy, and consistency
+- **Memory tracking** — monitor user context, detect stale
+  or contradictory memory keys
+- **Hallucination detection** — automatic flagging when AI
+  states something false
+- **Quality alerts** — instant alerts when scores drop
+  below your threshold
+- **Trend dashboard** — visualize quality over time, spot
+  regressions after prompt changes
+- **Zero latency impact** — SDK runs async, never slows
+  your app
+
+---
+
+## How It Works
+Your AI app runs normally
+↓
+@track intercepts each LLM call
+↓
+Input + output sent to Mindphor API
+↓
+Judge model scores the output
+↓
+Score + alerts appear on dashboard
+
+---
+
+## Quick Start
+
+### 1. Sign up
+
+Create your free account and copy your API key from Settings.
+
+### 2. Install the SDK
+
+```bash
+pip install git+https://github.com/realmannerd-afk/mindphor.git#subdirectory=sdk
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+### 3. Add @track to your AI function
 
-## 🚀 Project Structure
+```python
+from mindphor import track
 
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+@track(
+    api_key="mp_your_key_here",
+    model="gpt-4",
+    user_id="user_123"
+)
+def ask_ai(question: str) -> str:
+    response = openai.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": question}]
+    )
+    return response.choices[0].message.content
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+That's it. Every call is now monitored.
 
-## 🧞 Commands
+### 4. Track memory (optional)
 
-All commands are run from the root of the project, from a terminal:
+```python
+from mindphor import Memory
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+mem = Memory(api_key="mp_your_key_here")
 
-## 👀 Want to learn more?
+# Store user context
+mem.set(user_id="user_123", key="plan", value="pro")
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+# Mindphor alerts you if this goes stale
+# or if a contradiction is detected
+```
+
+---
+
+## SDK Reference
+
+### @track decorator
+
+| Parameter | Required | Description |
+|---|---|---|
+| api_key | Yes | Your Mindphor API key |
+| model | No | Model name for display |
+| user_id | No | Track per user |
+
+### Memory class
+
+```python
+mem = Memory(api_key="mp_xxx")
+
+mem.set(user_id, key, value)   # store a key
+mem.get(user_id)               # get all keys
+mem.delete(user_id, key)       # delete a key
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Astro + Svelte + Tailwind CSS |
+| Backend | Astro API Routes |
+| Database | Supabase (PostgreSQL) |
+| Hosting | Vercel |
+| Scorer | Cerebras LLM |
+| SDK | Python |
+
+---
+
+## Roadmap
+
+- [ ] Node.js SDK
+- [ ] Slack + email alerts
+- [ ] Custom eval criteria
+- [ ] Multi-project support
+- [ ] Self-hosted option
+
+---
+
+## License
+
+MIT
