@@ -249,12 +249,12 @@
           </div>
           <h3 class="text-[15px] font-medium text-text-primary mb-1.5">No traces found</h3>
           <p class="text-[13px] text-text-muted max-w-[300px] mb-5 leading-relaxed">Add your API key and integrate the SDK to start seeing full trace logs here.</p>
-          <button 
-            on:click={() => { document.cookie = "skipped_onboarding=; path=/; max-age=0"; window.location.reload(); }} 
+          <a 
+            href="/docs/quickstart" 
             class="text-[13px] bg-bg-elevated hover:bg-bg-subtle border border-border-default text-text-primary px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
           >
             View Integration Guide
-          </button>
+          </a>
         </div>
       {:else if filteredTraces.length === 0}
         <div class="py-16 text-center flex flex-col items-center justify-center">

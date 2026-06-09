@@ -10,11 +10,6 @@ let projectId = null;
 if (userData?.user) {
   let { data: project } = await supabase.from('projects').select('id').eq('user_id', userData.user.id).limit(1);
   projectId = project?.[0]?.id;
-} else {
-  const isGuest = Astro.url.searchParams.get('guest') === 'true' || Astro.cookies.has('guest_mode');
-  if (isGuest) {
-    projectId = "guest_project";
-  }
 }
 
 if (projectId) {

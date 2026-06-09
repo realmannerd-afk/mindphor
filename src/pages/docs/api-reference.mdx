@@ -1,0 +1,79 @@
+---
+layout: ../../layouts/DashboardLayout.astro
+title: "API Reference"
+---
+import CodeBlock from '../../components/ui/CodeBlock.astro';
+
+<div class="max-w-[660px]">
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h1 class="text-[18px] font-medium text-text-primary mb-2">API Reference</h1>
+  <p class="text-[14px] text-text-secondary leading-[1.7]">Complete reference for the Mindphor Python SDK, including tracking functions and memory management.</p>
+</div>
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">@track Decorator</h2>
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">The `@track` decorator automatically intercepts LLM calls, recording the input prompt, generated output, model details, and latency.</p>
+  
+  <CodeBlock lang="python" code={`@track(
+    api_key: str,
+    model: str,
+    user_id: str = None,
+    tags: List[str] = None
+)`} />
+
+  <h3 class="text-[15px] font-medium text-text-primary mt-6 mb-2">Parameters</h3>
+  <table class="w-full text-left border-collapse mb-4">
+    <thead>
+      <tr class="border-b border-border-faint">
+        <th class="py-2 pr-4 w-[140px] text-[11px] uppercase text-text-muted font-normal text-left">Name</th>
+        <th class="py-2 pr-4 w-[120px] text-[11px] uppercase text-text-muted font-normal text-left">Type</th>
+        <th class="py-2 text-[11px] uppercase text-text-muted font-normal text-left">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-b border-border-faint align-top">
+        <td class="py-3 pr-4 text-[13px] text-text-primary font-mono">api_key</td>
+        <td class="py-3 pr-4 text-[13px] text-text-secondary">str</td>
+        <td class="py-3 text-[13px] text-text-secondary leading-[1.6]">Your project's secret API key. Can also be set via MINDPHOR_API_KEY env variable.</td>
+      </tr>
+      <tr class="border-b border-border-faint align-top">
+        <td class="py-3 pr-4 text-[13px] text-text-primary font-mono">model</td>
+        <td class="py-3 pr-4 text-[13px] text-text-secondary">str</td>
+        <td class="py-3 text-[13px] text-text-secondary leading-[1.6]">The name of the LLM being used (e.g., 'gpt-4', 'claude-3-opus').</td>
+      </tr>
+      <tr class="border-b border-border-faint align-top">
+        <td class="py-3 pr-4 text-[13px] text-text-primary font-mono">user_id</td>
+        <td class="py-3 pr-4 text-[13px] text-text-secondary">str</td>
+        <td class="py-3 text-[13px] text-text-secondary leading-[1.6]">Optional. An identifier for the end user making the request, used for memory tracking.</td>
+      </tr>
+      <tr class="border-b border-border-faint align-top">
+        <td class="py-3 pr-4 text-[13px] text-text-primary font-mono">tags</td>
+        <td class="py-3 pr-4 text-[13px] text-text-secondary">List[str]</td>
+        <td class="py-3 text-[13px] text-text-secondary leading-[1.6]">Optional. Custom string tags to categorize and filter traces.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+{/* SECTION */}
+<div class="mb-0">
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Memory Class</h2>
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">The `Memory` class allows you to manually store and retrieve long-term context for your users.</p>
+  
+  <h3 class="text-[15px] font-medium text-text-primary mt-6 mb-2">mem.set()</h3>
+  <CodeBlock lang="python" code={`mem.set(user_id: str, key: str, value: str)`} />
+  <p class="text-[14px] text-text-secondary leading-[1.7] mt-3 mb-6">Stores a key-value pair for a specific user. If the key already exists, it will be overwritten.</p>
+
+  <h3 class="text-[15px] font-medium text-text-primary mb-2">mem.get()</h3>
+  <CodeBlock lang="python" code={`mem.get(user_id: str, key: str = None) -> Union[str, dict]`} />
+  <p class="text-[14px] text-text-secondary leading-[1.7] mt-3 mb-6">Retrieves memory for a user. If `key` is provided, returns a string. If `key` is omitted, returns a dictionary of all keys for that user.</p>
+
+  <h3 class="text-[15px] font-medium text-text-primary mb-2">mem.delete()</h3>
+  <CodeBlock lang="python" code={`mem.delete(user_id: str, key: str) -> bool`} />
+  <p class="text-[14px] text-text-secondary leading-[1.7] mt-3">Deletes a specific memory key for a user. Returns True if successful.</p>
+</div>
+
+</div>

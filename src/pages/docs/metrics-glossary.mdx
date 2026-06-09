@@ -1,0 +1,59 @@
+---
+layout: ../../layouts/DashboardLayout.astro
+title: "Metrics Glossary"
+---
+import CodeBlock from '../../components/ui/CodeBlock.astro';
+
+<div class="max-w-[660px]">
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h1 class="text-[18px] font-medium text-text-primary mb-2">Metrics Glossary</h1>
+  <p class="text-[14px] text-text-secondary leading-[1.7]">A complete reference of all the metrics, properties, and metadata fields displayed throughout the Mindphor dashboard.</p>
+</div>
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Overview Metrics</h2>
+  <ul class="list-disc pl-5 text-[14px] text-text-secondary leading-[1.7] mb-4">
+    <li class="mb-2"><strong>Avg Quality Score:</strong> The average quality score across all evaluated traces in your project. Calculated based on Relevance, Consistency, and Memory Adherence.</li>
+    <li class="mb-2"><strong>Memory Accuracy:</strong> The percentage of successful context retrievals from memory keys compared to the total number of retrieval attempts.</li>
+    <li class="mb-2"><strong>Regressions:</strong> The number of negative trends or quality drops detected recently, indicating potential degradation in model performance.</li>
+    <li class="mb-2"><strong>Total Calls:</strong> The total volume of monitored AI generations and completions logged by your application.</li>
+  </ul>
+</div>
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Trace Details</h2>
+  <ul class="list-disc pl-5 text-[14px] text-text-secondary leading-[1.7] mb-4">
+    <li class="mb-2"><strong>Model:</strong> The underlying LLM used for the completion (e.g., gpt-4, claude-3-opus).</li>
+    <li class="mb-2"><strong>Latency:</strong> Total time taken by the model to generate the response in milliseconds.</li>
+    <li class="mb-2"><strong>User ID:</strong> The identifier of the end user who triggered the trace interaction, useful for user-level debugging.</li>
+    <li class="mb-2"><strong>Trace ID:</strong> The internal UUID representing the specific logged trace record in Mindphor's database.</li>
+  </ul>
+</div>
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Alert Details</h2>
+  <ul class="list-disc pl-5 text-[14px] text-text-secondary leading-[1.7] mb-4">
+    <li class="mb-2"><strong>Severity Type:</strong> The classification of the alert (e.g., latency, quality, memory), indicating the type of issue detected.</li>
+    <li class="mb-2"><strong>Context:</strong> Additional metadata or system context providing details about why the alert was triggered.</li>
+    <li class="mb-2"><strong>Internal ID:</strong> The unique database identifier for the alert record.</li>
+    <li class="mb-2"><strong>Project ID:</strong> The workspace project the alert belongs to.</li>
+  </ul>
+</div>
+
+{/* SECTION */}
+<div class="mb-0">
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Memory Details</h2>
+  <ul class="list-disc pl-5 text-[14px] text-text-secondary leading-[1.7] mb-4">
+    <li class="mb-2"><strong>Status:</strong> The current freshness status of the memory record (e.g., active, stale).</li>
+    <li class="mb-2"><strong>Key Name:</strong> The identifier key under which the memory is stored for rapid retrieval.</li>
+    <li class="mb-2"><strong>Internal ID:</strong> The unique database identifier for the memory record.</li>
+    <li class="mb-2"><strong>Project ID:</strong> The workspace project the memory is scoped to.</li>
+  </ul>
+</div>
+
+</div>

@@ -34,14 +34,7 @@ try {
   console.error("Dashboard layout Supabase error:", err);
 }
 
-const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
-const isGuestCookie = Astro.cookies.has('guest_mode');
-const isGuest = isGuestQuery || isGuestCookie;
 
-
-if (!user && isGuest) {
-  profileName = "Guest User";
-}
 ---
 
 <RootLayout title={pageTitle}>
@@ -54,9 +47,9 @@ if (!user && isGuest) {
       <!-- Topbar inside dashboard (Height: 48px) -->
       <Topbar title={pageTitle} user={user} profileName={profileName} />
       
-      <!-- Content: fills remaining space, max-width fills remaining, padding 40px -->
+      <!-- Content: fills remaining space, max-width fills remaining, padding -->
       <main class="flex-1 overflow-y-auto relative">
-        <div class="px-10 pb-10 pt-6 min-h-full flex flex-col">
+        <div class="px-10 pb-[30px] pt-6 min-h-full flex flex-col">
           <slot />
         </div>
       </main>

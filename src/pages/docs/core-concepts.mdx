@@ -1,0 +1,51 @@
+---
+layout: ../../layouts/DashboardLayout.astro
+title: "Core Concepts"
+---
+import CodeBlock from '../../components/ui/CodeBlock.astro';
+
+<div class="max-w-[660px]">
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h1 class="text-[18px] font-medium text-text-primary mb-2">Core Concepts</h1>
+  <p class="text-[14px] text-text-secondary leading-[1.7]">Understand how Mindphor monitors, scores, and secures your LLM traffic under the hood.</p>
+</div>
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Non-blocking Architecture</h2>
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">Mindphor is designed to have **zero impact on your application's latency**. When you use the `@track` decorator, the SDK wraps your function but sends the telemetry data to our servers using an asynchronous background thread.</p>
+  
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">Even if the Mindphor API is down or experiencing high load, your application will continue to serve user requests without delay or interruption.</p>
+</div>
+
+{/* SECTION */}
+<div class="mb-[48px]">
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">Data Privacy & Security</h2>
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">We take your data seriously. By default, Mindphor captures:</p>
+  <ul class="list-disc pl-5 text-[14px] text-text-secondary leading-[1.7] mb-4">
+    <li>The raw text of the input prompt</li>
+    <li>The raw text of the LLM output</li>
+    <li>The model name and latency</li>
+    <li>Optional metadata like user_id and tags</li>
+  </ul>
+  
+  <p class="text-[14px] text-text-secondary leading-[1.7]">All data is encrypted at rest using AES-256 encryption. If you need to scrub Personally Identifiable Information (PII) before it reaches our servers, you can configure a custom scrubber function in the SDK (coming in v1.1).</p>
+</div>
+
+{/* SECTION */}
+<div class="mb-0">
+  <h2 class="text-[18px] font-medium text-text-primary mb-2">The Quality Judge</h2>
+  <p class="text-[14px] text-text-secondary leading-[1.7] mb-4">Every trace sent to Mindphor is asynchronously evaluated by our proprietary judge model. The judge assigns a score from 0 to 100 based on three distinct dimensions:</p>
+  
+  <ul class="list-disc pl-5 text-[14px] text-text-secondary leading-[1.7] mb-4">
+    <li><strong>Relevance:</strong> Does the output directly answer the user's prompt without hallucinating?</li>
+    <li><strong>Consistency:</strong> Does the output match the tone, instructions, and constraints provided in the system prompt?</li>
+    <li><strong>Memory Adherence:</strong> Does the output contradict any long-term memory facts stored for that user?</li>
+  </ul>
+  
+  <p class="text-[14px] text-text-secondary leading-[1.7]">If the composite score falls below your project's configured Alert Threshold, the trace is flagged and an alert is generated on your dashboard.</p>
+</div>
+
+</div>

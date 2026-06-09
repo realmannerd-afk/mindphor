@@ -102,36 +102,61 @@ answer = ask_ai("What is the refund policy?")`;
   }
 </style>
 
-<div class="max-w-4xl mx-auto mt-2 px-6">
-  <!-- Top: What is this? -->
-  <div class="mb-6 text-center">
+<div class="max-w-3xl mx-auto mt-2 px-6">
+  <div class="mb-10 text-center">
     <div class="w-12 h-12 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto mb-4">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
     </div>
-    
-    <h1 class="text-[28px] font-medium text-text-primary tracking-tight mb-2">Integrate Mindphor</h1>
-    <p class="text-[15px] leading-relaxed text-text-secondary max-w-2xl mx-auto mb-5">
-      Mindphor acts as the observation and evaluation layer for your AI. To get started, you just need to send your first generation trace to our ingestion API. We'll automatically evaluate it and populate your dashboard.
+    <h1 class="text-[28px] font-medium text-text-primary tracking-tight mb-2">Welcome to Mindphor</h1>
+    <p class="text-[15px] leading-relaxed text-text-secondary max-w-xl mx-auto">
+      Follow these 3 simple steps to integrate the SDK and start monitoring your LLM application.
     </p>
-
-    <!-- API Key Display -->
-    <div class="max-w-md mx-auto bg-bg-surface border border-border-default rounded-xl p-3 flex items-center justify-between gap-4">
-      <div class="text-left overflow-hidden">
-        <div class="text-[11px] uppercase tracking-wider text-text-muted mb-0.5 font-medium">Your API Key</div>
-        <div class="font-mono text-[14px] text-text-primary truncate">{apiKey}</div>
-      </div>
-      <button 
-        on:click={copyKey}
-        class="shrink-0 px-4 py-1.5 bg-bg-elevated border border-border-default hover:bg-bg-subtle text-text-primary text-[12px] rounded-lg transition-colors font-medium cursor-pointer"
-      >
-        {copied ? 'Copied!' : 'Copy Key'}
-      </button>
-    </div>
   </div>
 
-  <!-- Bottom: Platform Tabs -->
-  <div class="bg-bg-surface border border-border-default rounded-xl overflow-hidden shadow-sm">
-    <div class="relative flex border-b border-border-faint px-2 pt-2 bg-bg-elevated">
+  <div class="space-y-6">
+    <!-- STEP 1 -->
+    <div class="bg-bg-surface border border-border-default rounded-xl p-6 shadow-sm">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-7 h-7 rounded-full bg-accent text-bg-base flex items-center justify-center text-[13px] font-bold">1</div>
+        <h2 class="text-[16px] font-medium text-text-primary">Get your API Key</h2>
+      </div>
+      <p class="text-[14px] text-text-secondary mb-4 ml-10">You'll need this key to authenticate your requests. Keep it secret.</p>
+      <div class="ml-10 max-w-md bg-bg-base border border-border-default rounded-lg p-3 flex items-center justify-between gap-4">
+        <div class="font-mono text-[14px] text-text-primary truncate">{apiKey}</div>
+        <button 
+          on:click={copyKey}
+          class="shrink-0 px-3 py-1.5 bg-bg-elevated border border-border-default hover:bg-bg-subtle text-text-primary text-[12px] rounded-md transition-colors font-medium cursor-pointer"
+        >
+          {copied ? 'Copied!' : 'Copy Key'}
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="bg-bg-surface border border-border-default rounded-xl p-6 shadow-sm">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-7 h-7 rounded-full bg-accent text-bg-base flex items-center justify-center text-[13px] font-bold">2</div>
+        <h2 class="text-[16px] font-medium text-text-primary">Install the SDK</h2>
+      </div>
+      <p class="text-[14px] text-text-secondary mb-4 ml-10">Install the Python package via pip (or use our REST API directly).</p>
+      <div class="ml-10 max-w-md bg-[#121212] border border-[#333333] rounded-lg p-3 flex items-center">
+        <span class="text-emerald-400 font-mono text-[13px] mr-2">$</span>
+        <span class="text-[#D4D4D4] font-mono text-[13px]">pip install mindphor</span>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="bg-bg-surface border border-border-default rounded-xl overflow-hidden shadow-sm">
+      <div class="p-6 pb-0 border-b border-border-faint">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-7 h-7 rounded-full bg-accent text-bg-base flex items-center justify-center text-[13px] font-bold">3</div>
+          <h2 class="text-[16px] font-medium text-text-primary">Send your first trace</h2>
+        </div>
+        <p class="text-[14px] text-text-secondary mb-6 ml-10">Use the <code class="bg-bg-elevated px-1.5 py-0.5 rounded text-[12px] text-text-primary border border-border-faint">@track</code> decorator to wrap your LLM calls. We automatically capture the prompt, response, and latency.</p>
+      </div>
+
+      <!-- Bottom: Platform Tabs -->
+      <div class="relative flex border-b border-border-faint px-6 pt-2 bg-bg-base">
       {#each tabs as tab, i}
         <button 
           bind:this={tabElements[i]}
@@ -215,6 +240,8 @@ answer = ask_ai(<span class="text-amber-300">"What is the refund policy?"</span>
         </div>
       {/if}
     </div>
+  </div>
+
   </div>
 
   <!-- Skip Button -->

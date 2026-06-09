@@ -37,13 +37,6 @@ try {
       
       projectId = activeProject.id;
     }
-  } else {
-    const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
-    const isGuestCookie = Astro.cookies.has('guest_mode');
-    if (isGuestQuery || isGuestCookie) {
-      projectId = "guest_project";
-      activeProject = { id: "guest_project", name: "Guest Demo" };
-    }
   }
 
   if (projectId) {
@@ -69,8 +62,14 @@ const navItems = [
   { name: 'Traces', href: '/dashboard/traces' },
   { name: 'Memory', href: '/dashboard/memory' },
   { name: 'Alerts', href: '/dashboard/alerts', badgeCount: unreadCount },
-  { name: 'Settings', href: '/dashboard/settings' },
-  { name: 'Docs', href: '/docs/quickstart' }
+  { name: 'Settings', href: '/dashboard/settings' }
+];
+
+const docsItems = [
+  { name: 'Quickstart', href: '/docs/quickstart' },
+  { name: 'API Reference', href: '/docs/api-reference' },
+  { name: 'Core Concepts', href: '/docs/core-concepts' },
+  { name: 'Metrics Glossary', href: '/docs/metrics-glossary' }
 ];
 ---
 
@@ -117,6 +116,7 @@ const navItems = [
   </div>
   
   <nav class="flex flex-col gap-1 px-4">
+    <div class="text-[11px] font-medium text-text-muted uppercase tracking-wider px-3 mb-1 mt-2">Dashboard</div>
     {navItems.map(item => {
       const isActive = item.href === '/dashboard' ? pathname === '/dashboard' || pathname === '/dashboard/' : pathname.startsWith(item.href);
       return (
@@ -137,10 +137,27 @@ const navItems = [
         </a>
       );
     })}
+
+    <div class="text-[11px] font-medium text-text-muted uppercase tracking-wider px-3 mb-1 mt-6">Documentation</div>
+    {docsItems.map(item => {
+      const isActive = pathname.startsWith(item.href);
+      return (
+        <a 
+          href={item.href} 
+          class={`flex items-center justify-between px-3 py-2.5 text-[13px] rounded-md transition-colors ${
+            isActive 
+              ? 'bg-accent-subtle text-accent font-medium' 
+              : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
+          }`}
+        >
+          {item.name}
+        </a>
+      );
+    })}
   </nav>
   
   <div class="mt-auto px-4 pb-6">
-    {user ? (
+    {user && (
       <a href="/dashboard/profile" class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-bg-elevated border border-transparent hover:border-border-default transition-all group">
         <div class="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
           <span class="text-accent font-medium text-[13px]">{profileName.charAt(0).toUpperCase()}</span>
@@ -153,16 +170,6 @@ const navItems = [
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
         </svg>
-      </a>
-    ) : (
-      <a href="/" data-astro-reload onclick="document.cookie = 'guest_mode=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';" class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-bg-elevated border border-transparent hover:border-border-default transition-all group">
-        <div class="w-8 h-8 rounded-full bg-border-strong flex items-center justify-center flex-shrink-0">
-          <svg class="w-4 h-4 text-text-muted group-hover:text-text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-[13px] font-medium text-text-primary truncate leading-tight">Exit Guest Mode</p>
-          <p class="text-[11px] text-text-secondary truncate mt-0.5">Return to homepage</p>
-        </div>
       </a>
     )}
   </div>

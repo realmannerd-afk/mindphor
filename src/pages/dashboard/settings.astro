@@ -178,6 +178,23 @@ try {
     </div>
   </div>
 
+  <!-- Regenerate Key Modal -->
+  <dialog id="regenerate-key-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-0 bg-bg-surface border border-border-default rounded-[12px] shadow-2xl p-0 backdrop:bg-black/50 backdrop:backdrop-blur-sm w-full max-w-[400px]">
+    <div class="flex flex-col">
+      <div class="p-6 pb-2">
+        <h2 class="text-[18px] font-medium text-text-primary mb-1">Regenerate API Key?</h2>
+        <p class="text-[13px] text-text-secondary">Are you sure you want to regenerate your API key? Your old key will stop working immediately.</p>
+      </div>
+      
+      <div class="p-6 flex justify-end gap-3">
+        <button type="button" id="btn-cancel-regenerate" class="px-4 py-2 text-[13px] font-medium text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
+        <button type="button" id="btn-confirm-regenerate" class="px-4 py-2 bg-text-primary text-bg-base border border-text-primary hover:opacity-90 text-[13px] font-medium rounded-md transition-colors flex items-center gap-2">
+          <span>Regenerate Key</span>
+        </button>
+      </div>
+    </div>
+  </dialog>
+
   <!-- Delete Project Modal -->
   <dialog id="delete-project-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-0 bg-bg-surface border border-border-default rounded-[12px] shadow-2xl p-0 backdrop:bg-black/50 backdrop:backdrop-blur-sm w-full max-w-[400px]">
     <div class="flex flex-col">
@@ -218,27 +235,44 @@ try {
       });
     }
 
-    if (regenerateBtn && apiKeyInput) {
-      regenerateBtn.addEventListener('click', async () => {
-        if (confirm('Are you sure you want to regenerate your API key? Your old key will stop working immediately.')) {
-          try {
-            const res = await fetch('/api/keys/generate', { method: 'POST' });
-            const data = await res.json();
-            if (data.success && data.api_key) {
-              apiKeyInput.value = data.api_key;
-              if (apiKeyInput.type === 'password') {
-                apiKeyInput.type = 'text';
-                apiKeyInput.classList.remove('tracking-widest');
-                if (revealBtn) revealBtn.textContent = 'Hide';
-              }
-              apiKeyInput.classList.add('border-green-500', 'bg-green-500/10');
-              setTimeout(() => apiKeyInput.classList.remove('border-green-500', 'bg-green-500/10'), 2000);
-            } else {
-              alert('Failed to regenerate key');
+    const regenerateModal = document.getElementById('regenerate-key-modal') as HTMLDialogElement;
+    const cancelRegenerateBtn = document.getElementById('btn-cancel-regenerate');
+    const confirmRegenerateBtn = document.getElementById('btn-confirm-regenerate');
+
+    if (regenerateBtn && regenerateModal && cancelRegenerateBtn && confirmRegenerateBtn) {
+      regenerateBtn.addEventListener('click', () => {
+        regenerateModal.showModal();
+      });
+
+      cancelRegenerateBtn.addEventListener('click', () => {
+        regenerateModal.close();
+      });
+
+      confirmRegenerateBtn.addEventListener('click', async () => {
+        confirmRegenerateBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-bg-base" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Regenerating...`;
+        confirmRegenerateBtn.setAttribute('disabled', 'true');
+        
+        try {
+          const res = await fetch('/api/keys/generate', { method: 'POST' });
+          const data = await res.json();
+          if (data.success && data.api_key) {
+            apiKeyInput.value = data.api_key;
+            if (apiKeyInput.type === 'password') {
+              apiKeyInput.type = 'text';
+              apiKeyInput.classList.remove('tracking-widest');
+              if (revealBtn) revealBtn.textContent = 'Hide';
             }
-          } catch (e) {
-            alert('Error regenerating key');
+            apiKeyInput.classList.add('border-green-500', 'bg-green-500/10');
+            setTimeout(() => apiKeyInput.classList.remove('border-green-500', 'bg-green-500/10'), 2000);
+            regenerateModal.close();
+          } else {
+            alert('Failed to regenerate key');
           }
+        } catch (e) {
+          alert('Error regenerating key');
+        } finally {
+          confirmRegenerateBtn.innerHTML = '<span>Regenerate Key</span>';
+          confirmRegenerateBtn.removeAttribute('disabled');
         }
       });
     }

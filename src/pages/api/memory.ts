@@ -11,18 +11,6 @@ export const GET: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: "Missing project_id" }), { status: 400 });
     }
 
-    if (projectId === 'guest_project') {
-      return new Response(JSON.stringify({
-        keys: [
-          { id: 'mk_1', user_id: 'guest_user', key: 'user_preferences', value: '{"theme": "dark", "format": "bullet_points"}', is_stale: false, updated_at: new Date().toISOString() },
-          { id: 'mk_2', user_id: 'guest_user', key: 'current_project_context', value: 'Working on a React dashboard with Tailwind.', is_stale: false, updated_at: new Date(Date.now() - 3600000).toISOString() },
-          { id: 'mk_3', user_id: 'guest_user', key: 'api_keys', value: '*** REDACTED ***', is_stale: true, updated_at: new Date(Date.now() - 86400000 * 2).toISOString() },
-          { id: 'mk_4', user_id: 'guest_user', key: 'conversation_summary', value: 'User asked about fixing a CORS error in Express.', is_stale: true, updated_at: new Date(Date.now() - 86400000 * 3).toISOString() },
-        ],
-        total: 4,
-        stale_count: 2
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
 
     const supabaseUrl = import.meta.env.SUPABASE_URL;
     const supabaseKey = import.meta.env.SUPABASE_SERVICE_KEY;

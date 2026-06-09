@@ -5,7 +5,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect } = context;
 
   if (url.pathname === '/logout') {
-    cookies.delete('guest_mode', { path: '/' });
     cookies.delete('sb-ryewtqnqovpianuwsnpp-auth-token', { path: '/' });
     return redirect("/login");
   }
@@ -29,19 +28,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
       const { data } = await supabase.auth.getSession();
       const hasSession = !!data?.session;
 
-      const isGuestQuery = url.searchParams.get('guest') === 'true';
-      const isGuestCookie = cookies.has('guest_mode');
-      const isGuest = isGuestQuery || isGuestCookie;
-
-      if (isGuestQuery) {
-        cookies.set('guest_mode', 'true', { path: '/', maxAge: 86400, httpOnly: false });
-      }
-
-      if (isProtectedRoute && !hasSession && !isGuest) {
+      if (isProtectedRoute && !hasSession) {
         return redirect("/login");
       }
 
-      if (isPublicRoute && (hasSession || isGuest)) {
+      if (isPublicRoute && hasSession) {
         return redirect("/dashboard");
       }
     } catch (err) {

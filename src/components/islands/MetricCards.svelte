@@ -61,28 +61,24 @@
   <div class="flex-1 p-5 lg:p-[24px]">
     <div class="text-[11px] uppercase tracking-wider text-text-muted mb-2">Avg Quality Score</div>
     <div class="text-[28px] font-medium text-text-primary mt-2">{data.avgScore}%</div>
-    <div class="text-[12px] mt-1 text-[#2D5A0E] dark:text-emerald-400">↑ +3% this week</div>
   </div>
 
   <!-- Card 2 -->
   <div class="flex-1 p-5 lg:p-[24px]">
     <div class="text-[11px] uppercase tracking-wider text-text-muted mb-2">Memory Accuracy</div>
     <div class="text-[28px] font-medium text-text-primary mt-2">{data.memoryAccuracy}%</div>
-    <div class="text-[12px] mt-1 text-[#2D5A0E] dark:text-emerald-400">↑ +1.2% this week</div>
   </div>
 
   <!-- Card 3 -->
   <div class="flex-1 p-5 lg:p-[24px]">
     <div class="text-[11px] uppercase tracking-wider text-text-muted mb-2">Regressions</div>
     <div class="text-[28px] font-medium text-text-primary mt-2">{data.regressions}</div>
-    <div class="text-[12px] mt-1 text-[#A32D2D] dark:text-red-400">↑ +2 vs last week</div>
   </div>
 
   <!-- Card 4 -->
   <div class="flex-1 p-5 lg:p-[24px]">
     <div class="text-[11px] uppercase tracking-wider text-text-muted mb-2">Total Calls</div>
     <div class="text-[28px] font-medium text-text-primary mt-2">{data.totalCalls}</div>
-    <div class="text-[12px] mt-1 text-[#2D5A0E] dark:text-emerald-400">↑ +18% this week</div>
   </div>
 </div>
 {/if}
