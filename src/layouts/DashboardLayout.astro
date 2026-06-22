@@ -2,16 +2,18 @@
 import RootLayout from './RootLayout.astro';
 import Sidebar from '../components/layout/Sidebar.astro';
 import Topbar from '../components/layout/Topbar.astro';
+import CreateAppModal from '../components/islands/CreateAppModal.svelte';
 import { getSupabaseClient } from '../lib/supabase';
 
 interface Props {
 	title?: string;
+  hideTopbarTitle?: boolean;
   frontmatter?: {
     title: string;
   };
 }
 
-const { title, frontmatter } = Astro.props;
+const { title, frontmatter, hideTopbarTitle = false } = Astro.props;
 const pageTitle = title || (frontmatter && frontmatter.title) || 'Dashboard';
 
 const supabase = getSupabaseClient(Astro.cookies);
@@ -52,14 +54,16 @@ if (!user && isGuest) {
     <!-- Main content area -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
       <!-- Topbar inside dashboard (Height: 48px) -->
-      <Topbar title={pageTitle} user={user} profileName={profileName} />
+      <Topbar title={hideTopbarTitle ? "" : pageTitle} user={user} profileName={profileName} />
       
       <!-- Content: fills remaining space, max-width fills remaining, padding 40px -->
       <main class="flex-1 overflow-y-auto relative">
-        <div class="px-10 pb-10 pt-6 min-h-full flex flex-col">
+        <div class="px-10 pb-6 pt-6 min-h-full flex flex-col">
           <slot />
         </div>
       </main>
     </div>
   </div>
+  
+  <CreateAppModal client:load />
 </RootLayout>

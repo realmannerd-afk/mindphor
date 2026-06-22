@@ -76,33 +76,7 @@
   --color-tag-stale-text: #92400E;
 }
 
-.dark {
-  /* Claude-inspired warm dark mode */
-  --bg-base: #1C1B19; /* claude sidebar */
-  --bg-surface: #262522; /* claude main chat */
-  --bg-elevated: #32312D; 
-  --bg-subtle: #2B2A27;
 
-  --border-faint: #32312D;
-  --border-default: #41403B;
-  --border-strong: #595852;
-
-  --text-primary: #F3F2EF;
-  --text-secondary: #AAA9A5;
-  --text-muted: #7E7C77;
-  --text-faint: #5C5B57;
-
-  --btn-text: #0C0A09;
-
-  --accent: #DA7756;
-  --accent-hover: #D16B4A;
-  --accent-subtle: rgba(218, 119, 86, 0.15);
-
-  --color-tag-fresh-bg: rgba(6, 78, 59, 0.3);
-  --color-tag-fresh-text: #34d399;
-  --color-tag-stale-bg: rgba(120, 53, 15, 0.3);
-  --color-tag-stale-text: #fbbf24;
-}
 
 body {
   background-color: var(--bg-base);
@@ -116,16 +90,20 @@ button, a {
   cursor: pointer;
 }
 
-/* Custom Webkit Scrollbar */
+/* Custom Webkit & Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 2px;
+  height: 2px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-default);
+  background: var(--border-strong);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -148,4 +126,20 @@ button, a {
   color: var(--text-primary);
   margin-bottom: 40px;
   line-height: 1.3;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.timeline-item {
+  opacity: 0;
+  animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

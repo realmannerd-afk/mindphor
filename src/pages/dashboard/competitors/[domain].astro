@@ -1,0 +1,764 @@
+---
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import { getSupabaseClient } from '../../../lib/supabase';
+import Logo from '../../../components/islands/Logo.svelte';
+
+const { domain } = Astro.params;
+const competitorName = domain ? domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1) : 'Competitor';
+
+const supabase = getSupabaseClient(Astro.cookies);
+const { data: userData } = await supabase.auth.getUser();
+
+let projectId = null;
+if (userData?.user) {
+  let { data: project } = await supabase.from('projects').select('id').eq('user_id', userData.user.id).limit(1);
+  projectId = project?.[0]?.id;
+} else {
+  const isGuest = Astro.url.searchParams.get('guest') === 'true' || Astro.cookies.has('guest_mode');
+  if (isGuest) {
+    projectId = "guest_project";
+  }
+}
+
+let competitorData = null;
+
+if (projectId === 'guest_project') {
+  const mockData = [
+    { id: 'mk_1', user_id: 'Productivity', key: 'linear.app', value: 'Launched a new inline roadmap editor and custom workflow states today.', is_stale: false, updated_at: new Date().toISOString() },
+  ];
+  competitorData = mockData.find(k => k.key === domain);
+} else if (projectId) {
+  const { data } = await supabase
+    .from('memory_keys')
+    .select('*')
+    .eq('project_id', projectId)
+    .eq('key', domain)
+    .single();
+  if (data) competitorData = data;
+}
+
+if (!competitorData) {
+  competitorData = { user_id: 'Productivity', key: domain, value: 'Monitoring active.', is_stale: false, updated_at: new Date().toISOString() };
+}
+
+const isActive = competitorData.is_stale === false || competitorData.status === 'fresh';
+---
+
+<DashboardLayout title="Competitor">
+  
+  <style>
+    /* Real-time Layout Animations */
+    .funnel-container {
+      animation: expandFunnel 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transform-origin: top;
+      transform: scaleY(0);
+    }
+    @keyframes expandFunnel {
+      100% { transform: scaleY(1); }
+    }
+
+    .animate-bar {
+      width: 0%;
+      transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .timeline-item {
+      animation: slideLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateX(-15px);
+    }
+    @keyframes slideLeft {
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .timeline-item:nth-child(2) { animation-delay: 0.15s; }
+    .timeline-item:nth-child(3) { animation-delay: 0.30s; }
+    .timeline-item:nth-child(4) { animation-delay: 0.45s; }
+    .timeline-item:nth-child(5) { animation-delay: 0.60s; }
+    
+    .timeline-item {
+      animation: slideLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateX(-15px);
+    }
+    @keyframes slideLeft {
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .timeline-item:nth-child(2) { animation-delay: 0.15s; }
+    .timeline-item:nth-child(3) { animation-delay: 0.30s; }
+    .timeline-item:nth-child(4) { animation-delay: 0.45s; }
+    .timeline-item:nth-child(5) { animation-delay: 0.60s; }
+  </style>
+
+  <div class="w-full flex flex-col pt-0 pb-6 pr-6 max-w-[1400px]">
+    
+    <!-- Top Nav / Header Toolbar -->
+    <div class="flex items-center justify-between mb-6">
+      <a href="/dashboard/competitors" class="text-[13px] font-medium text-text-primary hover:text-accent transition-colors flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to competitors
+      </a>
+      
+      <div class="flex items-center gap-3">
+        <!-- Functional Share Button -->
+        <button id="shareButton" class="flex items-center gap-2 h-8 px-3 rounded-full border border-border-default bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-elevated/70 transition-colors focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 share-icon"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          <span class="text-[13px] font-medium share-text">Share</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main 2-Column Layout -->
+    <div class="flex flex-col xl:flex-row gap-8 lg:gap-10 items-start">
+      
+      <!-- LEFT COLUMN (Main Content) -->
+      <div class="flex-1 flex flex-col min-w-0 w-full gap-8">
+        
+        <!-- Header Profile -->
+        <div class="flex items-start gap-6 mb-2">
+          <div class="w-24 h-24 rounded-full flex items-center justify-center flex-shrink-0 bg-white text-text-primary overflow-hidden p-3 border border-border-default">
+            <Logo client:load domain={domain as string} alt={domain} title={domain} className="w-full h-full object-contain rounded-full" />
+          </div>
+          <div class="flex flex-col pt-1">
+            <h1 class="text-[32px] font-semibold text-text-primary leading-tight tracking-tight capitalize">{(domain || '').split('.')[0]}</h1>
+            <a href={`https://${domain}`} target="_blank" class="text-accent text-[13px] font-medium flex items-center gap-1.5 mt-0.5 hover:underline w-max">
+              {domain}
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+            <p class="text-text-secondary text-[14px] mt-2.5">Productivity software for planning and building products</p>
+            <div class="flex items-center gap-4 mt-3.5 text-[12px]">
+              <span class="px-2.5 py-1 rounded-[6px] bg-[#ECFDF5] text-[#059669] flex items-center gap-1.5 font-medium border border-[#D1FAE5]">
+                 <div class="w-1.5 h-1.5 bg-[#10B981] rounded-full"></div> Active monitoring
+              </span>
+              <span class="text-text-muted">Monitoring since May 10, 2026</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 KPI Cards -->
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          <!-- Card 1 -->
+          <div class="bg-bg-surface border border-border-default rounded-[12px] p-5 flex flex-col h-full">
+            <div class="flex items-center gap-2 text-text-secondary text-[12px] font-medium mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-text-muted"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+              Signals
+            </div>
+            <div class="flex items-baseline gap-2 mt-auto">
+              <span class="text-[22px] font-semibold text-text-primary animate-number" data-target="52">0</span>
+              <span class="text-[11px] font-medium text-[#10B981] animate-number" data-target="+18%">0%</span>
+            </div>
+          </div>
+          <!-- Card 2 -->
+          <div class="bg-bg-surface border border-border-default rounded-[12px] p-5 flex flex-col h-full">
+            <div class="flex items-center gap-2 text-text-secondary text-[12px] font-medium mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-text-muted"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+              Mentions
+            </div>
+            <div class="flex items-baseline gap-2 mt-auto">
+              <span class="text-[22px] font-semibold text-text-primary animate-number" data-target="248">0</span>
+              <span class="text-[11px] font-medium text-[#10B981] animate-number" data-target="+32%">0%</span>
+            </div>
+          </div>
+          <!-- Card 3 -->
+          <div class="bg-bg-surface border border-border-default rounded-[12px] p-5 flex flex-col h-full">
+            <div class="flex items-center gap-2 text-text-secondary text-[12px] font-medium mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-text-muted"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+              Releases
+            </div>
+            <div class="flex items-baseline gap-2 mt-auto">
+              <span class="text-[22px] font-semibold text-text-primary animate-number" data-target="12">0</span>
+              <span class="text-[11px] font-medium text-[#10B981] animate-number" data-target="-20%">0%</span>
+            </div>
+          </div>
+          <!-- Card 4 -->
+          <div class="bg-bg-surface border border-border-default rounded-[12px] p-5 flex flex-col h-full">
+            <div class="flex items-center gap-2 text-text-secondary text-[12px] font-medium mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-text-muted"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+              Confidence
+            </div>
+            <div class="flex items-baseline gap-2 mt-auto">
+              <span class="text-[22px] font-semibold text-text-primary">High</span>
+              <span class="text-[11px] font-medium text-text-muted animate-number" data-target="98%">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-full flex flex-col bg-bg-surface border border-border-default rounded-[16px] p-6 lg:p-8">
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="text-[15px] font-semibold text-text-primary">Latest intelligence</h2>
+            
+            <!-- Custom Dropdown Component -->
+            <div class="relative inline-block text-left" id="signalsDropdownContainer">
+              <button id="signalsDropdownBtn" class="flex items-center gap-1.5 px-3 h-8 rounded-full border border-border-default bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-elevated/70 transition-colors focus:outline-none text-[12px] font-medium cursor-pointer">
+                <span id="signalsDropdownText">All signals</span> 
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              
+              <div id="signalsDropdownMenu" class="hidden absolute right-0 mt-1.5 w-36 bg-bg-surface border border-border-default rounded-[10px] shadow-lg z-50 py-1.5 font-sans">
+                <button class="w-full text-left px-3 py-1.5 text-[12px] font-medium text-text-primary hover:bg-bg-subtle transition-colors flex items-center justify-between group">
+                  All signals <svg class="w-3 h-3 text-accent opacity-100" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button class="w-full text-left px-3 py-1.5 text-[12px] font-medium text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-colors">
+                  High impact
+                </button>
+                <button class="w-full text-left px-3 py-1.5 text-[12px] font-medium text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-colors">
+                  Medium impact
+                </button>
+                <button class="w-full text-left px-3 py-1.5 text-[12px] font-medium text-text-secondary hover:text-text-primary hover:bg-bg-subtle transition-colors">
+                  Low impact
+                </button>
+              </div>
+            </div>
+          </div>
+          <p class="text-[12px] text-text-muted mb-8">Real-time signals and changes detected</p>
+          <div class="relative flex flex-col gap-8 pb-4 overflow-y-auto overflow-x-hidden custom-scrollbar pr-2 min-h-0 max-h-[700px]">
+             <!-- Rail -->
+             <div class="absolute left-[11px] top-2 bottom-2 w-px bg-border-default"></div>
+             
+             <!-- Item 1 -->
+             <div class="flex gap-5 relative timeline-item" style="animation-delay: 0.1s;">
+                <div class="absolute left-[6px] top-1.5 w-2.5 h-2.5 rounded-full bg-accent ring-[4px] ring-bg-surface z-10">
+                  <div class="absolute inset-0 rounded-full bg-accent animate-ping opacity-75"></div>
+                </div>
+                <div class="ml-10 flex flex-col w-full">
+                  <span class="text-[11px] text-text-muted mb-3 font-medium tracking-wide">Today - 12:51 PM</span>
+                  <div class="flex items-start gap-4">
+                     <div class="w-[40px] h-[40px] rounded-[10px] bg-white border border-border-default flex items-center justify-center flex-shrink-0 overflow-hidden">
+                       <Logo client:load domain={domain as string} alt={competitorName} title={competitorName} className="w-6 h-6 object-contain" />
+                     </div>
+                     <div class="flex flex-col flex-1 pt-0.5">
+                       <div class="flex items-center gap-3 mb-1.5">
+                         <h3 class="text-[14px] font-semibold text-text-primary">Launched custom workflow states</h3>
+                         <span class="text-[10px] px-1.5 py-0.5 rounded-[4px] bg-[#EEF2FF] text-[#4F46E5] font-medium border border-[#E0E7FF]">Product Release</span>
+                       </div>
+                       <p class="text-[13px] text-text-secondary leading-[1.6] mb-3.5">Introduced custom workflow states and roadmap visibility controls for larger planning teams.</p>
+                       <div class="flex items-center justify-between text-[11px] font-medium">
+                         <span class="flex items-center gap-1.5 text-text-primary">
+                           <Logo client:load domain={domain as string} alt={competitorName} title={competitorName} className="w-4 h-4 rounded-full object-contain border border-border-default bg-white" />
+                           {competitorName} Blog
+                         </span>
+                       </div>
+                     </div>
+                  </div>
+                </div>
+             </div>
+
+             <!-- Item 2 -->
+             <div class="flex gap-5 relative mt-2 timeline-item" style="animation-delay: 0.2s;">
+                <div class="absolute left-[7px] top-1.5 w-2 h-2 rounded-full bg-border-strong ring-[4px] ring-bg-surface z-10"></div>
+                <div class="ml-10 flex flex-col w-full">
+                  <span class="text-[11px] text-text-muted mb-3 font-medium tracking-wide">2 days ago</span>
+                  <div class="flex items-start gap-4">
+                     <div class="w-[40px] h-[40px] rounded-[10px] bg-white border border-border-default flex items-center justify-center flex-shrink-0 overflow-hidden">
+                       <Logo client:load domain={domain as string} alt={competitorName} title={competitorName} className="w-6 h-6 object-contain" />
+                     </div>
+                     <div class="flex flex-col flex-1 pt-0.5">
+                       <div class="flex items-center gap-3 mb-1.5">
+                         <h3 class="text-[14px] font-semibold text-text-primary">Roadmap editor improvements</h3>
+                         <span class="text-[10px] px-1.5 py-0.5 rounded-[4px] bg-[#ECFDF5] text-[#10B981] font-medium border border-[#D1FAE5]">Update</span>
+                       </div>
+                       <p class="text-[13px] text-text-secondary leading-[1.6] mb-3.5">Shipped improvements to roadmap navigation, filtering, and dependency management.</p>
+                       <div class="flex items-center justify-between text-[11px] font-medium">
+                         <span class="flex items-center gap-1.5 text-text-primary">
+                           <Logo client:load domain={domain as string} alt={competitorName} title={competitorName} className="w-4 h-4 rounded-full object-contain border border-border-default bg-white" />
+                           {competitorName} Blog
+                         </span>
+                       </div>
+                     </div>
+                  </div>
+                </div>
+             </div>
+
+             <!-- Item 3 -->
+             <div class="flex gap-5 relative mt-2 timeline-item" style="animation-delay: 0.3s;">
+                <div class="absolute left-[7px] top-1.5 w-2 h-2 rounded-full bg-border-strong ring-[4px] ring-bg-surface z-10"></div>
+                <div class="ml-10 flex flex-col w-full">
+                  <span class="text-[11px] text-text-muted mb-3 font-medium tracking-wide">1 week ago</span>
+                  <div class="flex items-start gap-4">
+                     <div class="w-[40px] h-[40px] rounded-[10px] bg-white border border-border-default flex items-center justify-center flex-shrink-0 overflow-hidden">
+                       <Logo client:load domain={domain as string} alt={competitorName} title={competitorName} className="w-6 h-6 object-contain" />
+                     </div>
+                     <div class="flex flex-col flex-1 pt-0.5">
+                       <div class="flex items-center gap-3 mb-1.5">
+                         <h3 class="text-[14px] font-semibold text-text-primary">New planning permissions</h3>
+                         <span class="text-[10px] px-1.5 py-0.5 rounded-[4px] bg-[#FFF7ED] text-[#F97316] font-medium border border-[#FFEDD5]">Feature</span>
+                       </div>
+                       <p class="text-[13px] text-text-secondary leading-[1.6] mb-3.5">Introduced granular planning permissions for teams and workspace members.</p>
+                       <div class="flex items-center justify-between text-[11px] font-medium">
+                         <span class="flex items-center gap-1.5 text-text-primary">
+                           <Logo client:load domain={domain as string} alt={competitorName} title={competitorName} className="w-4 h-4 rounded-full object-contain border border-border-default bg-white" />
+                           {competitorName} Blog
+                         </span>
+                       </div>
+                     </div>
+                  </div>
+                </div>
+             </div>
+
+             <!-- Item 4 -->
+             <div class="flex gap-5 relative mt-2 timeline-item" style="animation-delay: 0.4s;">
+                <div class="absolute left-[7px] top-1.5 w-2 h-2 rounded-full bg-border-strong ring-[4px] ring-bg-surface z-10"></div>
+                <div class="ml-10 flex flex-col w-full">
+                  <span class="text-[11px] text-text-muted mb-3 font-medium tracking-wide">2 weeks ago</span>
+                  <div class="flex items-start gap-4">
+                     <div class="w-[40px] h-[40px] rounded-[10px] bg-white border border-border-default flex items-center justify-center flex-shrink-0">
+                       <img src="https://raw.githubusercontent.com/ln-dev7/logos-apps/master/logos/github.svg" class="w-5 h-5 object-contain" alt="GitHub" />
+                     </div>
+                     <div class="flex flex-col flex-1 pt-0.5">
+                       <div class="flex items-center gap-3 mb-1.5">
+                         <h3 class="text-[14px] font-semibold text-text-primary">Git integration updates</h3>
+                         <span class="text-[10px] px-1.5 py-0.5 rounded-[4px] bg-[#F3F4F6] text-[#4B5563] font-medium border border-border-default">Engineering</span>
+                       </div>
+                       <p class="text-[13px] text-text-secondary leading-[1.6] mb-3.5">Improved Git branch status visibility and commit tracking in issues.</p>
+                       <div class="flex items-center justify-between text-[11px] font-medium">
+                         <span class="flex items-center gap-1.5 text-text-primary">
+                           <img src="https://raw.githubusercontent.com/ln-dev7/logos-apps/master/logos/github.svg" class="w-4 h-4 rounded-full object-contain border border-border-default bg-white" alt="GitHub" />
+                           GitHub
+                         </span>
+                       </div>
+                     </div>
+                  </div>
+                </div>
+             </div>
+          </div>
+        </div>
+
+
+
+      </div>
+
+      <!-- RIGHT COLUMN (Sidebar) - Made Sticky -->
+      <div class="w-full xl:w-[350px] flex-shrink-0 flex flex-col gap-6 sticky top-6 self-start">
+        
+        <!-- AI Strategic Brief -->
+        <div class="bg-bg-surface border border-border-default rounded-[16px] p-6 flex flex-col">
+          <div class="flex items-center gap-2 text-[14px] font-semibold text-accent mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z"/></svg>
+            AI strategic brief
+          </div>
+          <p class="text-[13px] text-text-secondary leading-[1.6] mb-8">
+            {competitorName} is strengthening its position in enterprise planning through workflow flexibility and visibility.
+          </p>
+          
+          <div class="flex flex-col gap-6 mb-8">
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between text-[12px] font-semibold">
+                <span class="text-text-primary">Threat level</span>
+                <span class="text-[#EA580C]">Medium</span>
+              </div>
+              <div class="flex gap-1 h-1.5 w-full">
+                <div class="h-full bg-[#F97316] rounded-full animate-bar" data-width="50%" style="width: 0%"></div>
+                <div class="flex-1 bg-border-default rounded-full"></div>
+              </div>
+            </div>
+            
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between text-[12px] font-semibold">
+                <span class="text-text-primary">Market momentum</span>
+                <span class="text-[#10B981]">Strong</span>
+              </div>
+              <div class="flex gap-1 h-1.5 w-full">
+                <div class="h-full bg-[#10B981] rounded-full animate-bar" data-width="75%" style="width: 0%"></div>
+                <div class="flex-1 bg-border-default rounded-full"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="pt-5 mt-auto border-t border-border-faint">
+            <h4 class="text-[11px] font-semibold text-text-primary mb-3">Key takeaway</h4>
+            <div class="bg-[#FDFCF8] rounded-[8px] p-4 text-[12px] font-medium text-text-secondary leading-[1.6] border border-border-faint">
+              Monitor enterprise adoption signals and customer feedback over the next 30 days.
+            </div>
+          </div>
+        </div>
+
+        <!-- Signal Funnel Card (Moved to Sidebar) -->
+        <div class="flex-1 flex flex-col bg-bg-surface border border-border-default rounded-[16px] p-6 justify-center">
+          <h2 class="text-[14px] font-semibold text-text-primary mb-6 flex items-baseline gap-2">
+            Signal funnel 
+            <span class="text-[11px] font-normal text-text-muted">(30 days)</span>
+          </h2>
+          
+          <div class="flex items-stretch gap-5">
+            <!-- Funnel Shape using Clip Path -->
+            <div class="w-[120px] h-[180px] flex flex-col funnel-container" style="clip-path: polygon(0 0, 100% 0, 75% 100%, 25% 100%); gap: 2px;">
+              <div class="w-full flex-1 bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center text-[13px] font-semibold animate-number" data-target="152">0</div>
+              <div class="w-full flex-1 bg-[#F5F3FF] text-[#9333EA] flex items-center justify-center text-[13px] font-semibold animate-number" data-target="82">0</div>
+              <div class="w-full flex-1 bg-[#ECFDF5] text-[#10B981] flex items-center justify-center text-[13px] font-semibold animate-number" data-target="52">0</div>
+              <div class="w-full flex-1 bg-[#FFF7ED] text-[#F97316] flex items-center justify-center text-[13px] font-semibold animate-number" data-target="18">0</div>
+            </div>
+            
+            <!-- Funnel Labels -->
+            <div class="flex flex-col justify-around py-[14px]">
+              <div class="text-[11px] text-text-muted tracking-wide">Raw signals</div>
+              <div class="text-[11px] text-text-muted tracking-wide">After deduplication</div>
+              <div class="text-[11px] text-text-muted tracking-wide">Relevant signals</div>
+              <div class="text-[11px] text-text-muted tracking-wide">High impact</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Signal Categories Card (Moved to Sidebar) -->
+        <div class="flex-1 flex flex-col bg-bg-surface border border-border-default rounded-[16px] p-6 justify-center">
+          <h2 class="text-[15px] font-semibold text-text-primary mb-6">Top signal categories</h2>
+          
+          <div class="flex items-center gap-6">
+            <div class="relative w-[110px] h-[110px] flex-shrink-0" style="background: conic-gradient(#6366F1 0%, #4338CA 34%, #34D399 34%, #047857 59%, #FB923C 59%, #C2410C 77%, #60A5FA 77%, #1D4ED8 89%, #94A3B8 89%, #475569 100%); transform: rotate(-90deg); border-radius: 50%;">
+              <!-- Inner cutout for doughnut -->
+              <div class="absolute inset-[14px] bg-bg-surface rounded-full flex flex-col items-center justify-center border border-border-faint shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] z-10" style="transform: rotate(90deg);">
+                <span class="text-[22px] font-bold text-text-primary leading-none mb-0.5">5</span>
+                <span class="text-[8px] font-bold text-text-muted uppercase tracking-[0.05em]">Categories</span>
+              </div>
+            </div>
+            
+            <!-- Custom Legend -->
+            <div class="flex flex-col gap-3 w-full">
+              <!-- Cat 1 -->
+              <div class="flex items-center justify-between text-[12px] font-medium timeline-item" style="animation-delay: 0.1s;">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-[3px] bg-gradient-to-br from-[#6366F1] to-[#4338CA] shadow-sm shadow-indigo-500/20"></div>
+                  <span class="text-text-secondary truncate w-[95px]" title="Product Updates">Product Updates</span>
+                </div>
+                <span class="text-text-primary font-semibold">34%</span>
+              </div>
+              <!-- Cat 2 -->
+              <div class="flex items-center justify-between text-[12px] font-medium timeline-item" style="animation-delay: 0.2s;">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-[3px] bg-gradient-to-br from-[#34D399] to-[#047857] shadow-sm shadow-emerald-500/20"></div>
+                  <span class="text-text-secondary truncate w-[95px]" title="Hiring Signals">Hiring Signals</span>
+                </div>
+                <span class="text-text-primary font-semibold">25%</span>
+              </div>
+              <!-- Cat 3 -->
+              <div class="flex items-center justify-between text-[12px] font-medium timeline-item" style="animation-delay: 0.3s;">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-[3px] bg-gradient-to-br from-[#FB923C] to-[#C2410C] shadow-sm shadow-orange-500/20"></div>
+                  <span class="text-text-secondary truncate w-[95px]" title="Pricing & Packaging">Pricing & Packaging</span>
+                </div>
+                <span class="text-text-primary font-semibold">18%</span>
+              </div>
+              <!-- Cat 4 -->
+              <div class="flex items-center justify-between text-[12px] font-medium timeline-item" style="animation-delay: 0.4s;">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-[3px] bg-gradient-to-br from-[#60A5FA] to-[#1D4ED8] shadow-sm shadow-blue-500/20"></div>
+                  <span class="text-text-secondary truncate w-[95px]" title="Partnerships">Partnerships</span>
+                </div>
+                <span class="text-text-primary font-semibold">12%</span>
+              </div>
+              <!-- Cat 5 -->
+              <div class="flex items-center justify-between text-[12px] font-medium timeline-item" style="animation-delay: 0.5s;">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-[3px] bg-gradient-to-br from-[#94A3B8] to-[#475569] shadow-sm shadow-slate-500/20"></div>
+                  <span class="text-text-secondary truncate w-[95px]" title="Other">Other</span>
+                </div>
+                <span class="text-text-primary font-semibold">10%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+
+
+      </div>
+
+    </div>
+    
+    <!-- BOTTOM ROW: Shared Path Cards -->
+    <div class="flex flex-col xl:flex-row gap-8 lg:gap-10 mt-8 items-stretch">
+      
+      <!-- Customer Request Overlap Card (Moved to bottom row) -->
+      <div class="flex-1 bg-bg-surface border border-border-default rounded-[16px] p-6 lg:p-8 flex flex-col justify-between">
+        <h2 class="text-[15px] font-semibold text-text-primary mb-1">Customer request overlap</h2>
+        <p class="text-[12px] text-text-muted mb-8">What your customers want vs what {competitorName} is building</p>
+        
+        <div class="flex flex-col md:flex-row items-center gap-10">
+          
+          <div class="flex items-center gap-10 flex-1">
+            <!-- Circular Progress -->
+            <div class="w-20 h-20 rounded-full flex items-center justify-center relative animate-ring" data-perc="43" style="background: conic-gradient(#818cf8 0% 0%, #e0e7ff 0% 100%);">
+              <div class="absolute inset-[5px] bg-bg-surface rounded-full flex flex-col items-center justify-center">
+                 <span class="text-[20px] font-bold text-accent leading-none mb-0.5 animate-number" data-target="43">0</span>
+                 <span class="text-[8px] font-medium text-text-muted uppercase text-center leading-[1.2] tracking-wider">matching<br>requests</span>
+              </div>
+            </div>
+            
+            <!-- Check List -->
+            <div class="flex flex-col gap-3.5 text-[13px] text-text-secondary font-medium overflow-y-auto overflow-x-hidden custom-scrollbar max-h-[250px] pr-2">
+               <div class="flex items-center gap-3 timeline-item" style="animation-delay: 0.2s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-accent"><polyline points="20 6 9 17 4 12"></polyline></svg> <span class="animate-number" data-target="32">0</span> requests for workflow customization</div>
+               <div class="flex items-center gap-3 timeline-item" style="animation-delay: 0.3s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-accent"><polyline points="20 6 9 17 4 12"></polyline></svg> <span class="animate-number" data-target="8">0</span> requests for roadmap visibility</div>
+               <div class="flex items-center gap-3 timeline-item" style="animation-delay: 0.4s;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-accent"><polyline points="20 6 9 17 4 12"></polyline></svg> <span class="animate-number" data-target="3">0</span> requests for planning permissions</div>
+            </div>
+          </div>
+          
+          <!-- Opportunity Score -->
+          <div class="md:w-[260px] pl-10 md:border-l border-border-default flex flex-col justify-center">
+             <div class="flex items-center gap-3 mb-2.5">
+                <span class="text-[12px] font-medium text-text-primary">Opportunity score</span>
+                <span class="px-2 py-0.5 rounded-[4px] bg-[#ECFDF5] text-[#10B981] text-[10px] font-semibold border border-[#D1FAE5]">High</span>
+             </div>
+             <div class="flex items-baseline gap-1 mb-2">
+               <span class="text-[32px] font-bold text-text-primary leading-none tracking-tight animate-number" data-target="87">0</span> 
+               <span class="text-[14px] font-medium text-text-muted">/100</span>
+             </div>
+             <p class="text-[11px] text-text-muted leading-snug">Strong customer demand and competitor movement detected.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Recommended Actions Card (Moved to bottom row) -->
+      <div class="w-full xl:w-[350px] flex-shrink-0 bg-bg-surface border border-border-default rounded-[16px] p-6 flex flex-col justify-between">
+        <h2 class="text-[14px] font-semibold text-text-primary mb-5">Recommended actions</h2>
+        
+         <div class="flex flex-col">
+           <!-- Item 1 -->
+           <a href="#" class="add-todo-btn group relative flex items-center justify-between py-4 px-6 -mx-6 border-b border-border-faint last:border-0 timeline-item overflow-hidden" data-task="Add workflow states to roadmap consideration">
+             <!-- Animated Background Highlight -->
+             <div class="absolute inset-0 bg-gradient-to-r from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-0"></div>
+             
+             <div class="flex items-center gap-4 relative z-10">
+               <!-- Minimal Indicator -->
+               <div class="w-1.5 h-1.5 rounded-full bg-border-strong group-hover:bg-accent group-hover:shadow-[0_0_8px_rgba(79,70,229,0.6)] group-hover:scale-125 transition-all duration-300"></div>
+               <span class="text-[13px] text-text-secondary group-hover:text-text-primary font-medium transition-colors">
+                 Add workflow states to roadmap consideration
+               </span>
+             </div>
+             
+             <!-- Sliding Arrow -->
+             <div class="relative z-10 flex items-center">
+               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-accent translate-x-3 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+             </div>
+           </a>
+           
+           <!-- Item 2 -->
+           <a href="#" class="add-todo-btn group relative flex items-center justify-between py-4 px-6 -mx-6 border-b border-border-faint last:border-0 timeline-item overflow-hidden" data-task="Monitor enterprise adoption & feedback">
+             <!-- Animated Background Highlight -->
+             <div class="absolute inset-0 bg-gradient-to-r from-[#10B981]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-0"></div>
+             
+             <div class="flex items-center gap-4 relative z-10">
+               <!-- Minimal Indicator -->
+               <div class="w-1.5 h-1.5 rounded-full bg-border-strong group-hover:bg-[#10B981] group-hover:shadow-[0_0_8px_rgba(16,185,129,0.6)] group-hover:scale-125 transition-all duration-300"></div>
+               <span class="text-[13px] text-text-secondary group-hover:text-text-primary font-medium transition-colors">
+                 Monitor enterprise adoption & feedback
+               </span>
+             </div>
+             
+             <!-- Sliding Arrow -->
+             <div class="relative z-10 flex items-center">
+               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-[#10B981] translate-x-3 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+             </div>
+           </a>
+
+           <!-- Item 3 -->
+           <a href="#" class="add-todo-btn group relative flex items-center justify-between py-4 px-6 -mx-6 border-b border-border-faint last:border-0 timeline-item overflow-hidden" data-task="Track messaging around planning flexibility">
+             <!-- Animated Background Highlight -->
+             <div class="absolute inset-0 bg-gradient-to-r from-[#3B82F6]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-0"></div>
+             
+             <div class="flex items-center gap-4 relative z-10">
+               <!-- Minimal Indicator -->
+               <div class="w-1.5 h-1.5 rounded-full bg-border-strong group-hover:bg-[#3B82F6] group-hover:shadow-[0_0_8px_rgba(59,130,246,0.6)] group-hover:scale-125 transition-all duration-300"></div>
+               <span class="text-[13px] text-text-secondary group-hover:text-text-primary font-medium transition-colors">
+                 Track messaging around planning flexibility
+               </span>
+             </div>
+             
+             <!-- Sliding Arrow -->
+             <div class="relative z-10 flex items-center">
+               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-[#3B82F6] translate-x-3 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+             </div>
+           </a>
+         </div>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  <!-- Real-time JavaScript Animations Engine -->
+  <script is:inline>
+    function initAnimations() {
+      // 1. Number Counters
+      const numElements = document.querySelectorAll('.animate-number');
+      numElements.forEach(el => {
+        const targetText = el.getAttribute('data-target') || '0';
+        const isPercentage = targetText.includes('%');
+        const isPlus = targetText.includes('+');
+        const isMinus = targetText.includes('-');
+        
+        const rawMatch = targetText.match(/[0-9.]+/);
+        if (!rawMatch) return;
+        const target = parseFloat(rawMatch[0]);
+        
+        const duration = 1800; 
+        const startTime = performance.now();
+        
+        function updateNum(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easeProgress = 1 - Math.pow(1 - progress, 4); 
+          
+          const current = target * easeProgress;
+          let prefix = isPlus ? '+' : isMinus ? '-' : '';
+          let suffix = isPercentage ? '%' : '';
+          
+          el.textContent = prefix + Math.floor(current) + suffix;
+          
+          if (progress < 1) {
+            requestAnimationFrame(updateNum);
+          } else {
+            el.textContent = targetText; 
+          }
+        }
+        requestAnimationFrame(updateNum);
+      });
+
+      // 2. Horizontal Progress Bars
+      const bars = document.querySelectorAll('.animate-bar');
+      setTimeout(() => {
+        bars.forEach(bar => {
+          const targetWidth = bar.getAttribute('data-width');
+          if(targetWidth) bar.style.width = targetWidth;
+        });
+      }, 150);
+
+      // 3. Conic Gradient Ring Animation
+      const ring = document.querySelector('.animate-ring');
+      if (ring) {
+        const targetPerc = parseFloat(ring.getAttribute('data-perc') || '0');
+        const duration = 1800;
+        const startTime = performance.now();
+        function updateRing(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easeProgress = 1 - Math.pow(1 - progress, 4);
+          const currentPerc = targetPerc * easeProgress;
+          
+          ring.style.background = `conic-gradient(#818cf8 0% ${currentPerc}%, #e0e7ff ${currentPerc}% 100%)`;
+          
+          if (progress < 1) {
+            requestAnimationFrame(updateRing);
+          } else {
+            ring.style.background = `conic-gradient(#818cf8 0% ${targetPerc}%, #e0e7ff ${targetPerc}% 100%)`;
+          }
+        }
+        requestAnimationFrame(updateRing);
+      }
+
+      // 4. Functional Share Button Logic
+      const shareBtn = document.getElementById('shareButton');
+      if (shareBtn) {
+        shareBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            const span = shareBtn.querySelector('.share-text');
+            const svg = shareBtn.querySelector('.share-icon');
+            const originalText = span.textContent;
+            const originalHtml = svg.innerHTML;
+            
+            span.textContent = 'Copied!';
+            // Change to a checkmark
+            svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+            svg.classList.add('text-[#10B981]');
+            
+            setTimeout(() => {
+              span.textContent = originalText;
+              svg.innerHTML = originalHtml;
+              svg.classList.remove('text-[#10B981]');
+            }, 2000);
+          }).catch(err => {
+            console.error('Failed to copy text: ', err);
+          });
+        });
+      }
+
+      // 5. Custom Dropdown Logic
+      const dropdownBtn = document.getElementById('signalsDropdownBtn');
+      const dropdownMenu = document.getElementById('signalsDropdownMenu');
+      const dropdownContainer = document.getElementById('signalsDropdownContainer');
+      const dropdownText = document.getElementById('signalsDropdownText');
+
+      if (dropdownBtn && dropdownMenu) {
+        dropdownBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdownMenu.classList.toggle('hidden');
+        });
+
+        // Handle item clicks
+        const items = dropdownMenu.querySelectorAll('button');
+        items.forEach(item => {
+          item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            // Update active state visuals
+            items.forEach(btn => {
+              btn.classList.remove('text-text-primary', 'flex', 'items-center', 'justify-between');
+              btn.classList.add('text-text-secondary');
+              const svg = btn.querySelector('svg');
+              if(svg) svg.remove();
+            });
+            
+            item.classList.remove('text-text-secondary');
+            item.classList.add('text-text-primary', 'flex', 'items-center', 'justify-between');
+            item.innerHTML += ' <svg class="w-3 h-3 text-accent opacity-100" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            
+            // Update button text
+            dropdownText.textContent = item.textContent.trim();
+            dropdownMenu.classList.add('hidden');
+          });
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+          if (dropdownContainer && !dropdownContainer.contains(e.target)) {
+            dropdownMenu.classList.add('hidden');
+          }
+        });
+      }
+
+      // 6. Add to Todo Logic
+      document.querySelectorAll('.add-todo-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const task = btn.getAttribute('data-task');
+          
+          // Save to localStorage
+          const saved = localStorage.getItem('mindphor_todos');
+          const defaultTasks = [
+            { id: '1', text: 'Review customer request overlap data', completed: false },
+            { id: '2', text: 'Analyze latest pricing changes', completed: true },
+          ];
+          let tasks = saved ? JSON.parse(saved) : [...defaultTasks];
+          if (!tasks.some(t => t.text === task)) {
+            tasks.push({ id: Date.now().toString(), text: task, completed: false });
+            localStorage.setItem('mindphor_todos', JSON.stringify(tasks));
+          }
+
+          // Show Minimal Toast Popup
+          const popup = document.createElement('div');
+          popup.innerHTML = `
+            <div style="position:fixed; bottom:24px; right:24px; background:#18181B; color:#FFFFFF; padding:12px 16px; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); z-index:9999; display:flex; align-items:center; gap:10px; font-family:inherit; transform:translateY(100%); opacity:0; transition:all 0.3s cubic-bezier(0.16,1,0.3,1);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span style="font-size:14px; font-weight:500;">Added to Todo list</span>
+            </div>
+          `;
+          document.body.appendChild(popup);
+          
+          // Animate in
+          requestAnimationFrame(() => {
+            popup.firstElementChild.style.opacity = '1';
+            popup.firstElementChild.style.transform = 'translateY(0)';
+          });
+          
+          // Redirect
+          setTimeout(() => {
+            window.location.href = '/dashboard/goals';
+          }, 1200);
+        });
+      });
+    }
+    
+    // Execute immediately and on view transitions
+    initAnimations();
+    document.addEventListener('astro:page-load', initAnimations);
+  </script>
+</DashboardLayout>

@@ -17,9 +17,6 @@ const { code, lang } = Astro.props;
   <div class="code-light">
     <Code code={code} lang={lang} theme="github-light" />
   </div>
-  <div class="code-dark" style="display: none;">
-    <Code code={code} lang={lang} theme="github-dark" />
-  </div>
 </div>
 
 <script>
@@ -55,11 +52,5 @@ const { code, lang } = Astro.props;
     font-family: 'Geist Mono', monospace !important;
   }
 
-  /* Theme toggling based on html.dark */
-  html.dark .code-light {
-    display: none !important;
-  }
-  html.dark .code-dark {
-    display: block !important;
-  }
+
 </style>

@@ -29,7 +29,7 @@ if (userData?.user) {
       name: 'Default Project',
       api_key: newApiKey
     }).select('id, api_key').single();
-    project = newProject;
+    project = newProject || undefined;
   }
 
   if (project) {
@@ -52,24 +52,25 @@ if (userData?.user) {
 }
 
 const skippedOnboarding = Astro.cookies.has('skipped_onboarding');
+const selectedDate = Astro.url.searchParams.get('date') || '';
 ---
 
 {(hasTraces || skippedOnboarding) ? (
   <DashboardLayout title="Overview">
-    <MetricCards client:load projectId={projectId} />
-    <ScoreChart client:load projectId={projectId} />
-    <TraceTable client:load projectId={projectId} overviewLink={true} />
+    <MetricCards client:load projectId={projectId} date={selectedDate} />
+    <ScoreChart client:load projectId={projectId} date={selectedDate} />
+    <TraceTable client:load projectId={projectId} overviewLink={true} date={selectedDate} />
 
     <!-- Memory + Alerts Row -->
-    <div class="flex flex-col lg:flex-row gap-[16px] mb-10 w-full">
+    <div class="flex flex-col lg:flex-row gap-[16px] mb-2 w-full">
       <!-- Left: Memory viewer (55%) -->
-      <div class="w-full lg:w-[55%] h-[400px]">
-        <MemoryViewer client:load projectId={projectId} overviewLink={true} />
+      <div class="w-full lg:w-[55%] h-[364px]">
+        <MemoryViewer client:load projectId={projectId} overviewLink={true} date={selectedDate} />
       </div>
       
       <!-- Right: Alerts feed (45%) -->
-      <div class="w-full lg:w-[45%] h-[400px]">
-        <AlertsFeed client:load projectId={projectId} overviewLink={true} />
+      <div class="w-full lg:w-[45%] h-[364px]">
+        <AlertsFeed client:load projectId={projectId} overviewLink={true} date={selectedDate} />
       </div>
     </div>
   </DashboardLayout>

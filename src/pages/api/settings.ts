@@ -38,7 +38,7 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
     }
 
     const { error: updateError } = await supabase
-      .from('projects')
+      .from('apps')
       .update(updates)
       .eq('user_id', authData.user.id);
 
