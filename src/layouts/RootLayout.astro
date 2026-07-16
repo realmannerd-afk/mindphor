@@ -4,16 +4,17 @@ import Toast from '../components/ui/Toast.astro';
 
 interface Props {
 	title: string;
+	description?: string;
 }
 
-const { title } = Astro.props;
+const { title, description = "Mindphor - Customer Intelligence & Competitor Watch" } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="description" content="Mindphor - AI Reliability Monitoring" />
+		<meta name="description" content={description} />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="google" content="notranslate" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -24,7 +25,9 @@ const { title } = Astro.props;
 
 	</head>
 	<body>
-    <slot />
+    <div class="w-full overflow-x-hidden relative min-h-screen">
+      <slot />
+    </div>
     <Toast />
 	</body>
 </html>

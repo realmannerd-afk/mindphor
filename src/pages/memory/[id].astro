@@ -4,31 +4,20 @@ import { createClient } from '@supabase/supabase-js';
 
 const { id } = Astro.params;
 
-const mockMemory = [
-  { id: 'mk_1', key: 'user_preferences', value: '{"theme": "dark", "format": "bullet_points"}', status: 'fresh', created_at: new Date().toISOString(), project_id: 'guest_project' },
-  { id: 'mk_2', key: 'current_project_context', value: 'Working on a React dashboard with Tailwind.', status: 'fresh', created_at: new Date().toISOString(), project_id: 'guest_project' },
-  { id: 'mk_3', key: 'api_keys', value: '*** REDACTED ***', status: 'stale', created_at: new Date().toISOString(), project_id: 'guest_project' },
-  { id: 'mk_4', key: 'conversation_summary', value: 'User asked about fixing a CORS error in Express.', status: 'stale', created_at: new Date().toISOString(), project_id: 'guest_project' },
-];
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-let memory = mockMemory.find(m => m.id === id);
+const { data, error } = await supabase
+  .from('memory_keys')
+  .select('*')
+  .eq('id', id)
+  .single();
 
-if (!memory) {
-  const supabaseUrl = import.meta.env.SUPABASE_URL;
-  const supabaseKey = import.meta.env.SUPABASE_SERVICE_KEY;
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  const { data, error } = await supabase
-    .from('memory_keys')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error || !data) {
-    return Astro.redirect('/dashboard/memory');
-  }
-  memory = data;
+if (error || !data) {
+  return Astro.redirect('/dashboard/memory');
 }
+const memory = data;
 
 const date = memory.created_at ? new Date(memory.created_at).toLocaleString('en-US', {
   month: 'short',

@@ -1,22 +1,43 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import CompetitorsSetting from '../../components/islands/CompetitorsSetting.svelte';
+import DeleteConfirmModal from '../../components/islands/DeleteConfirmModal.svelte';
 import { getSupabaseClient } from '../../lib/supabase';
 
-let alertThreshold = 70;
-let apiKey = '************************';
+let appName = 'Production App';
+
 try {
   const supabase = getSupabaseClient(Astro.cookies);
   const { data: authData } = await supabase.auth.getUser();
   if (authData?.user) {
-    const { data: project } = await supabase.from('apps').select('alert_threshold, api_key').eq('user_id', authData.user.id).limit(1);
+    const projectId = Astro.cookies.get('mindphor_app_id')?.value;
+    
+    let query = supabase.from('apps').select('id, name, alert_threshold, api_key, retention_days, memory_prune_limit, play_store_url, app_store_url, reddit_search_term, sync_frequency').eq('user_id', authData.user.id);
+    if (projectId) {
+      query = query.eq('id', projectId);
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+    
+    const { data: project } = await query.limit(1);
     if (project && project.length > 0) {
-      if (project[0].alert_threshold !== null) {
-        alertThreshold = project[0].alert_threshold;
-      }
-      if (project[0].api_key) {
-        apiKey = project[0].api_key;
-      }
+      const app = project[0];
+      if (app.name) appName = app.name;
+      // Expose these as globals for the client script
+      Astro.locals.appId = app.id;
+      Astro.locals.playStoreUrl = app.play_store_url || '';
+      Astro.locals.syncFrequency = app.sync_frequency || 'daily';
+      Astro.locals.alertThreshold = app.alert_threshold || 5;
+      Astro.locals.retentionDays = app.retention_days || 90;
+      Astro.locals.memoryPruneLimit = app.memory_prune_limit || 1000;
+
+      // Fetch competitor domains for this app
+      const { data: competitorRows } = await supabase
+        .from('competitors')
+        .select('domain')
+        .eq('app_id', app.id);
+      Astro.locals.competitorDomains = (competitorRows || []).map((c: any) => c.domain).join(', ');
+      Astro.locals.appId = app.id;
     }
   }
 } catch (e) {
@@ -25,7 +46,7 @@ try {
 ---
 
 <DashboardLayout title="Settings">
-  <div class="max-w-[800px]">
+  <div class="max-w-[1100px] w-full mx-auto md:mx-0">
     
     <div class="bg-bg-surface border border-border-default rounded-[16px] overflow-hidden flex flex-col divide-y divide-border-faint">
       
@@ -41,7 +62,7 @@ try {
           <div class="text-[13px] text-text-secondary">The display name for your Mindphor workspace</div>
         </div>
         <div class="flex items-center gap-2">
-          <input type="text" value="Production App" class="w-[260px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
+          <input type="text" value={appName} class="w-[260px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
           
           <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
@@ -58,143 +79,146 @@ try {
         <div class="text-[10px] font-medium tracking-[0.1em] text-text-secondary uppercase">Sources & Tracking</div>
       </div>
       
+      <!-- Play Store URL -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="play_store_url">
+        <div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Play Store App ID</div>
+          <div class="text-[13px] text-text-secondary">E.g., com.whatsapp (Used for pulling Android reviews)</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="text" value={Astro.locals.playStoreUrl} placeholder="e.g. com.example.app" class="w-[260px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
+          
+          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
+          </button>
+          
+          <button class="w-8 h-8 flex items-center justify-center rounded-md bg-text-primary text-bg-base hover:bg-text-secondary transition-colors hidden" data-save-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
+          
+          <span class="text-[13px] text-green-500 font-medium hidden ml-2" data-success-msg>Saved</span>
+        </div>
+      </div>
+
+
       <!-- Competitor Domains -->
       <div class="px-6 py-4 flex items-start justify-between hover:bg-bg-subtle/50 transition-colors group">
         <div class="pt-1.5">
           <div class="text-[14px] font-medium text-text-primary mb-0.5">Competitor Domains</div>
           <div class="text-[13px] text-text-secondary">Comma-separated list of competitor URLs to monitor</div>
         </div>
-        <CompetitorsSetting client:load />
+        <CompetitorsSetting client:load value={Astro.locals.competitorDomains || ''} appId={Astro.locals.appId} />
       </div>
 
-      <!-- LLM Analysis Engine -->
-      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="llm_model">
+      <!-- Sync Reviews Button -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group">
         <div>
-          <div class="text-[14px] font-medium text-text-primary mb-0.5">Analysis Engine</div>
-          <div class="text-[13px] text-text-secondary">LLM used for sentiment scoring and feedback categorization</div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Sync Source Reviews</div>
+          <div class="text-[13px] text-text-secondary">Manually trigger ingestion of new reviews from Google Play.</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="sync-status" class="hidden text-[13px] text-text-muted text-right">Syncing...</span>
+          <button id="sync-reviews-btn" class="flex-shrink-0 whitespace-nowrap px-5 py-2 rounded-full border border-border-default bg-bg-surface text-text-primary text-[13px] font-medium hover:bg-bg-subtle transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><polyline points="21 3 21 8 16 8"></polyline></svg>
+            Sync Reviews
+          </button>
+        </div>
+      </div>
+
+
+
+
+
+      <!-- Auto-Sync Frequency -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="sync_frequency">
+        <div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Auto-Sync Frequency</div>
+          <div class="text-[13px] text-text-secondary">How often to automatically fetch new reviews and competitor data</div>
         </div>
         <div class="flex items-center gap-2">
           <div class="relative">
-            <select disabled class="w-[180px] bg-transparent border border-transparent rounded-[6px] pl-3 pr-8 py-1.5 text-[13px] text-text-primary focus:outline-none appearance-none cursor-default transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong data-[editing=true]:cursor-pointer" data-setting-input>
-              <option>Mindphor NLP (Default)</option>
-              <option selected>OpenAI GPT-4o</option>
-              <option>Claude 3.5 Sonnet</option>
-              <option>Gemini 1.5 Pro</option>
+            <select id="sync-frequency-select" class="w-[180px] bg-bg-surface border border-border-default rounded-[6px] pl-3 pr-8 py-1.5 text-[13px] text-text-primary focus:outline-none focus:border-border-strong appearance-none cursor-pointer transition-colors" data-sync-frequency-select>
+              <option value="every_6_hours">Every 6 hours</option>
+              <option value="daily">Daily (Default)</option>
+              <option value="weekly">Weekly</option>
+              <option value="manual">Manual Only</option>
             </select>
             <svg class="w-4 h-4 text-text-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path></svg>
           </div>
-          
-          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
-          </button>
-          
-          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity" data-save-btn>
-            Save
-          </button>
-          
-          <span class="hidden text-green-500 text-[12px] font-medium ml-2" data-success-msg>Saved!</span>
+          <span class="hidden text-green-500 text-[12px] font-medium ml-2" id="sync-freq-saved">Saved!</span>
+          <span class="hidden text-red-500 text-[12px] font-medium ml-2" id="sync-freq-error">Error saving</span>
         </div>
       </div>
 
-      <!-- Slack Webhook -->
-      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="slack_webhook">
-        <div>
-          <div class="text-[14px] font-medium text-text-primary mb-0.5">Slack Webhook URL</div>
-          <div class="text-[13px] text-text-secondary">Send sentiment alerts and weekly intelligence reports to Slack</div>
-        </div>
-        <div class="flex items-center gap-2">
-          <input type="password" value="https://hooks.slack.com/services/T000/B000/XXX" class="w-[260px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left font-mono tracking-widest transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong data-[editing=true]:tracking-normal" readonly data-setting-input />
-          
-          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
-          </button>
-          
-          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity" data-save-btn>
-            Save
-          </button>
-          
-          <span class="hidden text-green-500 text-[12px] font-medium ml-2" data-success-msg>Saved!</span>
-        </div>
-      </div>
-
-      <!-- Intelligence & Alerts Group Header -->
+      <!-- Advanced Configuration Group Header -->
       <div class="px-5 py-1.5 bg-bg-subtle border-t border-border-faint">
-        <div class="text-[10px] font-medium tracking-[0.1em] text-text-secondary uppercase">Intelligence & Alerts</div>
-      </div>
-
-      <!-- Alert Threshold Row -->
-      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="alert_threshold">
-        <div>
-          <div class="text-[14px] font-medium text-text-primary mb-0.5">Sentiment Alert Threshold</div>
-          <div class="text-[13px] text-text-secondary">Trigger a dashboard alert when the average sentiment rating drops below this %</div>
-        </div>
-        <div class="flex items-center gap-2">
-          <input type="number" min="1" max="99" value={alertThreshold} class="w-[180px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" readonly data-setting-input />
-          
-          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
-          </button>
-          
-          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity" data-save-btn>
-            Save
-          </button>
-          
-          <span class="hidden text-green-500 text-[12px] font-medium ml-2" data-success-msg>Saved!</span>
-        </div>
-      </div>
-
-      <!-- Data Management Group Header -->
-      <div class="px-5 py-1.5 bg-bg-subtle border-t border-border-faint">
-        <div class="text-[10px] font-medium tracking-[0.1em] text-text-secondary uppercase">Data Management</div>
+        <div class="text-[10px] font-medium tracking-[0.1em] text-text-secondary uppercase">Advanced Configuration</div>
       </div>
       
-      <!-- Row 3 -->
-      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="retention_days">
+      <!-- Alert Threshold -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="alert_threshold">
         <div>
-          <div class="text-[14px] font-medium text-text-primary mb-0.5">Feedback Log Retention</div>
-          <div class="text-[13px] text-text-secondary">How long to store full user reviews and raw feedback texts</div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Alert Threshold (Negative Reviews)</div>
+          <div class="text-[13px] text-text-secondary">Number of negative reviews in a day to trigger an anomaly alert</div>
         </div>
         <div class="flex items-center gap-2">
-          <div class="relative">
-            <select disabled class="w-[180px] bg-transparent border border-transparent rounded-[6px] pl-3 pr-8 py-1.5 text-[13px] text-text-primary focus:outline-none appearance-none cursor-default transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong data-[editing=true]:cursor-pointer" data-setting-input>
-              <option>7 Days</option>
-              <option>14 Days</option>
-              <option selected>30 Days</option>
-              <option>90 Days</option>
-            </select>
-            <svg class="w-4 h-4 text-text-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path></svg>
-          </div>
+          <input type="number" value={Astro.locals.alertThreshold} class="w-[120px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
           
           <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
           </button>
           
-          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity" data-save-btn>
-            Save
+          <button class="w-8 h-8 flex items-center justify-center rounded-md bg-text-primary text-bg-base hover:bg-text-secondary transition-colors hidden" data-save-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </button>
+          
+          <span class="text-[13px] text-green-500 font-medium hidden ml-2" data-success-msg>Saved</span>
         </div>
       </div>
 
-      <!-- Row 4 -->
-      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="memory_prune_limit">
+      <!-- Retention Days -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="retention_days">
         <div>
-          <div class="text-[14px] font-medium text-text-primary mb-0.5">Competitor Event Limit</div>
-          <div class="text-[13px] text-text-secondary">Maximum competitor release notes and updates to track before archiving the oldest</div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Data Retention (Days)</div>
+          <div class="text-[13px] text-text-secondary">How long to store historical review data before automatic deletion</div>
         </div>
         <div class="flex items-center gap-2">
-          <input type="number" value="5000" class="w-[180px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" readonly data-setting-input />
+          <input type="number" value={Astro.locals.retentionDays} class="w-[120px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
           
           <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
           </button>
           
-          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity" data-save-btn>
-            Save
+          <button class="w-8 h-8 flex items-center justify-center rounded-md bg-text-primary text-bg-base hover:bg-text-secondary transition-colors hidden" data-save-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </button>
           
-          <span class="hidden text-green-500 text-[12px] font-medium ml-2" data-success-msg>Saved!</span>
+          <span class="text-[13px] text-green-500 font-medium hidden ml-2" data-success-msg>Saved</span>
         </div>
       </div>
+
+      <!-- Memory Prune Limit -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="memory_prune_limit">
+        <div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Memory Index Limit</div>
+          <div class="text-[13px] text-text-secondary">Maximum number of traces to keep in the semantic search index</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="number" value={Astro.locals.memoryPruneLimit} class="w-[120px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
+          
+          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
+          </button>
+          
+          <button class="w-8 h-8 flex items-center justify-center rounded-md bg-text-primary text-bg-base hover:bg-text-secondary transition-colors hidden" data-save-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
+          
+          <span class="text-[13px] text-green-500 font-medium hidden ml-2" data-success-msg>Saved</span>
+        </div>
+      </div>
+
+
 
       <!-- Danger Zone Group Header -->
       <div class="px-5 py-1.5 bg-bg-subtle border-t border-border-faint">
@@ -207,21 +231,37 @@ try {
           <div class="text-[14px] font-medium text-text-primary mb-0.5">Delete Project</div>
           <div class="text-[13px] text-text-secondary">Permanently delete this project and all traces. This cannot be undone.</div>
         </div>
-        <button class="px-5 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-600 text-[13px] font-medium hover:bg-red-500/20 transition-colors whitespace-nowrap">
+        <button id="delete-project-btn" class="px-5 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-600 text-[13px] font-medium hover:bg-red-500/20 transition-colors whitespace-nowrap">
           Delete Project
         </button>
       </div>
+    
+    <DeleteConfirmModal client:load />
 
     </div>
 
     </div>
   </div>
+  
+  <script is:inline define:vars={{ 
+    appId: Astro.locals.appId, 
+    playStoreUrl: Astro.locals.playStoreUrl, 
+    syncFrequency: Astro.locals.syncFrequency
+  }}>
+    window.__SYNC_APP_ID__ = appId;
+    window.__SYNC_PLAY_STORE__ = playStoreUrl;
+    // Hydrate the sync frequency dropdown with the value from the DB
+    const sfSelect = document.getElementById('sync-frequency-select');
+    if (sfSelect && syncFrequency) {
+      sfSelect.value = syncFrequency;
+    }
+  </script>
 </DashboardLayout>
 
 <script>
   import { LogoService } from '../../lib/logos/LogoService';
 
-  document.addEventListener('DOMContentLoaded', () => {
+  const initSettings = () => {
     const rows = document.querySelectorAll('[data-setting-row]');
     
     rows.forEach(row => {
@@ -245,16 +285,20 @@ try {
         const rowId = row.getAttribute('data-setting-row');
         const successMsg = row.querySelector('[data-success-msg]') as HTMLSpanElement;
         
-        if (rowId === 'alert_threshold' || rowId === 'memory_prune_limit' || rowId === 'name' || rowId === 'retention_days') {
+        const saveableFields = ['name', 'play_store_url', 'alert_threshold', 'retention_days', 'memory_prune_limit'];
+        
+        if (rowId && saveableFields.includes(rowId)) {
           let val: any = input.value;
-          if (rowId === 'alert_threshold' || rowId === 'memory_prune_limit') {
-            val = parseInt(input.value as string);
-          } else if (rowId === 'retention_days') {
-             // Handle "X Days" string from select
-             val = parseInt((input.value as string).replace(' Days', ''));
+          
+          // Parse numbers for advanced settings
+          if (['alert_threshold', 'retention_days', 'memory_prune_limit'].includes(rowId)) {
+            val = parseInt(val, 10);
+            if (isNaN(val)) return;
           }
           
-          if (val !== undefined && val !== null && !Number.isNaN(val as any)) {
+          if (val !== undefined && val !== null) {
+            if (typeof val === 'string') val = val.trim();
+            
             try {
               const payload = { [rowId]: val };
               const res = await fetch('/api/settings', {
@@ -262,19 +306,18 @@ try {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
               });
-              if (res.ok && successMsg) {
-                successMsg.classList.remove('hidden');
-                setTimeout(() => successMsg.classList.add('hidden'), 2000);
+              if (res.ok) {
+                // If we updated a sync URL, update the window variable too so the "Sync" button uses it without refresh
+                if (rowId === 'play_store_url') window.__SYNC_PLAY_STORE__ = val;
+                
+                if (successMsg) {
+                  successMsg.classList.remove('hidden');
+                  setTimeout(() => successMsg.classList.add('hidden'), 2000);
+                }
               }
             } catch (err) {
               console.error("Failed to save settings", err);
             }
-          }
-        } else {
-          // Mock save for frontend-only settings
-          if (successMsg) {
-            successMsg.classList.remove('hidden');
-            setTimeout(() => successMsg.classList.add('hidden'), 2000);
           }
         }
         
@@ -289,5 +332,107 @@ try {
         editBtn.classList.remove('hidden');
       });
     });
-  });
+
+    const deleteBtn = document.getElementById('delete-project-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('open-delete-modal'));
+      });
+    }
+
+    const syncBtn = document.getElementById('sync-reviews-btn');
+    const syncStatus = document.getElementById('sync-status');
+    if (syncBtn && syncStatus) {
+      syncBtn.addEventListener('click', async () => {
+        syncBtn.setAttribute('disabled', 'true');
+        syncBtn.classList.add('opacity-50');
+        syncStatus.classList.remove('hidden');
+        syncStatus.textContent = 'Syncing...';
+        syncStatus.className = 'text-[13px] text-text-muted';
+
+        const sources = [
+          { store: 'playstore', store_identifier: window.__SYNC_PLAY_STORE__ }
+        ];
+
+        let totalInserted = 0;
+        let totalSkipped = 0;
+
+        try {
+          for (const source of sources) {
+            if (!source.store_identifier) continue;
+            try {
+              const res = await fetch('/api/ingest/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  app_id: window.__SYNC_APP_ID__,
+                  target_type: 'app',
+                  target_id: window.__SYNC_APP_ID__,
+                  store: source.store,
+                  store_identifier: source.store_identifier
+                })
+              });
+              if (res.ok) {
+                const data = await res.json();
+                totalInserted += data.inserted || 0;
+                totalSkipped += data.skipped || 0;
+              }
+            } catch (err) {
+              console.error(`Failed to sync ${source.store}`, err);
+            }
+          }
+          
+          syncStatus.textContent = `${totalInserted} new reviews found`;
+          syncStatus.className = 'text-[13px] text-green-500 font-medium';
+        } catch (err) {
+          syncStatus.textContent = 'Sync failed. Try again.';
+          syncStatus.className = 'text-[13px] text-red-500 font-medium';
+        } finally {
+          syncBtn.removeAttribute('disabled');
+          syncBtn.classList.remove('opacity-50');
+          setTimeout(() => {
+            syncStatus.classList.add('hidden');
+          }, 5000);
+        }
+      });
+    }
+
+    // ── Auto-Sync Frequency dropdown ──────────────────────────────────────
+    const sfSelect = document.getElementById('sync-frequency-select') as HTMLSelectElement | null;
+    const sfSaved = document.getElementById('sync-freq-saved') as HTMLSpanElement | null;
+    const sfError = document.getElementById('sync-freq-error') as HTMLSpanElement | null;
+
+    if (sfSelect) {
+      sfSelect.addEventListener('change', async () => {
+        const newFreq = sfSelect.value;
+        sfSelect.disabled = true;
+        try {
+          const res = await fetch('/api/settings', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sync_frequency: newFreq })
+          });
+          if (res.ok) {
+            sfSaved?.classList.remove('hidden');
+            sfError?.classList.add('hidden');
+            setTimeout(() => sfSaved?.classList.add('hidden'), 2000);
+          } else {
+            sfError?.classList.remove('hidden');
+            sfSaved?.classList.add('hidden');
+            setTimeout(() => sfError?.classList.add('hidden'), 3000);
+          }
+        } catch (err) {
+          console.error('Failed to save sync_frequency', err);
+          sfError?.classList.remove('hidden');
+          sfSaved?.classList.add('hidden');
+          setTimeout(() => sfError?.classList.add('hidden'), 3000);
+        } finally {
+          sfSelect.disabled = false;
+        }
+      });
+    }
+  };
+
+  // Run init immediately (as module scripts are deferred) or on Astro page load if applicable
+  initSettings();
 </script>

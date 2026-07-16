@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import * as echarts from 'echarts';
+  import Chart from 'chart.js/auto';
 
   let risingFeaturesRef;
   let growingIssuesRef;
@@ -8,126 +8,72 @@
   onMount(() => {
     // Rising Features Chart
     if (risingFeaturesRef) {
-      const risingChart = echarts.init(risingFeaturesRef);
-      risingChart.setOption({
-        tooltip: { trigger: 'axis', backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', textStyle: { color: 'var(--color-text-primary)', fontSize: 12 } },
-        grid: { top: 10, bottom: 20, left: 0, right: 0 },
-        xAxis: { 
-          type: 'category', 
-          boundaryGap: false, 
-          data: ['W1', 'W2', 'W3', 'W4'],
-          axisLine: { show: false },
-          axisTick: { show: false },
-          axisLabel: { color: 'var(--color-text-muted)', fontSize: 11 }
+      const risingChart = new Chart(risingFeaturesRef.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: ['W1', 'W2', 'W3', 'W4'],
+          datasets: [
+            { label: 'Offline Mode', data: [320, 332, 301, 334], borderColor: '#f59e0b', backgroundColor: '#f59e0b1a', fill: true, tension: 0, pointRadius: 0, borderWidth: 2 },
+            { label: 'Export PDF', data: [150, 232, 201, 154], borderColor: '#10b981', backgroundColor: '#10b9811a', fill: true, tension: 0, pointRadius: 0, borderWidth: 2 },
+            { label: 'AI Search', data: [220, 182, 191, 234], borderColor: '#3b82f6', backgroundColor: '#3b82f61a', fill: true, tension: 0, pointRadius: 0, borderWidth: 2 },
+            { label: 'Dark Mode', data: [120, 132, 101, 134], borderColor: '#8b5cf6', backgroundColor: '#8b5cf61a', fill: true, tension: 0, pointRadius: 0, borderWidth: 2 }
+          ]
         },
-        yAxis: { type: 'value', show: false },
-        series: [
-          {
-            name: 'Offline Mode',
-            type: 'line',
-            stack: 'Total',
-            areaStyle: { opacity: 0.1 },
-            lineStyle: { width: 2 },
-            symbol: 'none',
-            data: [320, 332, 301, 334],
-            itemStyle: { color: '#f59e0b' } // amber
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1E1E1E',
+              titleColor: '#FFFFFF',
+              bodyColor: '#FFFFFF',
+              borderColor: '#333333',
+              borderWidth: 1
+            }
           },
-          {
-            name: 'Export PDF',
-            type: 'line',
-            stack: 'Total',
-            areaStyle: { opacity: 0.1 },
-            lineStyle: { width: 2 },
-            symbol: 'none',
-            data: [150, 232, 201, 154],
-            itemStyle: { color: '#10b981' } // green
-          },
-          {
-            name: 'AI Search',
-            type: 'line',
-            stack: 'Total',
-            areaStyle: { opacity: 0.1 },
-            lineStyle: { width: 2 },
-            symbol: 'none',
-            data: [220, 182, 191, 234],
-            itemStyle: { color: '#3b82f6' } // blue
-          },
-          {
-            name: 'Dark Mode',
-            type: 'line',
-            stack: 'Total',
-            areaStyle: { opacity: 0.1 },
-            lineStyle: { width: 2 },
-            symbol: 'none',
-            data: [120, 132, 101, 134],
-            itemStyle: { color: '#8b5cf6' } // purple
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            y: { stacked: true, display: false }
           }
-        ]
+        }
       });
-      const resizeObserver1 = new ResizeObserver(() => risingChart.resize());
-      resizeObserver1.observe(risingFeaturesRef);
     }
 
     // Growing Issues Chart
     if (growingIssuesRef) {
-      const issuesChart = echarts.init(growingIssuesRef);
-      issuesChart.setOption({
-        tooltip: { trigger: 'axis', backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', textStyle: { color: 'var(--color-text-primary)', fontSize: 12 } },
-        grid: { top: 10, bottom: 20, left: 0, right: 0 },
-        xAxis: { 
-          type: 'category', 
-          boundaryGap: false, 
-          data: ['W1', 'W2', 'W3', 'W4'],
-          axisLine: { show: false },
-          axisTick: { show: false },
-          axisLabel: { color: 'var(--color-text-muted)', fontSize: 11 }
+      const issuesChart = new Chart(growingIssuesRef.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: ['W1', 'W2', 'W3', 'W4'],
+          datasets: [
+            { label: 'Login Errors', data: [80, 90, 85, 100], borderColor: '#64748b', backgroundColor: '#64748b1a', fill: true, tension: 0, pointRadius: 0, borderWidth: 2 },
+            { label: 'Billing Problems', data: [150, 232, 201, 154], borderColor: '#eab308', backgroundColor: '#eab3081a', fill: true, tension: 0, pointRadius: 0, borderWidth: 2 },
+            { label: 'Slow Performance', data: [220, 182, 191, 234], borderColor: '#f97316', backgroundColor: '#f973161a', fill: true, tension: 0, pointRadius: 0, borderWidth: 2 },
+            { label: 'Onboarding Issues', data: [120, 282, 391, 434], borderColor: '#ef4444', backgroundColor: '#ef44441a', fill: true, tension: 0, pointRadius: 0, borderWidth: 2 }
+          ]
         },
-        yAxis: { type: 'value', show: false },
-        series: [
-          {
-            name: 'Login Errors',
-            type: 'line',
-            stack: 'Total',
-            areaStyle: { opacity: 0.1 },
-            lineStyle: { width: 2 },
-            symbol: 'none',
-            data: [80, 90, 85, 100],
-            itemStyle: { color: '#64748b' } // slate
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1E1E1E',
+              titleColor: '#FFFFFF',
+              bodyColor: '#FFFFFF',
+              borderColor: '#333333',
+              borderWidth: 1
+            }
           },
-          {
-            name: 'Billing Problems',
-            type: 'line',
-            stack: 'Total',
-            areaStyle: { opacity: 0.1 },
-            lineStyle: { width: 2 },
-            symbol: 'none',
-            data: [150, 232, 201, 154],
-            itemStyle: { color: '#eab308' } // yellow
-          },
-          {
-            name: 'Slow Performance',
-            type: 'line',
-            stack: 'Total',
-            areaStyle: { opacity: 0.1 },
-            lineStyle: { width: 2 },
-            symbol: 'none',
-            data: [220, 182, 191, 234],
-            itemStyle: { color: '#f97316' } // orange
-          },
-          {
-            name: 'Onboarding Issues',
-            type: 'line',
-            stack: 'Total',
-            areaStyle: { opacity: 0.1 },
-            lineStyle: { width: 2 },
-            symbol: 'none',
-            data: [120, 282, 391, 434],
-            itemStyle: { color: '#ef4444' } // red
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            y: { stacked: true, display: false }
           }
-        ]
+        }
       });
-      const resizeObserver2 = new ResizeObserver(() => issuesChart.resize());
-      resizeObserver2.observe(growingIssuesRef);
     }
   });
 </script>
@@ -145,7 +91,9 @@
       <div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-[#10b981]"></div><span class="text-text-secondary">Export PDF</span></div>
       <div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-[#f59e0b]"></div><span class="text-text-secondary">Offline Mode</span></div>
     </div>
-    <div class="w-full h-48" bind:this={risingFeaturesRef}></div>
+    <div class="w-full h-48 relative">
+      <canvas bind:this={risingFeaturesRef}></canvas>
+    </div>
   </div>
 
   <!-- Growing Issues -->
@@ -160,6 +108,8 @@
       <div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-[#eab308]"></div><span class="text-text-secondary">Billing Problems</span></div>
       <div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-[#64748b]"></div><span class="text-text-secondary">Login Errors</span></div>
     </div>
-    <div class="w-full h-48" bind:this={growingIssuesRef}></div>
+    <div class="w-full h-48 relative">
+      <canvas bind:this={growingIssuesRef}></canvas>
+    </div>
   </div>
 </div>

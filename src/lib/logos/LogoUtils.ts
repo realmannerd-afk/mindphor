@@ -5,7 +5,7 @@
 // Mapping of platform identifiers to their official/primary domains
 const PLATFORM_DOMAINS: Record<string, string> = {
   reddit: 'reddit.com',
-  app_store: 'apple.com',
+  app_store: 'appstore',
   play_store: 'play.google.com',
   twitter: 'twitter.com',
   x: 'twitter.com',

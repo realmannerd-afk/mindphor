@@ -1,56 +1,100 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
 
+function getSupabase() {
+  return createClient(
+    import.meta.env.SUPABASE_URL,
+    import.meta.env.SUPABASE_SERVICE_KEY
+  );
+}
+
+// GET /api/alerts?app_id=xxx — fetch all alerts for an app
 export const GET: APIRoute = async ({ request }) => {
   try {
     const url = new URL(request.url);
     const appId = url.searchParams.get('app_id');
-
     if (!appId) {
       return new Response(JSON.stringify({ error: "Missing app_id" }), { status: 400 });
     }
 
-    if (appId === 'guest_project') {
-      return new Response(JSON.stringify({
-        alerts: [
-          { id: 'al_1', type: 'error', message: 'Critical review on Google Play: App crashes during checkout flow.', sub: '10 mins ago • Play Store • Rating: 20%' },
-          { id: 'al_2', type: 'warning', message: 'Competitor linear.app updated features: roadmaps and custom views released.', sub: '1 hour ago • Competitor Watch' },
-          { id: 'al_3', type: 'error', message: 'Negative sentiment alert on Twitter: "Mindphor notifications are broken".', sub: '2 hours ago • Twitter • Rating: 35%' },
-          { id: 'al_4', type: 'info', message: 'Positive review on App Store: "Offline mode is game changing".', sub: '5 hours ago • App Store • Rating: 95%' },
-          { id: 'al_5', type: 'warning', message: 'Pricing page bounce rate increased: 15% drop in conversions.', sub: '8 hours ago • Analytics • Traffic' },
-          { id: 'al_6', type: 'error', message: 'API latency spike detected: Integrations endpoint degrading.', sub: '12 hours ago • Infrastructure • Server' },
-          { id: 'al_7', type: 'info', message: 'New 5-star review on G2: "Best customer support in the industry".', sub: '1 day ago • G2 Reviews' },
-          { id: 'al_8', type: 'warning', message: 'Competitor notion.so launched new AI templates.', sub: '1 day ago • Competitor Watch' }
-        ]
-      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
 
-    const supabaseUrl = import.meta.env.SUPABASE_URL;
-    const supabaseKey = import.meta.env.SUPABASE_SERVICE_KEY;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let alerts: any[] = [];
-    try {
-      const { data, error } = await supabase
+    const { data, error } = await getSupabase()
+      .from('alerts')
+      .select('*')
+      .eq('app_id', appId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return new Response(JSON.stringify({ alerts: data || [] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
+};
+
+// PATCH /api/alerts — mark alerts as read
+// Body: { ids: string[] }         → mark specific alerts as read
+// Body: { app_id: string, all: true } → mark ALL alerts for app as read
+export const PATCH: APIRoute = async ({ request }) => {
+  try {
+    const body = await request.json();
+    const supabase = getSupabase();
+
+    if (body.all && body.app_id) {
+      // Mark all for this app
+      const { error } = await supabase
         .from('alerts')
-        .select('*')
-        .eq('app_id', appId)
-        .order('created_at', { ascending: false });
-      if (!error && data) alerts = data;
-    } catch (e) {
-      console.warn("DB alerts fetch failed");
+        .update({ is_read: true })
+        .eq('app_id', body.app_id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, updated: 'all' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    if (alerts.length === 0) {
-      alerts = [
-        { id: 'al_1', type: 'error', message: 'Critical review on Google Play: App crashes during checkout flow.', sub: '10 mins ago • Play Store • Rating: 20%' },
-        { id: 'al_2', type: 'warning', message: 'Competitor linear.app updated features: roadmaps and custom views released.', sub: '1 hour ago • Competitor Watch' },
-        { id: 'al_3', type: 'error', message: 'Negative sentiment alert on Twitter: "Mindphor notifications are broken".', sub: '2 hours ago • Twitter • Rating: 35%' },
-        { id: 'al_4', type: 'info', message: 'Positive review on App Store: "Offline mode is game changing".', sub: '5 hours ago • App Store • Rating: 95%' },
-      ];
+    if (body.ids && Array.isArray(body.ids) && body.ids.length > 0) {
+      const { error } = await supabase
+        .from('alerts')
+        .update({ is_read: true })
+        .in('id', body.ids);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, updated: body.ids.length }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    return new Response(JSON.stringify({ alerts }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: "Provide ids[] or {app_id, all:true}" }), { status: 400 });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
+};
+
+// DELETE /api/alerts — delete specific alerts
+// Body: { ids: string[] }
+export const DELETE: APIRoute = async ({ request }) => {
+  try {
+    const body = await request.json();
+    const supabase = getSupabase();
+
+    if (!body.ids || !Array.isArray(body.ids) || body.ids.length === 0) {
+      return new Response(JSON.stringify({ error: "Provide ids[] to delete" }), { status: 400 });
+    }
+
+    const { error } = await supabase
+      .from('alerts')
+      .delete()
+      .in('id', body.ids);
+
+    if (error) throw error;
+    return new Response(JSON.stringify({ success: true, deleted: body.ids.length }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }

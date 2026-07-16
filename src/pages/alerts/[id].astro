@@ -6,47 +6,83 @@ import RollingNumber from '../../components/islands/RollingNumber.svelte';
 
 const { id } = Astro.params;
 
-let alert;
-if (id === 'AL_124' || id?.toLowerCase() === 'al_124') {
-  alert = {
-    id: 'AL_124',
-    type: 'critical',
-    message: 'Login Failure Spike After Android Release 2.3.1',
-    sub: '10 minutes ago • Quality Drop',
-    created_at: new Date().toISOString(),
-    project_id: 'Mobile App',
-    confidence: '96%',
-    score: 45
-  };
-} else {
-  // Mock fallback or real DB
-  const mockAlerts = [
-    { id: 'al_1', type: 'error', message: 'Trace tr_124 scored 45 (below threshold 70).', sub: '10 mins ago • Quality Drop', created_at: new Date().toISOString(), project_id: 'guest_project', score: 45 },
-    { id: 'al_2', type: 'warning', message: 'Memory key "api_keys" has not been updated in 3 days.', sub: '1 hour ago • Stale Memory', created_at: new Date().toISOString(), project_id: 'guest_project', score: null },
-  ];
-  alert = mockAlerts.find(a => a.id === id);
-  if (!alert) {
-    const supabaseUrl = import.meta.env.SUPABASE_URL;
-    const supabaseKey = import.meta.env.SUPABASE_SERVICE_KEY;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const { data, error } = await supabase.from('alerts').select('*').eq('id', id).single();
-    if (error || !data) {
-      return Astro.redirect('/dashboard/alerts');
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+let alert: any = null;
+
+if (id === 'alert1' || id === 'alert2') {
+  // Guest mode mock alerts
+  const guestAlerts: Record<string, any> = {
+    "alert1": {
+      id: "alert1",
+      title: "Crash spike detected on Android 14",
+      description: "We've noticed a 400% increase in crash reports specifically mentioning 'Android 14' and 'upload photo'.",
+      severity: "high",
+      type: "anomaly",
+      is_read: false,
+      created_at: new Date().toISOString(),
+      score: 1,
+      traces_count: 42
+    },
+    "alert2": {
+      id: "alert2",
+      title: "Sudden drop in average rating",
+      description: "Average rating for the last 24 hours dropped to 3.2 stars compared to 4.5 last week.",
+      severity: "medium",
+      type: "trend",
+      is_read: true,
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      score: 3,
+      traces_count: 156
     }
-    alert = data;
+  };
+  alert = guestAlerts[id];
+} else {
+  const { data, error } = await supabase.from('alerts').select('*').eq('id', id).single();
+  if (error || !data) {
+    return Astro.redirect('/dashboard/alerts');
   }
+  alert = data;
 }
 
 if (!alert) throw new Error("Alert not found");
 
-// Force fallback so formatting logic won't fail if we don't have a score explicitly on the object
-const scoreMatch = alert.message.match(/scored (\d+)/);
+const messageText = alert.title || alert.description || "Anomaly Detected";
+const scoreMatch = messageText.match(/scored (\d+)/);
 const score = alert.score !== undefined ? alert.score : (scoreMatch ? parseInt(scoreMatch[1]) : null);
 
 function formatAlertMessage(message: string) {
-  let formatted = message.replace(/(Trace [a-zA-Z0-9_-]+) scored \d+\s*—\s*/, '$1 - ');
-  formatted = formatted.replace(/(Trace [a-zA-Z0-9_-]+) scored \d+ \((.*?)\)\.?/, '$1 - $2');
-  return formatted;
+  if (!message) return "Anomaly Detected";
+  
+  // Keep only the core issue before the colon for a punchy title
+  let formatted = message.split(':')[0].trim();
+  
+  // Remove robotic trailing words
+  formatted = formatted.replace(/\bdetected\b/i, '').trim();
+  
+  // Ensure it looks like a clean title
+  formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  
+  return formatted || "System Anomaly";
+}
+
+const alertTypeStr = (alert.type || 'system').toLowerCase();
+let category = "System Alert";
+if (alertTypeStr.includes('critical')) category = 'Critical Anomaly';
+else if (alertTypeStr.includes('error')) category = 'Error Spike';
+else if (alertTypeStr.includes('warning')) category = 'Quality Warning';
+else category = 'Insight';
+
+let relativeTime = 'Just now';
+if (alert.created_at) {
+  const diffMins = Math.floor((new Date().getTime() - new Date(alert.created_at).getTime()) / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays > 0) relativeTime = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  else if (diffHours > 0) relativeTime = `${diffHours} hr${diffHours > 1 ? 's' : ''} ago`;
+  else if (diffMins > 0) relativeTime = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
 }
 
 const dateStr = alert.created_at ? new Date(alert.created_at).toLocaleString('en-US', {
@@ -56,35 +92,252 @@ const dateStr = alert.created_at ? new Date(alert.created_at).toLocaleString('en
   hour: 'numeric',
   minute: '2-digit',
   hour12: true
-}) : alert.sub;
+}) : relativeTime;
 
 // Official Brand Icons
 const iconApple = `<svg viewBox="0 0 384 512" class="w-4.5 h-4.5 text-text-primary" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>`;
 const iconX = `<svg viewBox="0 0 512 512" class="w-3 h-3 text-text-primary" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L273.1 181.6 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"/></svg>`;
 const iconReddit = `<svg viewBox="0 0 512 512" class="w-4.5 h-4.5 text-[#FF4500]" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M201.5 305.5c-13.8 0-24.9-11.1-24.9-24.6 0-13.8 11.1-24.9 24.9-24.9 13.6 0 24.6 11.1 24.6 24.9 0 13.6-11.1 24.6-24.6 24.6zM504 256c0 137-111 248-248 248S8 393 8 256 119 8 256 8s248 111 248 248zm-132.3-41.2c-9.4 0-17.7 3.9-23.8 10-22.4-15.5-52.6-25.5-86.1-26.6l17.4-78.3 55.4 12.5c0 13.6 11.1 24.6 24.6 24.6 13.8 0 24.9-11.3 24.9-24.9s-11.1-24.9-24.9-24.9c-9.7 0-18 5.8-22.1 13.8l-61.2-13.6c-3-.8-6.1 1.4-6.9 4.4l-19.1 86.4c-33.2 1.4-63.1 11.3-85.5 26.8-6.1-6.4-14.7-10.2-24.1-10.2-34.9 0-46.3 46.9-14.4 62.8-1.1 5-1.7 10.2-1.7 15.5 0 52.6 59.2 95.2 132 95.2 73.1 0 132.3-42.6 132.3-95.2 0-5.3-.6-10.8-1.9-15.8 31.3-16 19.8-62.5-14.9-62.5zM302.8 331c-18.2 18.2-76.1 17.9-93.6 0-2.2-2.2-6.1-2.2-8.3 0-2.5 2.5-2.5 6.4 0 8.6 22.8 22.8 87.3 22.8 110.2 0 2.5-2.2 2.5-6.1 0-8.6-2.2-2.2-6.1-2.2-8.3 0zm7.7-75c-13.6 0-24.6 11.1-24.6 24.9 0 13.6 11.1 24.6 24.6 24.6 13.8 0 24.9-11.1 24.9-24.6 0-13.8-11-24.9-24.9-24.9z"/></svg>`;
-const iconPlay = `<svg viewBox="0 0 24 24" class="w-4.5 h-4.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.25 1.5C3.04 1.71 2.92 2.05 2.92 2.47V21.53C2.92 21.95 3.04 22.29 3.25 22.5L3.33 22.58L13.88 12.03V11.97L3.33 1.42L3.25 1.5Z" fill="#00A0FF"/><path d="M17.38 15.53L13.88 12.03V11.97L17.38 8.47L17.46 8.52L21.66 10.91C22.86 11.59 22.86 12.41 21.66 13.09L17.46 15.48L17.38 15.53Z" fill="#FFBB00"/><path d="M17.46 8.52L13.88 12.03L3.33 22.58C3.67 22.94 4.25 22.98 4.93 22.59L17.46 15.48L17.46 8.52Z" fill="#FF3A44"/><path d="M17.46 8.52L4.93 1.41C4.25 1.02 3.67 1.06 3.33 1.42L13.88 11.97L17.46 8.52Z" fill="#00E676"/></svg>`;
+const iconPlay = `<img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" alt="Google Play" class="w-4.5 h-4.5 object-contain" />`;
 
-// MOCK DATA for rich SaaS features
-const mockEvidence = [
-  { source: 'Google Play', text: "The app keeps freezing after the latest update. Very slow and unresponsive.", time: '10 mins ago', icon: iconPlay },
-  { source: 'Reddit', text: "Facing timeout and low performance since yesterday. Seems related to the new release.", time: '12 mins ago', icon: iconReddit },
-  { source: 'Twitter', text: "@yourapp experiencing major slowdowns. Requests taking too long to process.", time: '15 mins ago', icon: iconX }
-];
+const isTraceAlert = !!(score !== null || messageText.toLowerCase().includes('trace') || messageText.toLowerCase().includes('failure') || messageText.toLowerCase().includes('spike'));
+const isMemoryAlert = !!(messageText.toLowerCase().includes('memory') || messageText.toLowerCase().includes('stale') || messageText.toLowerCase().includes('key'));
 
-const mockSources = [
-  { name: 'Google Play', count: 182, icon: iconPlay },
-  { name: 'Reddit', count: 41, icon: iconReddit },
-  { name: 'Twitter', count: 23, icon: iconX },
-  { name: 'App Store', count: 18, icon: iconApple }
-];
+// Dynamic properties matching trace / memory / generic states
+let alertSummary = "";
+let alertCategory = category;
+let alertSeverity = alert.type === 'critical' ? 'Critical' : (alert.type === 'error' ? 'High' : (alert.type === 'warning' ? 'Medium' : 'Low'));
+let alertStatus = "New";
+let alertImpact = score ? `${score}%` : "55%";
+const alertImpactInt = score !== null ? score : 55;
+let alertConfidence = alert.confidence || "96%";
+const alertConfidenceInt = parseInt(alertConfidence) || 96;
 
-const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
-  { time: '12:23 PM', event: 'Alert triggered - Trace value dropped below threshold' },
-  { time: '12:21 PM', event: 'Trace value: 45 (threshold: 70)' },
-  { time: '12:15 PM', event: 'Anomaly detected in trace pattern' },
-  { time: '12:10 PM', event: 'Trace value: 65' }
-];
+if (isTraceAlert) {
+  alertCategory = "Quality Drop";
+  alertSummary = `Our intelligence engine detected a significant quality drop in trace execution performance. The measured performance score dropped to ${score || 45}, which is below the acceptable quality threshold of 70. This spike in failure rates is strongly correlated with recent release updates.`;
+} else if (isMemoryAlert) {
+  alertCategory = "Stale Memory";
+  alertSummary = `The data synchronization pipeline detected that key memory assets (including "${messageText.match(/"([^"]+)"/)?.[1] || 'api_keys'}") have not been refreshed within their designated sync interval. Servicing stale credentials or configurations may cause API authentication drops.`;
+} else {
+  alertCategory = "System Warning";
+  alertSummary = `A system monitoring rule triggered this alert: "${messageText}". Technical teams should review core telemetry metrics to ensure operational stability.`;
+}
 
+// Metrics block data
+interface MetricItem {
+  label: string;
+  value: string;
+  numValue?: number;
+  valuePrefix?: string;
+  valueSuffix?: string;
+  sub: string;
+  isDrop?: boolean;
+  isWarning?: boolean;
+  isConfidence?: boolean;
+}
+
+const metricsList: MetricItem[] = [];
+
+let feedbackQuery: any = null;
+if (id !== 'alert1' && id !== 'alert2') {
+  feedbackQuery = supabase
+    .from('feedback')
+    .select('source, content, created_at, score')
+    .eq('app_id', alert.app_id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const isNegativeAlert = messageText.toLowerCase().includes('negative') || messageText.toLowerCase().includes('crash') || alertTypeStr.includes('error') || alertTypeStr.includes('critical');
+  if (isNegativeAlert) {
+    feedbackQuery = feedbackQuery.lte('score', 3);
+  }
+
+  // Extract specific keyword to filter evidence (e.g. from 'Critical feedback detected: "crash"')
+  const keywordMatch = messageText.match(/"([^"]+)"/);
+  if (keywordMatch && keywordMatch[1]) {
+    feedbackQuery = feedbackQuery.ilike('content', `%${keywordMatch[1]}%`);
+  } else if (messageText.toLowerCase().includes('crash')) {
+    feedbackQuery = feedbackQuery.ilike('content', `%crash%`);
+  }
+}
+
+let feedbackData: any[] | null = null;
+if (id === 'alert1' || id === 'alert2') {
+  feedbackData = [
+    { content: "The app crashes every time I open it on Android 14.", score: 1, source: "Play Store", created_at: new Date().toISOString() },
+    { content: "Upload photo feature is completely broken.", score: 2, source: "Play Store", created_at: new Date(Date.now() - 3600000).toISOString() },
+    { content: "Can't upload anything without a crash.", score: 1, source: "Play Store", created_at: new Date(Date.now() - 7200000).toISOString() }
+  ];
+} else if (feedbackQuery) {
+  const { data } = await feedbackQuery;
+  feedbackData = data;
+}
+if (feedbackData && feedbackData.length > 0) {
+  const totalScore = feedbackData.reduce((acc, f) => acc + (f.score || 0), 0);
+  const avgScore = (totalScore / feedbackData.length).toFixed(1);
+  const negativeCount = feedbackData.filter(f => (f.score || 0) <= 3).length;
+  
+  metricsList.push({ label: "Avg Rating (Affected)", value: avgScore, numValue: parseFloat(avgScore), isDrop: parseFloat(avgScore) < 4.0, sub: `Across ${feedbackData.length} recent reviews` });
+  metricsList.push({ label: "Negative Sentiments", value: negativeCount.toString(), numValue: negativeCount, isWarning: negativeCount > 5, sub: "Score <= 3" });
+  metricsList.push({ label: "Detected", value: relativeTime, sub: dateStr });
+} else {
+  // Fallback to original logic if no real data
+  if (isTraceAlert) {
+    metricsList.push({ label: "What happened", value: `Trace value dropped to ${score || 45}`, numValue: score || 45, valuePrefix: "Trace value dropped to ", sub: "threshold: 70", isDrop: true });
+    metricsList.push({ label: "Detected", value: relativeTime, sub: dateStr });
+    metricsList.push({ label: "Confidence", value: `${alertConfidence}`, numValue: alertConfidenceInt, valueSuffix: "%", sub: "High confidence", isConfidence: true });
+  } else if (isMemoryAlert) {
+    metricsList.push({ label: "Status Alert", value: "Stale key detected", sub: "Interval: 24h max", isWarning: true });
+    metricsList.push({ label: "Last Refreshed", value: "3 days ago", sub: "Expected: Daily" });
+    metricsList.push({ label: "Confidence", value: `${alertConfidence}`, numValue: alertConfidenceInt, valueSuffix: "%", sub: "Verified system alert", isConfidence: true });
+  } else {
+    metricsList.push({ label: "Alert Type", value: "System event", sub: "Warning severity", isWarning: true });
+    metricsList.push({ label: "Detected", value: relativeTime, sub: dateStr });
+    metricsList.push({ label: "Confidence", value: `${alertConfidence}`, numValue: alertConfidenceInt, valueSuffix: "%", sub: "Standard rule match", isConfidence: true });
+  }
+}
+
+// Fetch readable app name and format alert ID
+let appData: any = null;
+if (id !== 'alert1' && id !== 'alert2') {
+  const { data } = await supabase.from('apps').select('name').eq('id', alert.app_id).single();
+  appData = data;
+}
+const appName = appData?.name ? (appData.name.charAt(0).toUpperCase() + appData.name.slice(1) + ' Workspace') : 'Primary Workspace';
+const displayAlertId = alert.id.includes('-') ? `AL-${alert.id.split('-')[0].toUpperCase()}` : alert.id;
+
+// Fetch similar alerts from the database
+let similarAlertsData: any[] | null = null;
+if (id === 'alert1' || id === 'alert2') {
+  similarAlertsData = [
+    { id: "alert2", title: "Sudden drop in average rating", type: "trend", created_at: new Date(Date.now() - 86400000).toISOString() }
+  ];
+} else {
+  const { data } = await supabase
+    .from('alerts')
+    .select('id, title, type, created_at')
+    .eq('app_id', alert.app_id)
+    .neq('id', alert.id)
+    .order('created_at', { ascending: false })
+    .limit(3);
+  similarAlertsData = data;
+}
+
+if (feedbackData && feedbackData.length > 0) {
+  const latestFeedback = feedbackData[0].content ? `"${feedbackData[0].content.substring(0, 60)}..."` : 'recent reviews';
+  alertSummary = `Mindphor's intelligence engine identified an anomaly across ${feedbackData.length} recent data points for ${appName}. Users are actively reporting issues matching this alert (e.g., ${latestFeedback}). Immediate investigation into the latest release is recommended to prevent further negative sentiment.`;
+} else {
+  if (isTraceAlert) {
+    alertSummary = `Quality drop detected. The measured performance score dropped to ${score || 45} (threshold: 70). This anomaly strongly correlates with recent codebase deployments.`;
+  } else if (isMemoryAlert) {
+    alertSummary = `Stale memory detected. Key operational assets have missed their scheduled synchronization interval.`;
+  }
+}
+
+// Evidence list
+let evidenceList: Array<{ source: string; text: string; time: string; icon: string }> = [];
+if (feedbackData && feedbackData.length > 0) {
+  evidenceList = feedbackData.slice(0, 5).map(f => {
+    let icon = `<svg class="w-4.5 h-4.5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+    const s = (f.source || '').toLowerCase();
+    if (s.includes('play')) icon = iconPlay;
+    if (s.includes('apple') || s.includes('app store')) icon = iconApple;
+    if (s.includes('reddit')) icon = iconReddit;
+    
+    const date = new Date(f.created_at);
+    const diffMins = Math.floor((new Date().getTime() - date.getTime()) / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    let timeStr = 'just now';
+    if (diffDays > 0) timeStr = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    else if (diffHours > 0) timeStr = `${diffHours} hr${diffHours > 1 ? 's' : ''} ago`;
+    else if (diffMins > 0) timeStr = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+
+    return {
+      source: f.source || 'Unknown Source',
+      text: (f.content || '').substring(0, 100) + '...',
+      time: timeStr,
+      icon: icon
+    };
+  });
+} else {
+  evidenceList = [
+    { source: 'System Telemetry', text: `Unchecked warning trigger: "${messageText}"`, time: relativeTime, icon: `<svg class="w-4.5 h-4.5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>` }
+  ];
+}
+
+// Sources affected
+let sourcesList: Array<{ name: string; count: number; icon: string; increase: string }> = [];
+if (feedbackData && feedbackData.length > 0) {
+  const sourceCounts = feedbackData.reduce((acc, row) => {
+    const src = row.source || 'Unknown';
+    acc[src] = (acc[src] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  sourcesList = Object.entries(sourceCounts).map(([name, count]) => {
+    let icon = `<svg class="w-4.5 h-4.5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>`;
+    const s = name.toLowerCase();
+    if (s.includes('play')) icon = iconPlay;
+    if (s.includes('apple') || s.includes('app store')) icon = iconApple;
+    if (s.includes('reddit')) icon = iconReddit;
+
+    return {
+      name: name,
+      count: count,
+      icon: icon,
+      increase: '400'
+    };
+  });
+} else {
+  sourcesList = [
+    { name: 'No Database Data Linked', count: 0, icon: `<svg class="w-4.5 h-4.5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`, increase: 'N/A' }
+  ];
+}
+
+// Recommended actions
+let actionsList: string[] = [];
+if (isTraceAlert) {
+  actionsList = [
+    "Investigate the root cause of the quality drop in trace performance.",
+    "Check recent deployments or configuration changes.",
+    "Monitor the trace value closely and set up additional alerts if needed."
+  ];
+} else if (isMemoryAlert) {
+  actionsList = [
+    "Restart the background synchronization workers and verify Scheduler health.",
+    "Check system credentials and API access tokens for 'api_keys'.",
+    "Manually run token refresh utility and verify database connectivity."
+  ];
+} else {
+  actionsList = [
+    "Review system exception rates around time of alert.",
+    "Verify system uptime and memory utilization parameters."
+  ];
+}
+
+// Timeline
+let timelineList: Array<{ time: string; event: string; details?: string }> = [];
+if (isTraceAlert) {
+  timelineList = [
+    { time: '12:23 PM', event: 'Alert triggered - Trace value dropped below threshold' },
+    { time: '12:21 PM', event: 'Trace value: 45 (threshold: 70)' },
+    { time: '12:15 PM', event: 'Anomaly detected in trace pattern' },
+    { time: '12:10 PM', event: 'Trace value: 65' }
+  ];
+} else if (isMemoryAlert) {
+  timelineList = [
+    { time: '11:00 AM', event: 'Alert triggered - stale memory key threshold exceeded' },
+    { time: '10:45 AM', event: 'Cache hit failure on stale api_keys detected' },
+    { time: '09:00 AM', event: 'Scheduler missed job check heartbeat run' }
+  ];
+} else {
+  timelineList = [
+    { time: relativeTime, event: `System alert triggered: ${messageText}` }
+  ];
+}
 ---
 
 <DashboardLayout title="Alerts">
@@ -95,7 +348,7 @@ const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
       <!-- Top nav row -->
       <div class="flex items-center justify-between">
         <a href="/dashboard/alerts" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-text-muted hover:text-text-primary transition-colors outline-none w-max">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           Back to alerts
         </a>
         <div class="text-[13px] font-medium text-text-muted">
@@ -106,20 +359,20 @@ const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
       <!-- Title & Badges -->
       <div class="flex flex-col gap-4">
         <div class="flex items-center gap-3">
-          <span class="px-2 py-1 bg-[#A32D2D]/10 text-[#A32D2D] rounded text-[11px] font-bold uppercase tracking-widest">{alert.type === 'critical' ? 'Critical' : alert.type} Alert</span>
-          <span class="text-[14px] text-text-secondary font-mono">al_1_124</span>
+          <span class="px-2 py-1 bg-[#A32D2D]/10 text-[#A32D2D] rounded text-[11px] font-bold uppercase tracking-widest">{alertSeverity} Alert</span>
+          <span class="text-[14px] text-text-secondary font-mono">#{displayAlertId}</span>
         </div>
         
         <h1 class="text-[28px] md:text-[32px] font-semibold tracking-tight text-text-primary max-w-4xl leading-[1.2]">
-          Trace tr_124 - below threshold 70
+          {formatAlertMessage(messageText)}
         </h1>
         
         <div class="flex items-center gap-2 text-[14px] text-text-secondary font-medium">
-          <span>{alert.sub.split('•')[0].trim() || '10 mins ago'}</span>
+          <span>{relativeTime}</span>
           <span>•</span>
-          <span>Quality Drop</span>
+          <span>{alertCategory}</span>
           <span>•</span>
-          <span>guest_project</span>
+          <span>{appName}</span>
         </div>
       </div>
     </div>
@@ -138,77 +391,87 @@ const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
           </div>
           
           <div class="text-[14px] text-text-primary leading-relaxed max-w-4xl">
-            <p>Our intelligence engine detected a significant quality drop. The trace value fell below the expected threshold of 70, indicating potential performance degradation.</p>
+            <p>{alertSummary}</p>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-border-faint rounded-xl overflow-hidden bg-bg-subtle/30 mt-2">
-            <div class="p-5 flex flex-col gap-3 border-r border-border-faint">
-              <span class="text-[12px] text-text-secondary font-medium">What happened</span>
-              <div class="flex items-center gap-2">
-                <span class="text-[14px] font-medium text-text-primary flex items-center gap-1">Trace value dropped to <RollingNumber client:load value={45} /></span>
-                <span class="inline-flex items-center justify-center w-5 h-5 rounded-md bg-[#A32D2D]/10 text-[#A32D2D]"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg></span>
+            {metricsList.map((m, idx) => (
+              <div class={`p-5 flex flex-col gap-3 ${idx < 2 ? 'border-r border-border-faint' : ''}`}>
+                <span class="text-[12px] text-text-secondary font-medium">{m.label}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[14px] font-medium text-text-primary">
+                    {m.numValue !== undefined ? (
+                      <span>
+                        {m.valuePrefix && <span>{m.valuePrefix}</span>}
+                        <RollingNumber client:load value={m.numValue} />
+                        {m.valueSuffix && <span>{m.valueSuffix}</span>}
+                      </span>
+                    ) : (
+                      m.value
+                    )}
+                  </span>
+                  {m.isDrop && (
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-md bg-[#A32D2D]/10 text-[#A32D2D]"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg></span>
+                  )}
+                </div>
+                <span class="text-[12px] text-text-muted mt-1">{m.sub}</span>
               </div>
-              <span class="text-[12px] text-text-muted mt-1">threshold: 70</span>
-            </div>
-            <div class="p-5 flex flex-col gap-3 border-r border-border-faint">
-              <span class="text-[12px] text-text-secondary font-medium">Detected</span>
-              <span class="text-[14px] font-medium text-text-primary">10 mins ago</span>
-              <span class="text-[12px] text-text-muted mt-1">Jun 17, 12:23 PM</span>
-            </div>
-            <div class="p-5 flex flex-col gap-3">
-              <span class="text-[12px] text-text-secondary font-medium">Confidence</span>
-              <span class="text-[14px] font-semibold text-text-primary flex items-center"><RollingNumber client:load value="96%" /></span>
-              <span class="text-[12px] text-emerald-600 font-medium mt-1">High confidence</span>
-            </div>
+            ))}
           </div>
         </div>
 
-        <!-- Evidence & Sources Row -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <!-- SECTION 2 & 3: Evidence & Sources Combined -->
+        <div class="bg-bg-surface border border-border-default rounded-[20px] flex flex-col overflow-hidden">
+          <div class="p-6 pb-4 border-b border-border-faint">
+            <h2 class="text-[14px] font-semibold text-text-primary">Evidence & Sources</h2>
+          </div>
           
-          <!-- SECTION 2: Evidence (col-span-3) -->
-          <div class="md:col-span-3 bg-bg-surface border border-border-default rounded-[20px] p-6 flex flex-col">
-            <h2 class="text-[14px] font-semibold text-text-primary mb-6">Evidence (5)</h2>
-            <div class="flex flex-col gap-6 max-h-[320px] overflow-y-auto pr-2">
-              {mockEvidence.map((ev) => (
-                <div class="flex items-start gap-4">
-                  <div class="mt-0.5 flex-shrink-0" set:html={ev.icon}></div>
-                  <div class="flex flex-col gap-1 w-full">
-                    <div class="flex items-center justify-between">
-                      <span class="text-[13px] font-semibold text-text-primary">{ev.source} {ev.source === 'Twitter' ? 'Mention' : 'Review'}</span>
-                      <a href="#" class="text-[11px] text-text-muted hover:text-text-primary flex items-center gap-1 group/link">
-                        {ev.time} 
-                        <svg class="w-3.5 h-3.5 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                      </a>
+          <div class="grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-border-faint">
+            
+            <!-- Left: Evidence -->
+            <div class="md:col-span-3 p-6 flex flex-col max-h-[360px] overflow-y-auto">
+              <h3 class="text-[11px] font-semibold text-text-muted mb-5 uppercase tracking-wider">Raw Evidence ({evidenceList.length})</h3>
+              <div class="flex flex-col">
+                {evidenceList.map((ev) => (
+                  <div class="flex items-start gap-3 py-3 border-b border-border-faint last:border-0 last:pb-0 first:pt-0">
+                    <div class="mt-0.5 flex-shrink-0 opacity-60" set:html={ev.icon}></div>
+                    <div class="flex flex-col w-full">
+                      <p class="text-[13px] text-text-primary leading-relaxed">"{ev.text}"</p>
+                      <div class="flex items-center gap-2 mt-1.5">
+                        <span class="text-[11px] font-medium text-text-muted">{ev.source}</span>
+                        <span class="text-[10px] text-border-strong">•</span>
+                        <span class="text-[11px] text-text-muted/80">{ev.time}</span>
+                      </div>
                     </div>
-                    <p class="text-[13px] text-text-secondary">"{ev.text}"</p>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
 
-          <!-- SECTION 3: Affected Sources (col-span-2) -->
-          <div class="md:col-span-2 bg-bg-surface border border-border-default rounded-[20px] p-6 flex flex-col">
-            <h2 class="text-[14px] font-semibold text-text-primary mb-6">Sources Affected</h2>
-            <div class="flex flex-col gap-5 max-h-[320px] overflow-y-auto pr-2">
-              {mockSources.map(source => (
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <div class="flex-shrink-0" set:html={source.icon}></div>
-                    <span class="text-[13px] font-medium text-text-primary">{source.name}</span>
+            <!-- Right: Affected Sources -->
+            <div class="md:col-span-2 p-6 flex flex-col max-h-[360px] overflow-y-auto">
+              <h3 class="text-[11px] font-semibold text-text-muted mb-5 uppercase tracking-wider">Source Breakdown</h3>
+              <div class="flex flex-col gap-5">
+                {sourcesList.map(source => (
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="flex-shrink-0" set:html={source.icon}></div>
+                      <span class="text-[13px] font-medium text-text-primary">{source.name}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span class="text-[13px] font-medium text-text-primary">
+                        {source.count !== undefined && <RollingNumber client:load value={source.count} />}
+                      </span>
+                      <span class="text-[11px] font-medium text-[#10B981] inline-flex items-baseline gap-0.5 w-max justify-end">
+                        &uarr; <RollingNumber client:load value={parseInt(source.increase) || 0} />%
+                      </span>
+                    </div>
                   </div>
-                  <div class="flex items-center gap-3">
-                    <span class="text-[13px] font-medium text-text-primary flex"><RollingNumber client:load value={source.count} /></span>
-                    <span class="text-[11px] font-medium text-[#A32D2D] flex items-center gap-0.5 w-max justify-end">
-                      &uarr; <RollingNumber client:load value={source.count * 2 + 10 + '%'} />
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
 
+          </div>
         </div>
 
         <!-- SECTION 4: Recommended Actions -->
@@ -218,36 +481,30 @@ const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
               <svg class="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
               <h2 class="text-[15px] font-semibold text-text-primary">Recommended Actions</h2>
             </div>
-            <span class="px-2.5 py-1 bg-[#A32D2D]/10 text-[#A32D2D] rounded text-[11px] font-semibold tracking-wide">Priority: High</span>
+            <span class={`px-2.5 py-1 rounded text-[11px] font-semibold tracking-wide ${alertSeverity === 'Critical' || alertSeverity === 'High' ? 'bg-[#A32D2D]/10 text-[#A32D2D]' : 'bg-amber-500/10 text-amber-600'}`}>Priority: {alertSeverity}</span>
           </div>
 
           <div class="flex flex-col gap-4 mb-6">
-            <div class="flex items-start gap-4">
-              <span class="text-[13px] font-mono text-text-secondary mt-0.5">1</span>
-              <p class="text-[13px] text-text-primary">Investigate the root cause of the quality drop in trace performance.</p>
-            </div>
-            <div class="flex items-start gap-4">
-              <span class="text-[13px] font-mono text-text-secondary mt-0.5">2</span>
-              <p class="text-[13px] text-text-primary">Check recent deployments or configuration changes.</p>
-            </div>
-            <div class="flex items-start gap-4">
-              <span class="text-[13px] font-mono text-text-secondary mt-0.5">3</span>
-              <p class="text-[13px] text-text-primary">Monitor the trace value closely and set up additional alerts if needed.</p>
-            </div>
+            {actionsList.map((action, idx) => (
+              <div class="flex items-start gap-4">
+                <span class="text-[13px] font-mono text-text-secondary mt-0.5">{idx + 1}</span>
+                <p class="text-[13px] text-text-primary">{action}</p>
+              </div>
+            ))}
           </div>
 
           <div class="grid grid-cols-3 gap-0 border border-border-faint rounded-xl overflow-hidden bg-bg-subtle/30 mb-6">
             <div class="p-4 flex flex-col gap-1 border-r border-border-faint">
               <span class="text-[11px] text-text-secondary font-medium">Expected Impact</span>
-              <span class="text-[14px] font-semibold text-[#A32D2D]">High</span>
+              <span class={`text-[14px] font-semibold ${alertSeverity === 'Critical' || alertSeverity === 'High' ? 'text-[#A32D2D]' : 'text-amber-500'}`}>{isTraceAlert ? 'High' : (isMemoryAlert ? 'Medium' : 'Low')}</span>
             </div>
             <div class="p-4 flex flex-col gap-1 border-r border-border-faint">
               <span class="text-[11px] text-text-secondary font-medium">Effort</span>
-              <span class="text-[14px] font-semibold text-amber-500">Medium</span>
+              <span class="text-[14px] font-semibold text-amber-500">{isTraceAlert ? 'Medium' : 'Low'}</span>
             </div>
             <div class="p-4 flex flex-col gap-1">
               <span class="text-[11px] text-text-secondary font-medium">Confidence</span>
-              <span class="text-[14px] font-semibold text-emerald-600 flex items-center"><RollingNumber client:load value="96%" /></span>
+              <span class="text-[14px] font-semibold text-emerald-600"><RollingNumber client:load value={alertConfidenceInt} />%</span>
             </div>
           </div>
         </div>
@@ -259,7 +516,7 @@ const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
           </div>
           
           <div class="flex flex-col gap-0 relative max-h-[400px] overflow-y-auto pr-2">
-            <AlertTimeline client:load timeline={mockTimeline} />
+            <AlertTimeline client:load timeline={timelineList} />
           </div>
         </div>
 
@@ -275,19 +532,19 @@ const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
             <div class="flex flex-col gap-4">
               <div class="flex items-center justify-between">
                 <span class="text-[13px] text-text-secondary">Severity</span>
-                <span class="px-2 py-0.5 bg-[#A32D2D]/10 text-[#A32D2D] rounded text-[11px] font-bold">Critical</span>
+                <span class={`px-2 py-0.5 rounded text-[11px] font-bold ${alertSeverity === 'Critical' || alertSeverity === 'High' ? 'bg-[#A32D2D]/10 text-[#A32D2D]' : 'bg-amber-500/10 text-amber-600'}`}>{alertSeverity}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-[13px] text-text-secondary">Status</span>
-                <span class="px-2 py-0.5 bg-blue-500/10 text-blue-600 rounded text-[11px] font-bold">New</span>
+                <span class="px-2 py-0.5 bg-blue-500/10 text-blue-600 rounded text-[11px] font-bold">{alertStatus}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-[13px] text-text-secondary">Impact Score</span>
-                <span class="text-[14px] font-bold text-[#A32D2D] flex items-center"><RollingNumber client:load value="45%" /></span>
+                <span class={`text-[14px] font-bold ${alertSeverity === 'Critical' || alertSeverity === 'High' ? 'text-[#A32D2D]' : 'text-amber-500'}`}><RollingNumber client:load value={alertImpactInt} />%</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-[13px] text-text-secondary">Confidence</span>
-                <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded text-[11px] font-bold flex items-center gap-0.5"><RollingNumber client:load value="96%" /></span>
+                <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded text-[11px] font-bold inline-flex items-baseline gap-0.5"><RollingNumber client:load value={alertConfidenceInt} />%</span>
               </div>
             </div>
           </div>
@@ -298,15 +555,15 @@ const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
             <div class="flex flex-col gap-3.5">
               <div class="flex justify-between items-start">
                 <span class="text-[13px] text-text-secondary mt-0.5">Alert ID</span>
-                <span class="text-[13px] text-text-primary font-mono">{alert.id}</span>
+                <span class="text-[13px] text-text-primary font-mono">#{displayAlertId}</span>
               </div>
               <div class="flex justify-between items-start mt-1">
                 <span class="text-[13px] text-text-secondary">Project</span>
-                <span class="text-[13px] text-text-primary">{alert.project_id || 'guest_project'}</span>
+                <span class="text-[13px] text-text-primary">{appName}</span>
               </div>
               <div class="flex justify-between items-start mt-1">
                 <span class="text-[13px] text-text-secondary">Type</span>
-                <span class="text-[13px] text-text-primary">Quality Drop</span>
+                <span class="text-[13px] text-text-primary">{alertCategory}</span>
               </div>
               <div class="flex justify-between items-start mt-1">
                 <span class="text-[13px] text-text-secondary">First Detected</span>
@@ -314,36 +571,35 @@ const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
               </div>
               <div class="flex justify-between items-start mt-1">
                 <span class="text-[13px] text-text-secondary">Last Updated</span>
-                <span class="text-[13px] text-text-primary">Jun 17, 12:33 PM</span>
+                <span class="text-[13px] text-text-primary">{relativeTime}</span>
               </div>
-
+            </div>
           </div>
 
           <!-- Card 3: Similar Alerts -->
           <div class="bg-bg-surface border border-border-default rounded-[20px] p-6 flex flex-col gap-4">
             <h2 class="text-[15px] font-semibold text-text-primary">Similar Alerts</h2>
             <div class="flex flex-col gap-4 max-h-[250px] overflow-y-auto pr-2">
-              <div class="flex items-center justify-between group cursor-pointer">
-                <div class="flex flex-col gap-1">
-                  <span class="text-[13px] text-text-primary font-medium group-hover:text-accent transition-colors">Trace tr_120 - below threshold 70</span>
-                  <span class="text-[12px] text-text-muted">Quality Drop • 2 days ago</span>
-                </div>
-                <svg class="w-4 h-4 text-text-muted group-hover:text-text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </div>
-              <div class="flex items-center justify-between group cursor-pointer">
-                <div class="flex flex-col gap-1">
-                  <span class="text-[13px] text-text-primary font-medium group-hover:text-accent transition-colors">Trace tr_098 - below threshold 70</span>
-                  <span class="text-[12px] text-text-muted">Quality Drop • 1 week ago</span>
-                </div>
-                <svg class="w-4 h-4 text-text-muted group-hover:text-text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </div>
-              <div class="flex items-center justify-between group cursor-pointer">
-                <div class="flex flex-col gap-1">
-                  <span class="text-[13px] text-text-primary font-medium group-hover:text-accent transition-colors">Trace tr_075 - below threshold 70</span>
-                  <span class="text-[12px] text-text-muted">Quality Drop • 2 weeks ago</span>
-                </div>
-                <svg class="w-4 h-4 text-text-muted group-hover:text-text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </div>
+              {similarAlertsData && similarAlertsData.length > 0 ? (
+                similarAlertsData.map(similar => {
+                  const simDate = new Date(similar.created_at);
+                  const diffDays = Math.floor((new Date().getTime() - simDate.getTime()) / (1000 * 3600 * 24));
+                  const timeStr = diffDays > 0 ? `${diffDays} day${diffDays > 1 ? 's' : ''} ago` : 'Today';
+                  const title = similar.title ? similar.title.split(':')[0].trim() : "Anomaly Detected";
+                  const typeStr = similar.type ? similar.type.charAt(0).toUpperCase() + similar.type.slice(1) : 'Alert';
+                  
+                  return (
+                    <div class="flex items-center justify-between outline-none">
+                      <div class="flex flex-col gap-1 pr-3">
+                        <span class="text-[13px] text-text-primary font-medium line-clamp-1">{title}</span>
+                        <span class="text-[12px] text-text-muted">{typeStr} • {timeStr}</span>
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <div class="text-[13px] text-text-muted italic py-4">No similar alerts detected.</div>
+              )}
             </div>
           </div>
 
@@ -351,16 +607,16 @@ const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
           <div class="bg-bg-surface border border-border-default rounded-[20px] p-4 flex flex-col">
             <h2 class="text-[15px] font-semibold text-text-primary px-2 mb-2">Actions</h2>
             <div class="flex flex-col gap-0.5">
-              <button class="w-full px-2 py-2.5 flex items-center gap-3 hover:bg-bg-subtle rounded-md transition-colors text-left text-[13px] font-medium text-text-secondary hover:text-text-primary">
-                <svg class="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+              <button id="btn-mute-alert" class="w-full px-2 py-2.5 flex items-center gap-3 hover:bg-bg-subtle rounded-md transition-colors text-left text-[13px] font-medium text-text-secondary hover:text-text-primary">
+                <svg class="w-4.5 h-4.5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
                 Mute this alert
               </button>
-              <button class="w-full px-2 py-2.5 flex items-center gap-3 hover:bg-bg-subtle rounded-md transition-colors text-left text-[13px] font-medium text-text-secondary hover:text-text-primary">
-                <svg class="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+              <button id="btn-share-alert" class="w-full px-2 py-2.5 flex items-center gap-3 hover:bg-bg-subtle rounded-md transition-colors text-left text-[13px] font-medium text-text-secondary hover:text-text-primary">
+                <svg class="w-4.5 h-4.5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
                 Share alert
               </button>
-              <button class="w-full px-2 py-2.5 flex items-center gap-3 hover:bg-bg-subtle rounded-md transition-colors text-left text-[13px] font-medium text-text-secondary hover:text-text-primary">
-                <svg class="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              <button id="btn-export-alert" class="w-full px-2 py-2.5 flex items-center gap-3 hover:bg-bg-subtle rounded-md transition-colors text-left text-[13px] font-medium text-text-secondary hover:text-text-primary">
+                <svg class="w-4.5 h-4.5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 Export report
               </button>
             </div>
@@ -372,3 +628,52 @@ const mockTimeline: Array<{ time: string, event: string, details?: string }> = [
     </div>
   </div>
 </DashboardLayout>
+
+<script is:inline define:vars={{ alertId: alert.id, alertMessage: alert.message }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const muteBtn = document.getElementById('btn-mute-alert');
+    const shareBtn = document.getElementById('btn-share-alert');
+    const exportBtn = document.getElementById('btn-export-alert');
+
+    if (muteBtn) {
+      muteBtn.addEventListener('click', () => {
+        muteBtn.innerHTML = `<svg class="w-4.5 h-4.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> <span class="text-green-500">Muted Successfully</span>`;
+        setTimeout(() => {
+          muteBtn.innerHTML = `<svg class="w-4.5 h-4.5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg> Mute this alert`;
+        }, 2000);
+      });
+    }
+
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(window.location.href);
+        shareBtn.innerHTML = `<svg class="w-4.5 h-4.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> <span class="text-green-500">Link Copied!</span>`;
+        setTimeout(() => {
+          shareBtn.innerHTML = `<svg class="w-4.5 h-4.5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg> Share alert`;
+        }, 2000);
+      });
+    }
+
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        const payload = {
+          id: alertId,
+          message: alertMessage,
+          exported_at: new Date().toISOString()
+        };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+        const a = document.createElement('a');
+        a.href = dataStr;
+        a.download = `alert_${alertId}_export.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        
+        exportBtn.innerHTML = `<svg class="w-4.5 h-4.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> <span class="text-green-500">Downloaded!</span>`;
+        setTimeout(() => {
+          exportBtn.innerHTML = `<svg class="w-4.5 h-4.5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export report`;
+        }, 2000);
+      });
+    }
+  });
+</script>

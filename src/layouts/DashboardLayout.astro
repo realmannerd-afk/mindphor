@@ -7,13 +7,14 @@ import { getSupabaseClient } from '../lib/supabase';
 
 interface Props {
 	title?: string;
+  description?: string;
   hideTopbarTitle?: boolean;
   frontmatter?: {
     title: string;
   };
 }
 
-const { title, frontmatter, hideTopbarTitle = false } = Astro.props;
+const { title, description, frontmatter, hideTopbarTitle = false } = Astro.props;
 const pageTitle = title || (frontmatter && frontmatter.title) || 'Dashboard';
 
 const supabase = getSupabaseClient(Astro.cookies);
@@ -25,28 +26,25 @@ try {
   user = data?.user;
 
   if (user) {
+    const { data: apps } = await supabase.from('apps').select('id').eq('user_id', user.id).limit(1);
+    if (!apps || apps.length === 0) {
+      return Astro.redirect('/dashboard/onboarding');
+    }
+
     const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
     if (profile?.name) {
       profileName = profile.name;
     } else if (user.user_metadata?.name) {
       profileName = user.user_metadata.name;
     }
-  }
+    }
+
 } catch (err) {
   console.error("Dashboard layout Supabase error:", err);
 }
-
-const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
-const isGuestCookie = Astro.cookies.has('guest_mode');
-const isGuest = isGuestQuery || isGuestCookie;
-
-
-if (!user && isGuest) {
-  profileName = "Guest User";
-}
 ---
 
-<RootLayout title={pageTitle}>
+<RootLayout title={pageTitle} description={description}>
   <div class="flex h-[100dvh] overflow-hidden bg-bg-base text-text-secondary">
     <!-- Left sidebar: 220px fixed -->
     <Sidebar user={user} profileName={profileName} />
@@ -64,6 +62,5 @@ if (!user && isGuest) {
       </main>
     </div>
   </div>
-  
   <CreateAppModal client:load />
 </RootLayout>

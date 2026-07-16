@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Update the project with the new key
     const { error: updateError } = await supabase
-      .from('projects')
+      .from('apps')
       .update({ api_key: newApiKey })
       .eq('user_id', authData.user.id);
 

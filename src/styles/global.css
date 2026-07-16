@@ -78,6 +78,11 @@
 
 
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
 body {
   background-color: var(--bg-base);
   color: var(--text-secondary);
@@ -90,17 +95,20 @@ button, a {
   cursor: pointer;
 }
 
-/* Custom Webkit & Firefox Scrollbar */
+/* Custom Webkit Scrollbar */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
 }
 ::-webkit-scrollbar {
-  width: 2px;
-  height: 2px;
+  width: 1px;
+  height: 1px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0px;
+  height: 0px;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--border-strong);
@@ -142,4 +150,34 @@ button, a {
 .timeline-item {
   opacity: 0;
   animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s linear infinite;
+}
+
+@keyframes slideRight {
+  0% { transform: translateX(-4px) rotate(180deg); opacity: 0.3; }
+  50% { transform: translateX(0px) rotate(180deg); opacity: 1; }
+  100% { transform: translateX(4px) rotate(180deg); opacity: 0.3; }
+}
+
+.animate-data-flow {
+  animation: slideRight 1.2s ease-in-out infinite;
+}
+
+@keyframes bellRing {
+  0%, 100% { transform: rotate(0deg); }
+  10%, 30%, 50%, 70%, 90% { transform: rotate(10deg); }
+  20%, 40%, 60%, 80% { transform: rotate(-10deg); }
+}
+
+.animate-bell-ring {
+  animation: bellRing 1.5s ease-in-out infinite;
+  transform-origin: top center;
 }

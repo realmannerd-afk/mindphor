@@ -32,6 +32,17 @@
     isRefreshing = false;
   }
 
+  function getRelativeTime(isoString: string) {
+    if (!isoString) return "";
+    const diffMs = Date.now() - new Date(isoString).getTime();
+    const diffHrs = Math.floor(diffMs / 3600000);
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffHrs > 24) return `${Math.floor(diffHrs / 24)} days ago`;
+    if (diffHrs > 0) return `${diffHrs} hrs ago`;
+    if (diffMins > 0) return `${diffMins} mins ago`;
+    return "Just now";
+  }
+
   async function loadData() {
     if (!projectId) {
       alerts = (window as any).mockAlerts || [];
@@ -43,7 +54,12 @@
       const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
-        alerts = json.alerts || [];
+        const rawAlerts = json.alerts || [];
+        alerts = rawAlerts.map((a: any) => ({
+          ...a,
+          sub: a.sub || `${getRelativeTime(a.created_at || a.date)} • ${a.severity || a.type || 'System'}`,
+          message: a.message || a.description || a.title || 'System alert triggered'
+        }));
         updateUnreadCount();
       }
     } catch (e) {
@@ -61,6 +77,35 @@
   }
 
   let isOptionsOpen = false;
+
+  async function markAllAsRead() {
+    isOptionsOpen = false;
+    if (!projectId) return;
+    try {
+      await fetch('/api/alerts', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_id: projectId, all: true })
+      });
+      alerts = alerts.map(a => ({ ...a, is_read: true }));
+      unreadCount = 0;
+    } catch (e) { console.error(e); }
+  }
+
+  async function deleteSelected() {
+    isOptionsOpen = false;
+    if (!projectId || checkedIds.length === 0) return;
+    try {
+      await fetch('/api/alerts', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: checkedIds })
+      });
+      alerts = alerts.filter(a => !checkedIds.includes(a.id));
+      checkedIds = [];
+      updateUnreadCount();
+    } catch (e) { console.error(e); }
+  }
 
   function toggleStar(id: string, e: Event) {
     e.preventDefault();
@@ -121,8 +166,9 @@
 
 <div class="flex flex-col w-full h-full">
   {#if loading}
-    <div class="flex items-center justify-center p-8 text-text-muted">
-      <svg class="w-6 h-6 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+    <div class={`w-full h-full flex-1 flex flex-col items-center justify-center text-text-muted ${expanded ? 'min-h-[60vh]' : 'min-h-[200px]'}`}>
+      <div class="w-8 h-8 border-[3px] border-border-default border-t-text-muted rounded-full animate-spin mb-4"></div>
+      <span class="text-[13px] text-text-muted font-medium animate-pulse">Loading alerts...</span>
     </div>
   {:else if !expanded}
     {#if !overviewLink}
@@ -169,7 +215,7 @@
           
           <div class="relative group/tooltip flex items-center">
             <button on:click={manualReload} class="p-1.5 text-text-muted hover:text-text-primary transition-colors rounded-md hover:bg-bg-elevated focus:outline-none" aria-label="Refresh alerts">
-              <svg class={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-text-primary' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              <svg class={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-text-primary' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><polyline points="21 3 21 8 16 8"></polyline></svg>
             </button>
             <div class="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-bg-elevated border border-border-default text-text-primary text-[11px] font-medium px-2.5 py-1 rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-sm z-10">
               Refresh alerts
@@ -193,7 +239,7 @@
               {@const subject = msgParts.length > 1 ? msgParts[0].trim() : msgFormatted}
               {@const snippetBody = msgParts.length > 1 ? msgParts.slice(1).join(':').trim() : ''}
               
-              {@const subParts = alert.sub.split('•')}
+              {@const subParts = (alert.sub || '').split('•')}
               {@const snippetMeta = subParts.length > 1 ? subParts.slice(1).join(' • ').trim() : ''}
               {@const finalSnippet = snippetBody && snippetMeta ? `${snippetBody} — ${snippetMeta}` : snippetBody || snippetMeta}
 
@@ -207,7 +253,7 @@
                     {alert.type === 'error' ? 'CRITICAL' : alert.type === 'warning' ? 'WARNING' : 'INFO'}
                   </span>
                   <span class="text-[13px] text-text-primary font-semibold truncate leading-snug">{subject}</span>
-                  <span class="text-[12px] font-medium text-text-muted ml-auto flex-shrink-0 group-hover:text-text-primary transition-colors">{formatTimeOnly(alert.sub)}</span>
+                  <span class="text-[12px] font-medium text-text-muted ml-auto flex-shrink-0 group-hover:text-text-primary transition-colors">{formatTimeOnly(alert.sub || '')}</span>
                 </div>
                 {#if finalSnippet}
                   <div class="text-[13px] text-text-secondary truncate leading-relaxed">
@@ -253,10 +299,10 @@
           {#if isOptionsOpen}
             <div class="fixed inset-0 z-40" aria-label="Close dropdown" role="button" tabindex="0" on:keydown={(e) => e.key === 'Escape' && (isOptionsOpen = false)} on:click={() => isOptionsOpen = false}></div>
             <div class="absolute right-0 top-full mt-2 w-48 bg-bg-surface border border-border-default rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] py-1.5 z-50 overflow-hidden flex flex-col font-normal normal-case tracking-normal text-[13px]">
-              <button class="w-full text-left px-4 py-2 text-text-primary hover:bg-bg-subtle transition-colors focus:outline-none" on:click={() => isOptionsOpen = false}>Mark all as read</button>
-              <button class="w-full text-left px-4 py-2 text-text-primary hover:bg-bg-subtle transition-colors focus:outline-none" on:click={() => isOptionsOpen = false}>Delete selected</button>
+              <button class="w-full text-left px-4 py-2 text-text-primary hover:bg-bg-subtle transition-colors focus:outline-none" on:click={markAllAsRead}>Mark all as read</button>
+              <button class={`w-full text-left px-4 py-2 transition-colors focus:outline-none ${checkedIds.length > 0 ? 'text-text-primary hover:bg-bg-subtle' : 'text-text-muted opacity-50 cursor-not-allowed'}`} disabled={checkedIds.length === 0} on:click={deleteSelected}>Delete selected ({checkedIds.length})</button>
               <div class="h-px w-full bg-border-faint my-1"></div>
-              <button class="w-full text-left px-4 py-2 text-text-primary hover:bg-bg-subtle transition-colors focus:outline-none" on:click={() => isOptionsOpen = false}>Alert settings</button>
+              <a href="/dashboard/settings" class="w-full text-left px-4 py-2 text-text-primary hover:bg-bg-subtle transition-colors focus:outline-none block" on:click={() => isOptionsOpen = false}>Alert settings</a>
             </div>
           {/if}
         </div>
@@ -273,7 +319,7 @@
           <!-- Refresh/Action Col -->
           <div class="flex items-center justify-center relative">
             <button class="text-text-muted hover:text-text-primary transition-colors focus:outline-none flex items-center justify-center" aria-label="Refresh alerts" on:click={handleRefresh}>
-              <svg class="w-[16px] h-[16px] {isRefreshing ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              <svg class="w-[16px] h-[16px] {isRefreshing ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><polyline points="21 3 21 8 16 8"></polyline></svg>
             </button>
           </div>
           

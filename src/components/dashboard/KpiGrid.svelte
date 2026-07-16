@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import * as echarts from 'echarts';
+  import Chart from 'chart.js/auto';
   import { animate, stagger } from 'motion';
   import { 
     IconMessageCircle, 
@@ -27,29 +27,40 @@
     kpis.forEach((kpi, idx) => {
       const el = chartContainers[idx];
       if (el) {
-        const chart = echarts.init(el);
-        chart.setOption({
-          grid: { top: 2, bottom: 2, left: 0, right: 0 },
-          xAxis: { type: 'category', show: false },
-          yAxis: { type: 'value', show: false, min: 'dataMin' },
-          series: [{
-            data: kpi.data,
-            type: 'line',
-            smooth: true,
-            symbol: 'none',
-            lineStyle: { width: 2, color: kpi.color },
-            areaStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: kpi.color + '40' },
-                { offset: 1, color: kpi.color + '00' }
-              ])
-            }
-          }],
-          tooltip: { show: false }
+        const ctx = el.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 40);
+        gradient.addColorStop(0, kpi.color + '40');
+        gradient.addColorStop(1, kpi.color + '00');
+
+        const chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['1', '2', '3', '4', '5', '6', '7'],
+            datasets: [{
+              data: kpi.data,
+              borderColor: kpi.color,
+              borderWidth: 2,
+              backgroundColor: gradient,
+              fill: true,
+              pointRadius: 0,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: false }
+            },
+            scales: {
+              x: { display: false },
+              y: { display: false, min: Math.min(...kpi.data) * 0.9 }
+            },
+            layout: { padding: 0 }
+          }
         });
-        
-        const resizeObserver = new ResizeObserver(() => chart.resize());
-        resizeObserver.observe(el);
+        el.__chart = chart;
       }
     });
 
@@ -76,7 +87,9 @@
       </div>
       <div class="flex items-end justify-between">
         <div class="text-2xl font-bold text-text-primary tracking-tight">{kpi.value}</div>
-        <div class="w-24 h-10" bind:this={chartContainers[idx]}></div>
+        <div class="w-24 h-10 relative">
+          <canvas bind:this={chartContainers[idx]}></canvas>
+        </div>
       </div>
     </div>
   {/each}

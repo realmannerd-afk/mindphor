@@ -17,13 +17,6 @@ const selectedDate = Astro.url.searchParams.get('date');
   <div class="flex items-center gap-4">
     <!-- Date Filter -->
     <DatePicker client:load initialDate={selectedDate} />
-
-    <!-- Avatar -->
-    {user && (
-      <a href="/dashboard/profile" class="w-7 h-7 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-accent group">
-        <span class="text-accent font-medium text-[13px] group-hover:scale-105 transition-transform">{profileName.charAt(0).toUpperCase()}</span>
-      </a>
-    )}
   </div>
 </header>
 

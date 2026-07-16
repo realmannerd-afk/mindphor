@@ -94,7 +94,7 @@
 
   $: displayText = selectedDate 
     ? selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    : 'Select Date';
+    : new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 </script>
 
 <div class="relative" bind:this={dropdownRef}>

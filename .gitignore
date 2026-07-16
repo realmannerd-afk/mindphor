@@ -41,3 +41,7 @@ sdk/__pycache__/
 # test files with real keys
 scratch_get_key.js
 test_schema.ts
+.vercel
+
+# local assets not meant for github
+public/local_logos/

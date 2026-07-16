@@ -6,7 +6,7 @@
   $: chars = valueStr.split('');
 </script>
 
-<span class="inline-flex overflow-hidden select-none font-semibold tracking-tight">
+<span class="inline-flex items-baseline overflow-hidden select-none font-semibold tracking-tight">
   {#each chars as char, i (chars.length - i + (/\d/.test(char) ? 'd' : char))}
     {#if /\d/.test(char)}
       <RollingDigit digit={char} delay={i * 120} />
@@ -19,5 +19,6 @@
 <style>
   .non-digit {
     display: inline-block;
+    vertical-align: baseline;
   }
 </style>

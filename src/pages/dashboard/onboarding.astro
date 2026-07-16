@@ -1,0 +1,24 @@
+---
+import RootLayout from '../../layouts/RootLayout.astro';
+import CreateAppModal from '../../components/islands/CreateAppModal.svelte';
+import { getSupabaseClient } from '../../lib/supabase';
+
+const supabase = getSupabaseClient(Astro.cookies);
+const { data: userData } = await supabase.auth.getUser();
+
+if (userData?.user) {
+  const { data: projects } = await supabase.from('apps').select('id').eq('user_id', userData.user.id).limit(1);
+  if (projects && projects.length > 0) {
+    return Astro.redirect('/dashboard');
+  }
+} else {
+  return Astro.redirect('/login');
+}
+---
+
+<RootLayout title="Onboarding">
+  <div class="min-h-screen w-full bg-bg-base flex items-center justify-center p-6 relative">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-bg-base to-bg-base"></div>
+    <CreateAppModal client:load forceShow={true} />
+  </div>
+</RootLayout>

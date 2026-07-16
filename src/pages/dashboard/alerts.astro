@@ -8,23 +8,31 @@ const { data: userData } = await supabase.auth.getUser();
 
 let projectId = null;
 if (userData?.user) {
-  let { data: project } = await supabase.from('projects').select('id').eq('user_id', userData.user.id).limit(1);
-  projectId = project?.[0]?.id;
-} else {
-  const isGuest = Astro.url.searchParams.get('guest') === 'true' || Astro.cookies.has('guest_mode');
-  if (isGuest) {
-    projectId = "guest_project";
+  projectId = Astro.cookies.get('mindphor_app_id')?.value;
+  
+  let query = supabase.from('apps').select('id').eq('user_id', userData.user.id);
+  if (projectId) {
+    query = query.eq('id', projectId);
+  } else {
+    query = query.order('created_at', { ascending: false });
   }
+  
+  let { data: apps } = await query.limit(1);
+  projectId = apps?.[0]?.id;
+} else {
+  
 }
 
 if (projectId) {
-  const { count } = await supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('project_id', projectId);
+  const { count } = await supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('app_id', projectId);
   Astro.cookies.set('last_seen_alerts_count', (count || 0).toString(), { path: '/' });
 }
+
+const selectedDate = Astro.url.searchParams.get('date') || '';
 ---
 
 <DashboardLayout title="Alerts">
-  <div class="w-full flex flex-col pb-10">
-    <AlertsFeed client:load projectId={projectId} expanded={true} />
+  <div class="w-full flex-1 flex flex-col pb-10">
+    <AlertsFeed client:load projectId={projectId} expanded={true} date={selectedDate} />
   </div>
 </DashboardLayout>

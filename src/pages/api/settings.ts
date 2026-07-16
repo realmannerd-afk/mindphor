@@ -29,6 +29,21 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
     if (body.name !== undefined) {
       updates.name = body.name;
     }
+    if (body.play_store_url !== undefined) {
+      updates.play_store_url = body.play_store_url;
+    }
+    if (body.app_store_url !== undefined) {
+      updates.app_store_url = body.app_store_url;
+    }
+    if (body.reddit_search_term !== undefined) {
+      updates.reddit_search_term = body.reddit_search_term;
+    }
+    if (body.sync_frequency !== undefined) {
+      const validFreqs = ['every_6_hours', 'daily', 'weekly', 'manual'];
+      if (validFreqs.includes(body.sync_frequency)) {
+        updates.sync_frequency = body.sync_frequency;
+      }
+    }
 
     if (Object.keys(updates).length === 0) {
       return new Response(JSON.stringify({ error: "No fields to update" }), {

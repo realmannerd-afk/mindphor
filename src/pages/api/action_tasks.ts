@@ -10,14 +10,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: "Missing app_id" }), { status: 400 });
     }
 
-    if (appId === 'guest_project') {
-      return new Response(JSON.stringify({
-        tasks: [
-          { id: 't_1', text: 'Review customer request overlap data', completed: false, order_index: 0 },
-          { id: 't_2', text: 'Analyze latest pricing changes', completed: true, order_index: 1 },
-        ]
-      }), { status: 200 });
-    }
+
 
     const supabase = getSupabaseClient(cookies);
     const { data: { user } } = await supabase.auth.getUser();
@@ -46,9 +39,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const body = await request.json();
     const { app_id, text, completed, order_index } = body;
 
-    if (app_id === 'guest_project') {
-      return new Response(JSON.stringify({ success: true, task: { id: `guest_task_${Date.now()}`, text, completed, order_index } }), { status: 200 });
-    }
+
 
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
 
@@ -75,26 +66,30 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     const { tasks } = body; // Array of { id, order_index, completed }
 
     if (!tasks) return new Response(JSON.stringify({ error: "Missing tasks" }), { status: 400 });
-    if (tasks.length > 0 && tasks[0].app_id === 'guest_project') {
-      return new Response(JSON.stringify({ success: true }), { status: 200 });
-    }
+
 
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
 
     // Supabase JS doesn't support bulk upsert easily without specifying unique constraints in the insert method
     // For simplicity, we can iterate or use a stored procedure. Let's do simple iteration for small lists.
     for (const task of tasks) {
-      if (task.id.startsWith('guest_')) continue;
-      let updatePayload: any = { order_index: task.order_index, completed: task.completed };
-      if (task.description !== undefined) {
-        updatePayload.description = task.description;
-      }
+      let updatePayload: any = {};
+      if (task.order_index !== undefined) updatePayload.order_index = task.order_index;
+      if (task.completed !== undefined) updatePayload.completed = task.completed;
+      if (task.text !== undefined) updatePayload.text = task.text;
+      if (task.description !== undefined) updatePayload.description = task.description;
+      if (task.due_date !== undefined) updatePayload.due_date = task.due_date;
 
-      await supabase
+      const { error } = await supabase
         .from('action_tasks')
         .update(updatePayload)
         .eq('id', task.id)
         .eq('user_id', user.id);
+        
+      if (error) {
+        console.error("Supabase update error:", error);
+        throw error;
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
@@ -109,9 +104,7 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
     const id = url.searchParams.get('id');
 
     if (!id) return new Response(JSON.stringify({ error: "Missing id" }), { status: 400 });
-    if (id.startsWith('guest_') || id === 't_1' || id === 't_2') {
-      return new Response(JSON.stringify({ success: true }), { status: 200 });
-    }
+
 
     const supabase = getSupabaseClient(cookies);
     const { data: { user } } = await supabase.auth.getUser();

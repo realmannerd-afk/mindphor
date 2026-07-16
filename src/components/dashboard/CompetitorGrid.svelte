@@ -1,8 +1,9 @@
 <script>
   import { onMount } from 'svelte';
-  import * as echarts from 'echarts';
+  import Chart from 'chart.js/auto';
   import { animate, stagger } from 'motion';
   import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-svelte';
+  import Logo from '../islands/Logo.svelte';
 
   const competitors = [
     { name: 'Linear', domain: 'linear.app', mentions: '2.4k', sentiment: 'Positive', trend: 'up', threat: 92, gaps: 14, color: '#5e6ad2' },
@@ -18,7 +19,6 @@
     competitors.forEach((comp, idx) => {
       const el = radarContainers[idx];
       if (el) {
-        const chart = echarts.init(el);
         const dataVals = [
           comp.threat,
           Math.floor(Math.random() * 40 + 60),
@@ -26,37 +26,41 @@
           Math.floor(Math.random() * 40 + 60),
           Math.floor(Math.random() * 40 + 60)
         ];
-        
-        chart.setOption({
-          radar: {
-            indicator: [
-              { name: 'Threat', max: 100 },
-              { name: 'Mentions', max: 100 },
-              { name: 'Sentiment', max: 100 },
-              { name: 'Growth', max: 100 },
-              { name: 'Gaps', max: 100 }
-            ],
-            radius: '65%',
-            axisName: { color: 'var(--color-text-muted)', fontSize: 9 },
-            splitArea: { show: false },
-            splitLine: { lineStyle: { color: 'var(--color-border-faint)' } },
-            axisLine: { lineStyle: { color: 'var(--color-border-faint)' } }
+        const chart = new Chart(el.getContext('2d'), {
+          type: 'radar',
+          data: {
+            labels: ['Threat', 'Mentions', 'Sentiment', 'Growth', 'Gaps'],
+            datasets: [{
+              label: comp.name,
+              data: dataVals,
+              backgroundColor: comp.color + '33',
+              borderColor: comp.color,
+              pointBackgroundColor: comp.color,
+              borderWidth: 1.5,
+              pointRadius: 0,
+            }]
           },
-          series: [{
-            type: 'radar',
-            data: [{
-              value: dataVals,
-              name: comp.name,
-              itemStyle: { color: comp.color },
-              areaStyle: { color: comp.color, opacity: 0.2 },
-              lineStyle: { width: 1.5 }
-            }],
-            symbol: 'none'
-          }],
-          tooltip: { show: false }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: false }
+            },
+            scales: {
+              r: {
+                min: 0,
+                max: 100,
+                ticks: { display: false },
+                pointLabels: { color: 'var(--color-text-muted)', font: { size: 9 } },
+                grid: { color: 'var(--color-border-faint)' },
+                angleLines: { color: 'var(--color-border-faint)' }
+              }
+            }
+          }
         });
-        const resizeObserver = new ResizeObserver(() => chart.resize());
-        resizeObserver.observe(el);
+        // Save instance to destroy later if needed
+        el.__chart = chart;
       }
     });
 
@@ -77,7 +81,7 @@
     {#each competitors as comp, idx}
       <div class="competitor-card opacity-0 bg-bg-surface border border-border-default rounded-xl p-5 flex flex-col hover:border-border-strong transition-colors cursor-pointer group">
         <div class="flex justify-between items-start mb-4">
-          <img src={`https://img.logo.dev/${comp.domain}?token=pk_q0D6rLqTRt6wF3L-kYjIqg`} alt={comp.name} class="w-8 h-8 rounded-md bg-white border border-border-faint p-0.5 object-contain" onerror={(e) => e.currentTarget.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjODg4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSI+PC9jaXJjbGU+PHBvbHlsaW5lIHBvaW50cz0iMjEgMTUgMTYgMTAgNSAyMSI+PC9wb2x5bGluZT48L3N2Zz4='}/>
+          <Logo domain={comp.domain} alt={comp.name} className="w-8 h-8 rounded-md bg-white border border-border-faint p-0.5 object-contain" />
           <div class={`flex items-center justify-center w-6 h-6 rounded-full ${comp.trend === 'up' ? 'bg-red-500/10 text-red-500' : comp.trend === 'down' ? 'bg-green-500/10 text-green-500' : 'bg-bg-subtle text-text-secondary'}`}>
             <svelte:component this={comp.trend === 'up' ? IconTrendingUp : comp.trend === 'down' ? IconTrendingDown : IconMinus} size={14} stroke={2.5} />
           </div>
@@ -85,7 +89,9 @@
         <h3 class="text-sm font-semibold text-text-primary mb-1 group-hover:text-accent transition-colors">{comp.name}</h3>
         <p class="text-[11px] text-text-muted mb-4">{comp.mentions} mentions • {comp.sentiment}</p>
         
-        <div class="w-full h-32 mb-4" bind:this={radarContainers[idx]}></div>
+        <div class="w-full h-32 mb-4 relative">
+          <canvas bind:this={radarContainers[idx]}></canvas>
+        </div>
 
         <div class="grid grid-cols-2 gap-2 mt-auto border-t border-border-faint pt-4">
           <div>

@@ -15,69 +15,68 @@ const { data: userData } = await supabase.auth.getUser();
 let hasTraces = false;
 let projectId = null;
 let apiKey = null;
+let playStoreUrl = null;
 
 if (userData?.user) {
-  // Get or create project
-  let { data: projects } = await supabase.from('projects').select('id, api_key').eq('user_id', userData.user.id).limit(1);
-  let project = projects?.[0];
+  // Get active project from cookie or default to latest
+  projectId = Astro.cookies.get('mindphor_app_id')?.value;
+  
+  let query = supabase.from('apps').select('id, api_key, play_store_url').eq('user_id', userData.user.id);
+  if (projectId) {
+    query = query.eq('id', projectId);
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
+  
+  let { data: apps } = await query.limit(1);
+  let project = apps?.[0];
   
   if (!project) {
-    // Generate new secure key and create default project
-    const newApiKey = "sk_live_" + crypto.randomUUID().replace(/-/g, '');
-    const { data: newProject } = await supabase.from('projects').insert({
-      user_id: userData.user.id,
-      name: 'Default Project',
-      api_key: newApiKey
-    }).select('id, api_key').single();
-    project = newProject || undefined;
+    return Astro.redirect('/dashboard/onboarding');
   }
-
   if (project) {
     projectId = project.id;
     apiKey = project.api_key;
+    playStoreUrl = project.play_store_url;
     
     // Check if any traces exist
-    const { count } = await supabase.from('traces').select('*', { count: 'exact', head: true }).eq('project_id', project.id);
+    const { count } = await supabase.from('feedback').select('*', { count: 'exact', head: true }).eq('app_id', project.id);
     hasTraces = (count || 0) > 0;
   }
 } else {
-  const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
-  const isGuestCookie = Astro.cookies.has('guest_mode');
-  const isGuest = isGuestQuery || isGuestCookie;
-  if (isGuest) {
+        if (isGuest) {
     projectId = "guest_project";
     apiKey = "sk_guest_demo_key";
     hasTraces = true;
   }
 }
 
-const skippedOnboarding = Astro.cookies.has('skipped_onboarding');
 const selectedDate = Astro.url.searchParams.get('date') || '';
 ---
 
-{(hasTraces || skippedOnboarding) ? (
-  <DashboardLayout title="Overview">
-    <MetricCards client:load projectId={projectId} date={selectedDate} />
-    <ScoreChart client:load projectId={projectId} date={selectedDate} />
-    <TraceTable client:load projectId={projectId} overviewLink={true} date={selectedDate} />
+<DashboardLayout title="Overview">
+  {hasTraces ? (
+    <Fragment>
+      <MetricCards client:load projectId={projectId} date={selectedDate} />
+      <ScoreChart client:load projectId={projectId} date={selectedDate} />
+      <TraceTable client:load projectId={projectId} overviewLink={true} date={selectedDate} />
 
-    <!-- Memory + Alerts Row -->
-    <div class="flex flex-col lg:flex-row gap-[16px] mb-2 w-full">
-      <!-- Left: Memory viewer (55%) -->
-      <div class="w-full lg:w-[55%] h-[364px]">
-        <MemoryViewer client:load projectId={projectId} overviewLink={true} date={selectedDate} />
+      <!-- Memory + Alerts Row -->
+      <div class="flex flex-col lg:flex-row gap-[16px] mb-2 w-full">
+        <!-- Left: Memory viewer (55%) -->
+        <div class="w-full lg:w-[55%] h-[364px]">
+          <MemoryViewer client:load projectId={projectId} overviewLink={true} date={selectedDate} />
+        </div>
+        
+        <!-- Right: Alerts feed (45%) -->
+        <div class="w-full lg:w-[45%] h-[364px]">
+          <AlertsFeed client:load projectId={projectId} overviewLink={true} date={selectedDate} />
+        </div>
       </div>
-      
-      <!-- Right: Alerts feed (45%) -->
-      <div class="w-full lg:w-[45%] h-[364px]">
-        <AlertsFeed client:load projectId={projectId} overviewLink={true} date={selectedDate} />
-      </div>
+    </Fragment>
+  ) : (
+    <div class="w-full h-[80vh] flex items-center justify-center">
+      <EmptyStateOnboarding client:load projectId={projectId} playStoreUrl={playStoreUrl} />
     </div>
-  </DashboardLayout>
-) : (
-  <RootLayout title="Welcome">
-    <div class="min-h-screen w-full bg-bg-base flex items-center justify-center p-6">
-      <EmptyStateOnboarding client:load apiKey={apiKey} projectId={projectId} />
-    </div>
-  </RootLayout>
-)}
+  )}
+</DashboardLayout>

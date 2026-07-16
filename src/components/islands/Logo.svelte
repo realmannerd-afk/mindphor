@@ -8,7 +8,16 @@
   $: urls = LogoService.getLogoUrls(domain);
   let currentIdx = 0;
 
+  $: {
+    if (domain === 'Google Play' || domain === 'playstore' || domain === 'google_play') {
+      console.log('Logo.svelte rendering:', domain, urls);
+    }
+  }
+
   function handleError(e: Event) {
+    if (domain === 'Google Play' || domain === 'playstore' || domain === 'google_play') {
+      console.error('Logo failed to load:', urls[currentIdx]);
+    }
     if (currentIdx < urls.length - 1) {
       currentIdx++;
     } else {
@@ -23,11 +32,10 @@
   }
 </script>
 
-<span class={`logo-container ${domain?.toLowerCase().trim() === 'twitter' || domain?.toLowerCase().trim() === 'x' ? 'scale-75' : ''}`} data-domain={domain?.toLowerCase().trim()}>
+<span class="logo-container w-full h-full" data-domain={domain?.toLowerCase().trim()}>
   <img 
     src={urls[currentIdx]} 
     {alt} 
-    title={title || alt}
     class={className} 
     onerror={handleError} 
   />
@@ -39,5 +47,4 @@
     align-items: center;
     justify-content: center;
   }
-
 </style>

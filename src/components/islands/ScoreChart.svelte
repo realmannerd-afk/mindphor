@@ -1,20 +1,17 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Chart from 'chart.js/auto';
-  import Logo from './Logo.svelte';
 
   export let projectId: string;
   export let date: string = '';
 
   let lineCanvas: HTMLCanvasElement;
   let lineChart: Chart;
-  let categoryData: { category: string, score: number }[] = [
-    { category: 'Google Play', score: 0 },
-    { category: 'App Store', score: 0 },
-    { category: 'Reddit', score: 0 },
-    { category: 'Twitter', score: 0 }
-  ];
   let pollInterval: any;
+  let versionLabels: (string | null)[] = [];
+  let validPointsCount = 0;
+  let currentAvgRating = "0.0";
+  let isLoaded = false;
 
   async function loadData() {
     if (!projectId) return;
@@ -22,13 +19,42 @@
       const url = `/api/dashboard?app_id=${projectId}${date ? `&date=${date}` : ''}`;
       const res = await fetch(url);
       const json = await res.json();
-      if (json.score_by_day && lineChart) {
-        lineChart.data.labels = json.score_by_day.map((d: any) => d.day);
-        lineChart.data.datasets[0].data = json.score_by_day.map((d: any) => d.score);
+      if (json.rating_by_day && lineChart) {
+        let labels = json.rating_by_day.map((d: any) => {
+          const parts = d.date.split('-');
+          if (parts.length === 3) {
+            const dateObj = new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])));
+            return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+          }
+          return d.date;
+        });
+        let ratingData = json.rating_by_day.map((d: any) => d.avg_rating);
+        
+        const versionMarkers = json.rating_by_day.map((d: any) => {
+          const change = json.version_changes ? json.version_changes.find((vc: any) => vc.date === d.date) : null;
+          return change ? d.avg_rating : null;
+        });
+        
+        versionLabels = json.rating_by_day.map((d: any) => {
+          const change = json.version_changes ? json.version_changes.find((vc: any) => vc.date === d.date) : null;
+          return change ? change.version : null;
+        });
+
+        validPointsCount = ratingData.filter((r: any) => r !== null && r !== undefined).length;
+        
+        if (validPointsCount > 0) {
+          const sum = ratingData.reduce((acc: number, curr: any) => (curr !== null && curr !== undefined) ? acc + curr : acc, 0);
+          currentAvgRating = (sum / validPointsCount).toFixed(1);
+        }
+        
+        isLoaded = true;
+
+        lineChart.data.labels = labels.length ? labels : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        lineChart.data.datasets[0].data = ratingData.length ? ratingData : [1, 1, 1, 1, 1, 1, 1];
+        
+        lineChart.data.datasets[0].pointRadius = validPointsCount === 1 ? 4 : 0;
+        
         lineChart.update('none');
-      }
-      if (json.score_by_category) {
-        categoryData = json.score_by_category;
       }
     } catch (e) {
       console.error(e);
@@ -52,7 +78,7 @@
     // LINE CHART
     const lineCtx = lineCanvas.getContext('2d');
     if (lineCtx) {
-      const lineGradient = lineCtx.createLinearGradient(0, 0, 0, 220);
+      const lineGradient = lineCtx.createLinearGradient(0, 0, 0, 280);
       lineGradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
       lineGradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
 
@@ -61,21 +87,25 @@
         data: {
           labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
           datasets: [{
-            label: 'Avg Rating',
-            data: [0, 0, 0, 0, 0, 0, 0],
+            label: 'Average Rating',
+            data: [1, 1, 1, 1, 1, 1, 1],
             borderColor: accent,
             backgroundColor: lineGradient,
             borderWidth: 3,
             tension: 0.45,
             fill: true,
+            spanGaps: true,
             pointRadius: 0,
-            pointHoverRadius: 6,
-            pointBackgroundColor: '#FFFFFF',
-            pointBorderColor: accent,
+            pointHoverRadius: 7,
+            pointBackgroundColor: accent,
+            pointBorderColor: '#FFFFFF',
             pointBorderWidth: 2
           }]
         },
         options: {
+          layout: {
+            padding: { top: 10, right: 15, bottom: 5, left: 5 }
+          },
           responsive: true,
           maintainAspectRatio: false,
           interaction: { mode: 'index', intersect: false },
@@ -95,14 +125,14 @@
               bodyFont: { size: 11, family: 'Geist', weight: 500 },
               callbacks: {
                 label: function(context) {
-                  return `Avg Rating: ${context.parsed.y}%`;
+                  return `Average Rating: ${context.parsed.y}`;
                 }
               }
             } 
           },
           scales: {
             y: {
-              min: 0, max: 100,
+              min: 0, max: 5.5,
               grid: { display: false },
               ticks: { display: false },
               border: { display: false }
@@ -128,33 +158,28 @@
   });
 </script>
 
-<div class="bg-bg-surface border border-border-default rounded-[16px] overflow-hidden flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-border-faint mb-10">
-  <!-- Left Chart (60%) -->
-  <div class="w-full lg:w-[60%] p-[24px]">
-    <div class="text-[11px] uppercase tracking-wider text-text-muted mb-[16px]">Rating & Sentiment Trend</div>
-    <div class="relative w-full h-[220px]">
-      <canvas bind:this={lineCanvas}></canvas>
-    </div>
-  </div>
-
-  <!-- Right Chart (40%) -->
-  <div class="w-full lg:w-[40%] p-[24px]">
-    <div class="text-[11px] uppercase tracking-wider text-text-muted mb-[16px]">Reviews by Platform</div>
-    <div class="relative w-full h-[220px] flex flex-col justify-around py-2">
-      {#each categoryData as item}
-        <div class="flex items-center w-full gap-4 group">
-          <Logo domain={item.category.replace(' ', '_').toLowerCase()} alt={item.category} className="w-[20px] h-[20px] object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
-          <div class="flex-1 flex flex-col justify-center">
-            <div class="flex justify-between items-end mb-1.5">
-              <span class="text-[12px] font-medium text-text-primary">{item.category}</span>
-              <span class="text-[12px] font-medium text-text-muted group-hover:text-text-primary transition-colors">{item.score}%</span>
-            </div>
-            <div class="w-full bg-bg-subtle h-2.5 rounded-[4px] overflow-hidden border border-border-faint">
-              <div class="bg-gradient-to-r from-indigo-500/60 to-indigo-500 h-full rounded-[4px] transition-all duration-500 ease-out" style="width: {item.score}%"></div>
-            </div>
+<div class="bg-bg-surface border border-border-default rounded-[16px] overflow-hidden mb-10">
+  <div class="w-full p-[24px]">
+    <div class="text-[11px] uppercase tracking-wider text-text-muted mb-2">Rating & Sentiment Trend</div>
+    
+    {#if !isLoaded}
+      <div class="w-full h-[100px] flex items-center justify-center text-[13px] text-text-secondary">
+        Loading...
+      </div>
+    {:else if validPointsCount < 3}
+      <div class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="text-[14px] font-medium text-text-primary">Building trend graph...</div>
+        {#if validPointsCount > 0}
+          <div class="text-[13px] text-text-secondary mt-2">
+            Current rating is <span class="text-accent font-semibold">{currentAvgRating}</span> ({validPointsCount} {validPointsCount === 1 ? 'day' : 'days'} collected)
           </div>
-        </div>
-      {/each}
+        {/if}
+        <div class="text-[12px] text-text-muted mt-2">Requires at least 3 days of monitoring to plot.</div>
+      </div>
+    {/if}
+
+    <div class="relative w-full h-[280px] {!isLoaded || validPointsCount < 3 ? 'hidden' : 'mt-4'}">
+      <canvas bind:this={lineCanvas}></canvas>
     </div>
   </div>
 </div>

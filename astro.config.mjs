@@ -17,6 +17,7 @@ export default defineConfig({
   },
 
   integrations: [svelte(), mdx(), react()],
+  prefetch: true,
   output: 'server',
   adapter: vercel()
 });

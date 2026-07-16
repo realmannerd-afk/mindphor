@@ -1,5 +1,8 @@
 ---
 import { getSupabaseClient } from '../../lib/supabase';
+import { LogoService } from '../../lib/logos/LogoService';
+import { getApps } from '../../lib/apps';
+import UserAvatarReact from '../islands/UserAvatarReact.tsx';
 
 interface Props {
   user?: any;
@@ -17,22 +20,25 @@ const currentAppLogo = isCompetitors
 
 let alertsCount = 0;
 let apps: any[] = [];
+let projectId = null;
 try {
   const supabase = getSupabaseClient(Astro.cookies);
-  let projectId = null;
   if (user) {
     const { data: userApps } = await supabase.from('apps').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
     apps = userApps || [];
-    projectId = apps?.[0]?.id;
-  } else {
-    const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
-    const isGuestCookie = Astro.cookies.has('guest_mode');
-    if (isGuestQuery || isGuestCookie) {
-      projectId = "guest_project";
+    
+    const activeAppCookie = Astro.cookies.get('mindphor_app_id')?.value;
+    if (activeAppCookie && apps.some(a => a.id === activeAppCookie)) {
+      projectId = activeAppCookie;
+    } else if (apps.length > 0) {
+      projectId = apps[0].id;
+      // It's safe to set a cookie in Astro frontmatter before the body is sent
+      Astro.cookies.set('mindphor_app_id', projectId, { path: '/', maxAge: 31536000 });
     }
   }
 
   if (projectId) {
+    currentApp = apps.find(a => a.id === projectId);
     // For now, map project_id to app_id since alerts use app_id
     const { count } = await supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('app_id', projectId);
     alertsCount = count || 0;
@@ -43,9 +49,15 @@ try {
 
 // Ensure at least an empty array for rendering
 apps = apps || [];
-const currentApp = apps.length > 0 ? apps[0] : null;
+const currentApp = apps.find(a => a.id === projectId) || (apps.length > 0 ? apps[0] : null);
 const dynamicAppName = currentApp ? currentApp.name : 'No App Selected';
-const defaultAppLogo = 'https://raw.githubusercontent.com/ln-dev7/logos-apps/master/logos/linear.svg';
+const getAppLogo = (name: string) => {
+  if (name === "Lumina AI") {
+    return "https://api.dicebear.com/7.x/initials/svg?seed=Lumina+AI&backgroundColor=1E293B&textColor=ffffff";
+  }
+  const urls = LogoService.getLogoUrls(name);
+  return urls[0] || 'https://api.dicebear.com/7.x/initials/svg?seed=App&backgroundColor=1E293B&textColor=ffffff';
+};
 
 const isAlertsPage = pathname === '/dashboard/alerts' || pathname.startsWith('/dashboard/alerts/');
 let unreadCount = 0;
@@ -69,8 +81,10 @@ const navItems = [
 
 <aside class="w-[220px] flex-shrink-0 bg-bg-base border-r border-border-default flex flex-col">
   <!-- 48px height to perfectly align with Topbar -->
-  <div class="h-[48px] flex items-center px-6">
-    <a href={user ? "/dashboard" : "/"} class="text-[15px] font-medium text-text-primary tracking-tight hover:opacity-80 transition-opacity">Mindphor</a>
+  <div class="h-[48px] flex items-center px-6 border-b border-border-default">
+    <a href={user ? "/dashboard" : "/"} class="group flex items-baseline gap-0 transition-opacity cursor-pointer">
+      <span class="text-[15px] font-medium text-text-primary tracking-tight transition-opacity duration-200 group-hover:opacity-70">Mindphor</span>
+    </a>
   </div>
   
   <div class="px-4 mt-6 mb-4 relative z-50">
@@ -78,7 +92,7 @@ const navItems = [
       <summary class="list-none flex items-center justify-between w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg hover:border-border-strong transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20">
         <div class="flex items-center gap-2 overflow-hidden">
           {currentApp ? (
-            <img src={defaultAppLogo} alt={dynamicAppName} class="w-4 h-4 object-contain flex-shrink-0" />
+            <img src={getAppLogo(dynamicAppName)} alt={dynamicAppName} class="w-4 h-4 object-contain flex-shrink-0 rounded-[4px]" />
           ) : (
             <svg class="w-4 h-4 text-text-muted flex-shrink-0" viewBox="0 0 256 256" fill="currentColor"><path d="M200,136H136v64a8,8,0,0,1-16,0V136H56a8,8,0,0,1,0-16h64V56a8,8,0,0,1,16,0v64h64a8,8,0,0,1,0,16Z"></path></svg>
           )}
@@ -90,8 +104,8 @@ const navItems = [
       <div class="absolute left-0 right-0 top-[calc(100%+4px)] bg-bg-surface border border-border-default rounded-lg shadow-xl overflow-hidden z-[100] max-h-[300px] overflow-y-auto custom-scrollbar">
         {apps.map((app: any) => (
           <div class="p-1">
-            <button class="w-full px-2 py-1.5 flex items-center gap-2 hover:bg-bg-subtle rounded-md transition-colors text-left text-text-secondary hover:text-text-primary">
-              <img src={defaultAppLogo} alt={app.name} class="w-4 h-4 object-contain flex-shrink-0 opacity-70" />
+            <button onclick={`document.cookie = 'mindphor_app_id=${app.id}; path=/; max-age=31536000'; window.location.reload();`} class="w-full px-2 py-1.5 flex items-center gap-2 hover:bg-bg-subtle rounded-md transition-colors text-left text-text-secondary hover:text-text-primary">
+              <img src={getAppLogo(app.name)} alt={app.name} class="w-4 h-4 object-contain flex-shrink-0 opacity-70" />
               <span class="text-[13px] font-medium truncate flex-1">{app.name}</span>
               {currentApp?.id === app.id && <svg class="w-3 h-3 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>}
             </button>
@@ -114,6 +128,7 @@ const navItems = [
       return (
         <a 
           href={item.href} 
+          data-astro-prefetch="hover"
           class={`flex items-center justify-between px-3 py-2.5 text-[13px] rounded-md transition-colors ${
             isActive 
               ? 'bg-accent-subtle text-accent font-medium' 
@@ -132,31 +147,20 @@ const navItems = [
   </nav>
   
   <div class="mt-auto px-4 pb-6">
-    {user ? (
-      <a href="/dashboard/profile" class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-bg-elevated border border-transparent hover:border-border-default transition-all group">
-        <div class="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
-          <span class="text-accent font-medium text-[13px]">{profileName.charAt(0).toUpperCase()}</span>
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-[13px] font-medium text-text-primary truncate leading-tight">{profileName}</p>
-          <p class="text-[11px] text-text-secondary truncate mt-0.5">{user.email}</p>
-        </div>
-        <svg class="w-4 h-4 text-text-muted group-hover:text-text-primary transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
-      </a>
-    ) : (
-      <a href="/" data-astro-reload onclick="document.cookie = 'guest_mode=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';" class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-bg-elevated border border-transparent hover:border-border-default transition-all group">
-        <div class="w-8 h-8 rounded-full bg-border-strong flex items-center justify-center flex-shrink-0">
-          <svg class="w-4 h-4 text-text-muted group-hover:text-text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-[13px] font-medium text-text-primary truncate leading-tight">Exit Guest Mode</p>
-          <p class="text-[11px] text-text-secondary truncate mt-0.5">Return to homepage</p>
-        </div>
-      </a>
-    )}
+    <a href="/dashboard/profile" class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-bg-elevated border border-transparent hover:border-border-default transition-all group">
+      <div class="relative flex-shrink-0">
+        <UserAvatarReact client:load name={profileName} className="w-8 h-8" />
+        <span class="absolute bottom-0 right-0 block w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-bg-base"></span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-[13px] font-medium text-text-primary truncate leading-tight">{profileName}</p>
+        <p class="text-[11px] text-text-secondary truncate mt-0.5">{user ? user.email : "sarah@lumina.ai"}</p>
+      </div>
+      <svg class="w-4 h-4 text-text-muted group-hover:text-text-primary transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+    </a>
   </div>
 </aside>
 

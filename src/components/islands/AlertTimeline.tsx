@@ -8,6 +8,25 @@ export type TimelineEvent = {
 
 export default function AlertTimeline({ timeline }: { timeline: TimelineEvent[] }) {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [ackEvents, setAckEvents] = useState<Set<number>>(new Set());
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  const handleAck = (e: React.MouseEvent, i: number) => {
+    e.stopPropagation();
+    const newSet = new Set(ackEvents);
+    newSet.add(i);
+    setAckEvents(newSet);
+  };
+
+  const handleCopy = (e: React.MouseEvent, item: TimelineEvent, i: number) => {
+    e.stopPropagation();
+    const textToCopy = `Event: ${item.event}\nTime: ${item.time}\nDetails: ${item.details || 'N/A'}`;
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedIndex(i);
+    setTimeout(() => {
+      setCopiedIndex(null);
+    }, 2000);
+  };
 
   return (
     <div className="flex flex-col gap-0 relative">
@@ -50,11 +69,18 @@ export default function AlertTimeline({ timeline }: { timeline: TimelineEvent[] 
                       </div>
                     </div>
                     <div className="flex gap-2 mt-1">
-                      <button className="px-3 py-1.5 bg-bg-surface hover:bg-border-faint border border-border-default text-text-primary rounded-md text-[12px] font-medium transition-colors" onClick={(e) => e.stopPropagation()}>
-                        Acknowledge
+                      <button 
+                        className={`px-3 py-1.5 border rounded-md text-[12px] font-medium transition-colors ${ackEvents.has(i) ? 'bg-green-500/10 border-green-500/20 text-green-600' : 'bg-bg-surface hover:bg-border-faint border-border-default text-text-primary'}`} 
+                        onClick={(e) => handleAck(e, i)}
+                        disabled={ackEvents.has(i)}
+                      >
+                        {ackEvents.has(i) ? 'Acknowledged ✓' : 'Acknowledge'}
                       </button>
-                      <button className="px-3 py-1.5 bg-transparent hover:bg-bg-surface text-text-secondary rounded-md text-[12px] font-medium transition-colors" onClick={(e) => e.stopPropagation()}>
-                        Copy Event Data
+                      <button 
+                        className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${copiedIndex === i ? 'bg-green-500/10 text-green-600' : 'bg-transparent hover:bg-bg-surface text-text-secondary'}`} 
+                        onClick={(e) => handleCopy(e, item, i)}
+                      >
+                        {copiedIndex === i ? 'Copied! ✓' : 'Copy Event Data'}
                       </button>
                     </div>
                   </div>

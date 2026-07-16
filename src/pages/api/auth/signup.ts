@@ -38,7 +38,11 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   });
 
   if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { 
+    return new Response(JSON.stringify({ 
+      error: error, 
+      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+      debugUrl: import.meta.env.SUPABASE_URL
+    }), { 
       status: 400,
       headers: { "Content-Type": "application/json" }
     });

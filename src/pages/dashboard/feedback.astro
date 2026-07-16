@@ -8,20 +8,28 @@ const { data: userData } = await supabase.auth.getUser();
 
 let projectId = null;
 if (userData?.user) {
-  let { data: project } = await supabase.from('projects').select('id').eq('user_id', userData.user.id).single();
-  projectId = project?.id;
+  projectId = Astro.cookies.get('mindphor_app_id')?.value;
+  
+  let query = supabase.from('apps').select('id').eq('user_id', userData.user.id);
+  if (projectId) {
+    query = query.eq('id', projectId);
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
+  
+  let { data: apps } = await query.limit(1);
+  projectId = apps?.[0]?.id;
 } else {
-  const isGuestQuery = Astro.url.searchParams.get('guest') === 'true';
-  const isGuestCookie = Astro.cookies.has('guest_mode');
-  const isGuest = isGuestQuery || isGuestCookie;
-  if (isGuest) {
-    projectId = "guest_project";
+   else {
+    return Astro.redirect('/login');
   }
 }
+
+const selectedDate = Astro.url.searchParams.get('date') || '';
 ---
 
 <DashboardLayout title="Feedback">
   <div class="absolute inset-0 px-10 pb-10 pt-6 flex flex-col min-h-0">
-    <TraceTable client:load projectId={projectId} />
+    <TraceTable client:load projectId={projectId} date={selectedDate} />
   </div>
 </DashboardLayout>
