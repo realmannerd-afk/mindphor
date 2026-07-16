@@ -13,6 +13,9 @@ export default defineConfig({
     plugins: [tailwindcss()],
     optimizeDeps: {
       exclude: ['@astrojs/cloudflare']
+    },
+    ssr: {
+      noExternal: ['google-play-scraper', 'memoizee', 'es5-ext']
     }
   },
 
