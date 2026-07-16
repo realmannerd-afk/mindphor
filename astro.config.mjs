@@ -19,5 +19,7 @@ export default defineConfig({
   integrations: [svelte(), mdx(), react()],
   prefetch: true,
   output: 'server',
-  adapter: vercel()
+  adapter: vercel({
+    excludeFiles: ['**/node_modules/es5-ext/**'],
+  })
 });
