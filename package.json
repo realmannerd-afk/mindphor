@@ -9,7 +9,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "postinstall": "node -e \"try { require('fs').rmSync('node_modules/es5-ext/node_modules/es5-ext', {recursive:true, force:true}) } catch(e) {}\""
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
