@@ -20,9 +20,7 @@ if (userData?.user) {
   let { data: apps } = await query.limit(1);
   projectId = apps?.[0]?.id;
 } else {
-   else {
-    return Astro.redirect('/login');
-  }
+  return Astro.redirect('/login');
 }
 
 const selectedDate = Astro.url.searchParams.get('date') || '';
