@@ -34,15 +34,6 @@ Mindphor automatically monitors customer feedback, app ratings, and competitor t
 | **Scraping Engine** | `google-play-scraper` (bundled via Vite) |
 | **Deployment** | Vercel |
 
----
-
-## 📝 Important Architecture Notes
-
-- **App Store Scraper**: The `app-store-scraper` dependency has been removed to bypass a known Vercel `ELOOP` deployment bug. Apple App Store ingestion currently utilizes an honest fallback (returns an empty array).
-- **Vite Bundling**: `google-play-scraper` and its dependencies (`memoizee`, `es5-ext`) are heavily integrated and bundled via Vite's `ssr.noExternal` config in `astro.config.mjs` to prevent Vercel Node File Trace (NFT) crashes. A postinstall script also removes recursive symlink bugs native to `es5-ext`.
-
----
-
 ## 📄 License
 
 MIT © Mindphor
