@@ -34,15 +34,13 @@ if (userData?.user) {
   >
     <div class="max-w-[580px]">
       <div class="mb-8 w-full">
-        <p class="text-[15px] font-medium text-text-secondary leading-relaxed flex items-center flex-wrap gap-x-1.5">
-          Currently in
+        <p class="text-[15px] font-medium text-text-secondary leading-relaxed">
+          Currently in{" "}
           <Highlighter client:only="react" action="underline" color="#3b82f6" strokeWidth={2}>
-            <span class="text-text-primary inline-block">development</span>
+            <span class="text-text-primary">development</span>
           </Highlighter>.
-          Access is
-          <Highlighter client:only="react" action="highlight" color="#facc15" iterations={1} padding={1} roughness={0}>
-            <span class="text-black font-semibold inline-block px-1">locked</span>
-          </Highlighter>.
+          {" "}Access is{" "}
+          <span class="bg-yellow-400 text-black font-semibold px-1.5 py-0.5 rounded-sm inline-block">locked</span>.
         </p>
       </div>
       <h1
