@@ -25,6 +25,7 @@ interface HighlighterProps {
   padding?: number
   multiline?: boolean
   isView?: boolean
+  roughness?: number
 }
 
 export function Highlighter({
@@ -37,6 +38,7 @@ export function Highlighter({
   padding = 2,
   multiline = true,
   isView = false,
+  roughness = 1.5,
 }: HighlighterProps) {
   const elementRef = useRef<HTMLSpanElement>(null)
 
@@ -62,6 +64,7 @@ export function Highlighter({
         iterations,
         padding,
         multiline,
+        roughness,
       }
 
       const currentAnnotation = annotate(element, annotationConfig)
@@ -92,6 +95,7 @@ export function Highlighter({
     iterations,
     padding,
     multiline,
+    roughness,
   ])
 
   return (
