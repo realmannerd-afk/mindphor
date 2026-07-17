@@ -10,6 +10,7 @@ import HowItWorksInteractive from "../components/islands/HowItWorksInteractive.s
 import FeatureShowcase from "../components/islands/FeatureShowcase.tsx";
 
 import { Highlighter } from "../components/magicui/highlighter";
+import { StraightHighlighter } from "../components/magicui/straight-highlighter";
 
 const cookieHeader = Astro.request.headers.get('cookie') || '';
 const hasSessionCookie = cookieHeader.includes('sb-');
@@ -40,7 +41,7 @@ if (userData?.user) {
             <span class="text-text-primary">development</span>
           </Highlighter>.
           {" "}Access is{" "}
-          <span class="bg-yellow-400 text-black font-semibold px-1.5 py-0.5 rounded-sm inline-block">locked</span>.
+          <StraightHighlighter client:only="react">locked</StraightHighlighter>.
         </p>
       </div>
       <h1
