@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Sparkles, ArrowLeft } from 'lucide-react';
+---
+
+<Layout title="In Development | Mindphor">
+  <main class="min-h-screen bg-bg-base text-text-primary flex items-center justify-center p-6 relative overflow-hidden">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute -top-1/2 -right-1/2 w-full h-full bg-accent/5 rounded-full blur-[120px]"></div>
+      <div class="absolute -bottom-1/2 -left-1/2 w-full h-full bg-blue-500/5 rounded-full blur-[120px]"></div>
+    </div>
+
+    <div class="max-w-md w-full relative z-10 text-center">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-bg-surface border border-border-default mb-8 shadow-sm">
+        <Sparkles class="w-8 h-8 text-accent" />
+      </div>
+      
+      <h1 class="text-3xl font-bold tracking-tight mb-4">We're Building Something Special</h1>
+      
+      <p class="text-text-secondary text-lg mb-8 leading-relaxed">
+        Mindphor is currently in active development. We are not accepting public sign-ups or granting dashboard access just yet while we perfect the experience.
+      </p>
+
+      <a href="/" class="inline-flex items-center gap-2 px-6 py-3 bg-bg-surface border border-border-default hover:border-text-primary/20 hover:bg-bg-surface-hover text-text-primary rounded-xl font-medium transition-all group">
+        <ArrowLeft class="w-4 h-4 text-text-muted group-hover:text-text-primary transition-colors" />
+        Return to Landing Page
+      </a>
+    </div>
+  </main>
+</Layout>
