@@ -2,14 +2,14 @@
 
 > Real-time Play Store feedback, AI sentiment analysis, and competitor monitoring in one powerful dashboard.
 
-Mindphor automatically monitors customer feedback, app ratings, and competitor trends in real time using AI. It aggregates reviews from the Google Play Store and Reddit, providing you with deep, actionable insights to understand your users and stay ahead of your rivals.
+Mindphor automatically monitors customer feedback, app ratings, and competitor trends in real time using AI. It aggregates reviews exclusively from the Google Play Store, providing you with deep, actionable insights to understand your users and stay ahead of your rivals.
 
 ---
 
 ## 🚀 Key Features
 
 - **Feedback Traceability**  
-  Aggregate and filter raw user feedback from the Play Store and Reddit in a single intuitive table. Slice data by sentiment, source, or specific competitor.
+  Aggregate and filter raw user feedback from the Play Store in a single intuitive table. Slice data by sentiment or specific competitor.
   
 - **Competitor Intelligence**  
   Monitor your closest rivals with side-by-side sentiment tracking and dedicated competitor profiles to see exactly where they are failing and how you can capitalize.
@@ -33,40 +33,6 @@ Mindphor automatically monitors customer feedback, app ratings, and competitor t
 | **Database & Auth** | Supabase (PostgreSQL) |
 | **Scraping Engine** | `google-play-scraper` (bundled via Vite) |
 | **Deployment** | Vercel |
-
----
-
-## 💻 Local Development
-
-### Prerequisites
-- Node.js `>=22.12.0`
-- A Supabase project with valid API keys
-
-### Setup
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/realmannerd-afk/mindphor.git
-   cd mindphor
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Configure Environment Variables:**
-   Create a `.env` file in the root directory and add your Supabase credentials:
-   ```env
-   PUBLIC_SUPABASE_URL=your-supabase-url
-   PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-   ```
-
-4. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-   *Your app will be running at `http://localhost:4321/`*
 
 ---
 
