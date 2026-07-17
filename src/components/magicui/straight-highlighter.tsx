@@ -2,24 +2,25 @@ import type React from "react"
 import { motion } from "framer-motion"
 
 export function StraightHighlighter({ children }: { children: React.ReactNode }) {
-  // A hand-drawn SVG marker that fully covers the background with wavy, uneven edges
-  const markerSvg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M2,4 Q25,0 75,2 T98,5 Q100,50 97,95 Q75,100 25,98 T3,96 Q0,50 2,4 Z' fill='%23facc15'/%3E%3C/svg%3E")`
-
   return (
-    <span className="relative inline-block whitespace-nowrap z-0 px-1">
-      <motion.span
-        initial={{ scaleX: 0 }}
-        whileInView={{ scaleX: 1 }}
+    <span className="relative inline-block whitespace-nowrap z-0 px-2 py-0.5">
+      <motion.svg
+        initial={{ clipPath: "inset(0 100% 0 0)" }}
+        whileInView={{ clipPath: "inset(0 0 0 0)" }}
         viewport={{ once: true, margin: "-10%" }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="absolute bottom-0 left-[-5%] w-[110%] h-[130%] top-[-15%] -z-10 origin-left"
-        style={{
-          backgroundImage: markerSvg,
-          backgroundSize: "100% 100%",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center",
-        }}
-      />
+        className="absolute inset-0 w-full h-full -z-10"
+        preserveAspectRatio="none"
+        viewBox="0 0 100 100"
+      >
+        <defs>
+          <filter id="marker-rough">
+            <feTurbulence type="fractalNoise" baseFrequency="0.2" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+        <path d="M1,8 Q50,2 99,6 L97,94 Q50,98 3,92 Z" fill="#facc15" filter="url(#marker-rough)" />
+      </motion.svg>
       <span className="relative text-black font-semibold z-10">{children}</span>
     </span>
   )
