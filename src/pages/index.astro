@@ -9,6 +9,8 @@ import FAQAccordionReact from "../components/islands/FAQAccordionReact.tsx";
 import HowItWorksInteractive from "../components/islands/HowItWorksInteractive.svelte";
 import FeatureShowcase from "../components/islands/FeatureShowcase.tsx";
 
+import { MorphingText } from "../components/magicui/morphing-text";
+
 const cookieHeader = Astro.request.headers.get('cookie') || '';
 const hasSessionCookie = cookieHeader.includes('sb-');
 
@@ -31,9 +33,13 @@ if (userData?.user) {
     class="w-full max-w-[1400px] mx-auto px-[clamp(20px,5vw,80px)] pt-[116px] pb-[120px]"
   >
     <div class="max-w-[580px]">
-      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-[12px] font-medium text-accent mb-6">
-        <IconSparkles class="w-4 h-4" />
-        <span>We're currently in active development. App access is temporarily locked.</span>
+      <div class="mb-6 h-[24px] w-full flex items-center justify-start">
+        <IconSparkles class="w-4 h-4 text-accent mr-2" />
+        <MorphingText 
+          texts={["We're in active development", "App access is temporarily locked", "We're building something special"]} 
+          className="text-[14px] font-medium text-accent h-[24px] flex items-center flex-1 text-left" 
+          client:load 
+        />
       </div>
       <h1
         class="text-[clamp(24px,3vw,34px)] font-semibold text-text-primary leading-[1.15] mb-[20px] tracking-tight"
@@ -48,12 +54,12 @@ if (userData?.user) {
       </p>
 
       <div class="flex items-center gap-[12px]">
-        <a
-          href="/dashboard"
-          class="bg-text-primary text-bg-base rounded-full px-[20px] py-[10px] text-[13px] font-medium hover:opacity-90 transition-opacity"
+        <button
+          disabled
+          class="bg-text-primary text-bg-base rounded-full px-[20px] py-[10px] text-[13px] font-medium opacity-50 cursor-not-allowed"
         >
           Start Monitoring
-        </a>
+        </button>
       </div>
     </div>
 
