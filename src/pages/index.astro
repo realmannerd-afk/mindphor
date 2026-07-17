@@ -34,16 +34,15 @@ if (userData?.user) {
   >
     <div class="max-w-[580px]">
       <div class="mb-8 w-full">
-        <p class="text-[15px] font-medium text-text-secondary leading-relaxed">
-          Mindphor is currently in{" "}
+        <p class="text-[15px] font-medium text-text-secondary leading-relaxed flex items-center flex-wrap gap-x-1.5">
+          Currently in
           <Highlighter client:only="react" action="underline" color="#3b82f6" strokeWidth={2}>
-            <span class="text-text-primary">active development</span>
+            <span class="text-text-primary inline-block">development</span>
           </Highlighter>.
-          App access is{" "}
+          Access is
           <Highlighter client:only="react" action="highlight" color="#3b82f6">
-            <span class="text-black font-semibold">temporarily locked</span>
-          </Highlighter>{" "}
-          while we build something special.
+            <span class="text-black font-semibold inline-block px-1">locked</span>
+          </Highlighter>.
         </p>
       </div>
       <h1
