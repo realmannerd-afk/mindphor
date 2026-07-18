@@ -206,12 +206,12 @@ if (userData?.user) {
               <span>Basic sentiment metrics</span>
             </li>
           </ul>
-          <a
-            href="/signup?plan=starter"
+          <button
+            id="btn-starter"
             class="mt-auto block w-full bg-transparent border border-border-default text-text-primary rounded-full py-3 text-[13px] font-medium hover:bg-bg-elevated transition-colors text-center"
           >
             Start for free
-          </a>
+          </button>
         </div>
 
         <!-- Growth Card -->
@@ -244,12 +244,12 @@ if (userData?.user) {
               <span>AI-generated action plans</span>
             </li>
           </ul>
-          <a
-            href="/signup?plan=growth"
+          <button
+            id="btn-growth"
             class="mt-auto block w-full bg-text-primary text-bg-base border border-transparent rounded-full py-3 text-[13px] font-medium hover:opacity-90 transition-opacity text-center"
           >
             Get Started
-          </a>
+          </button>
         </div>
 
         <!-- Pro Card -->
@@ -281,12 +281,12 @@ if (userData?.user) {
               <span>API Access & Webhooks</span>
             </li>
           </ul>
-          <a
-            href="/signup?plan=pro"
+          <button
+            id="btn-pro"
             class="mt-auto block w-full bg-transparent border border-border-default text-text-primary rounded-full py-3 text-[13px] font-medium hover:bg-bg-elevated transition-colors text-center"
           >
             Start Pro Plan
-          </a>
+          </button>
         </div>
 
       </div>
@@ -341,4 +341,25 @@ if (userData?.user) {
       </div>
     </footer>
   </div>
+
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+  <script type="module">
+    Paddle.Environment.set('sandbox');
+    Paddle.Initialize({ token: import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN });
+
+    document.getElementById('btn-starter')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      Paddle.Checkout.open({ items: [{ priceId: import.meta.env.PUBLIC_PADDLE_STARTER_PRICE_ID, quantity: 1 }] });
+    });
+
+    document.getElementById('btn-growth')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      Paddle.Checkout.open({ items: [{ priceId: import.meta.env.PUBLIC_PADDLE_GROWTH_PRICE_ID, quantity: 1 }] });
+    });
+
+    document.getElementById('btn-pro')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      Paddle.Checkout.open({ items: [{ priceId: import.meta.env.PUBLIC_PADDLE_PRO_PRICE_ID, quantity: 1 }] });
+    });
+  </script>
 </RootLayout>
