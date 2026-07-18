@@ -39,16 +39,6 @@ if (userData?.user) {
     class="w-full max-w-[1400px] mx-auto px-[clamp(20px,5vw,80px)] pt-[116px] pb-[120px]"
   >
     <div class="max-w-[580px]">
-      <div class="mb-8 w-full">
-        <p class="text-[15px] font-medium text-text-secondary leading-relaxed">
-          Currently in{" "}
-          <Highlighter client:only="react" action="underline" color="#3b82f6" strokeWidth={2}>
-            <span class="text-text-primary">development</span>
-          </Highlighter>.
-          {" "}Access is{" "}
-          <StraightHighlighter client:only="react">locked</StraightHighlighter>.
-        </p>
-      </div>
       <h1
         class="text-[clamp(24px,3vw,34px)] font-semibold text-text-primary leading-[1.15] mb-[20px] tracking-tight"
       >
@@ -62,12 +52,12 @@ if (userData?.user) {
       </p>
 
       <div class="flex items-center gap-[12px]">
-        <button
-          disabled
-          class="bg-text-primary text-bg-base rounded-full px-[20px] py-[10px] text-[13px] font-medium opacity-50 cursor-not-allowed"
+        <a
+          href="/signup"
+          class="bg-text-primary text-bg-base rounded-full px-[20px] py-[10px] text-[13px] font-medium hover:opacity-90 transition-opacity"
         >
           Start Monitoring
-        </button>
+        </a>
       </div>
     </div>
 

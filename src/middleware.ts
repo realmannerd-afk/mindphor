@@ -4,22 +4,6 @@ import { getSupabaseClient } from "./lib/supabase";
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect } = context;
 
-  // Development Phase Lock - Blocks access to the main app functionality for regular users
-  const isAppRoute = url.pathname.startsWith("/dashboard") || 
-                     url.pathname.startsWith("/docs") || 
-                     url.pathname.startsWith("/memory") || 
-                     url.pathname.startsWith("/alerts") || 
-                     url.pathname.startsWith("/traces") ||
-                     url.pathname === "/login" ||
-                     url.pathname === "/signup";
-  
-  // Disable the lock entirely when testing locally on localhost
-  const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-
-  if (isAppRoute && !isLocalhost) {
-    return redirect("/development");
-  }
-
   if (url.pathname === '/logout') {
     cookies.delete('sb-ryewtqnqovpianuwsnpp-auth-token', { path: '/' });
     return redirect("/login");
