@@ -13,9 +13,9 @@ import { Highlighter } from "../components/magicui/highlighter";
 import { StraightHighlighter } from "../components/magicui/straight-highlighter";
 
 const paddleToken = import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN;
-const starterPrice = import.meta.env.PADDLE_STARTER_PRICE_ID;
-const growthPrice = import.meta.env.PADDLE_GROWTH_PRICE_ID;
-const proPrice = import.meta.env.PADDLE_PRO_PRICE_ID;
+const starterPrice = import.meta.env.PUBLIC_PADDLE_STARTER_PRICE_ID;
+const growthPrice = import.meta.env.PUBLIC_PADDLE_GROWTH_PRICE_ID;
+const proPrice = import.meta.env.PUBLIC_PADDLE_PRO_PRICE_ID;
 
 const cookieHeader = Astro.request.headers.get('cookie') || '';
 const hasSessionCookie = cookieHeader.includes('sb-');
@@ -338,7 +338,7 @@ if (userData?.user) {
   </div>
 
   <script src="https://cdn.paddle.com/paddle/v2/paddle.js" is:inline></script>
-  <script is:inline define:vars={{
+  <script define:vars={{
     paddleToken,
     starterPrice,
     growthPrice,
