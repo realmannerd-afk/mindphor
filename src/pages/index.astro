@@ -12,6 +12,11 @@ import FeatureShowcase from "../components/islands/FeatureShowcase.tsx";
 import { Highlighter } from "../components/magicui/highlighter";
 import { StraightHighlighter } from "../components/magicui/straight-highlighter";
 
+const paddleToken = import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN;
+const starterPrice = import.meta.env.PADDLE_STARTER_PRICE_ID;
+const growthPrice = import.meta.env.PADDLE_GROWTH_PRICE_ID;
+const proPrice = import.meta.env.PADDLE_PRO_PRICE_ID;
+
 const cookieHeader = Astro.request.headers.get('cookie') || '';
 const hasSessionCookie = cookieHeader.includes('sb-');
 
@@ -344,10 +349,10 @@ if (userData?.user) {
 
   <script src="https://cdn.paddle.com/paddle/v2/paddle.js" is:inline></script>
   <script is:inline define:vars={{
-    paddleToken: import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN,
-    starterPrice: import.meta.env.PADDLE_STARTER_PRICE_ID,
-    growthPrice: import.meta.env.PADDLE_GROWTH_PRICE_ID,
-    proPrice: import.meta.env.PADDLE_PRO_PRICE_ID
+    paddleToken,
+    starterPrice,
+    growthPrice,
+    proPrice
   }}>
     Paddle.Environment.set('sandbox');
     Paddle.Initialize({ token: paddleToken });
