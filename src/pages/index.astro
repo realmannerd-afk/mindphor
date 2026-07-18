@@ -342,24 +342,41 @@ if (userData?.user) {
     </footer>
   </div>
 
-  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-  <script type="module">
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js" is:inline></script>
+  <script is:inline define:vars={{
+    paddleToken: import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN,
+    starterPrice: import.meta.env.PADDLE_STARTER_PRICE_ID,
+    growthPrice: import.meta.env.PADDLE_GROWTH_PRICE_ID,
+    proPrice: import.meta.env.PADDLE_PRO_PRICE_ID
+  }}>
     Paddle.Environment.set('sandbox');
-    Paddle.Initialize({ token: import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN });
+    Paddle.Initialize({ token: paddleToken });
 
     document.getElementById('btn-starter')?.addEventListener('click', (e) => {
       e.preventDefault();
-      Paddle.Checkout.open({ items: [{ priceId: import.meta.env.PUBLIC_PADDLE_STARTER_PRICE_ID, quantity: 1 }] });
+      if (starterPrice) {
+        Paddle.Checkout.open({ items: [{ priceId: starterPrice, quantity: 1 }] });
+      } else {
+        console.error("Missing Starter Price ID in .env");
+      }
     });
 
     document.getElementById('btn-growth')?.addEventListener('click', (e) => {
       e.preventDefault();
-      Paddle.Checkout.open({ items: [{ priceId: import.meta.env.PUBLIC_PADDLE_GROWTH_PRICE_ID, quantity: 1 }] });
+      if (growthPrice) {
+        Paddle.Checkout.open({ items: [{ priceId: growthPrice, quantity: 1 }] });
+      } else {
+        console.error("Missing Growth Price ID in .env");
+      }
     });
 
     document.getElementById('btn-pro')?.addEventListener('click', (e) => {
       e.preventDefault();
-      Paddle.Checkout.open({ items: [{ priceId: import.meta.env.PUBLIC_PADDLE_PRO_PRICE_ID, quantity: 1 }] });
+      if (proPrice) {
+        Paddle.Checkout.open({ items: [{ priceId: proPrice, quantity: 1 }] });
+      } else {
+        console.error("Missing Pro Price ID in .env");
+      }
     });
   </script>
 </RootLayout>
