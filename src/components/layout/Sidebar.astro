@@ -3,6 +3,7 @@ import { getSupabaseClient } from '../../lib/supabase';
 import { LogoService } from '../../lib/logos/LogoService';
 import { getApps } from '../../lib/apps';
 import UserAvatarReact from '../islands/UserAvatarReact.tsx';
+import { getUserPlanLimits } from '../../lib/planLimits';
 
 interface Props {
   user?: any;
@@ -21,6 +22,8 @@ const currentAppLogo = isCompetitors
 let alertsCount = 0;
 let apps: any[] = [];
 let projectId = null;
+let canCreateApp = true;
+let upgradeMessage = "";
 try {
   const supabase = getSupabaseClient(Astro.cookies);
   if (user) {
@@ -34,6 +37,12 @@ try {
       projectId = apps[0].id;
       // It's safe to set a cookie in Astro frontmatter before the body is sent
       Astro.cookies.set('mindphor_app_id', projectId, { path: '/', maxAge: 31536000 });
+    }
+
+    const limits = await getUserPlanLimits(user.id);
+    if (apps.length >= limits.maxApps) {
+      canCreateApp = false;
+      upgradeMessage = "Upgrade plan to add more apps";
     }
   }
 
@@ -114,10 +123,17 @@ const navItems = [
         ))}
         <div class="h-[1px] bg-border-faint w-full my-0.5"></div>
         <div class="p-1">
-          <button onclick="window.dispatchEvent(new CustomEvent('open-create-app-modal'))" class="w-full px-2 py-1.5 flex items-center gap-2 hover:bg-bg-subtle rounded-md transition-colors text-left text-text-secondary hover:text-text-primary">
-            <svg class="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            <span class="text-[13px] font-medium">Create App</span>
-          </button>
+          {canCreateApp ? (
+            <button onclick="window.dispatchEvent(new CustomEvent('open-create-app-modal'))" class="w-full px-2 py-1.5 flex items-center gap-2 hover:bg-bg-subtle rounded-md transition-colors text-left text-text-secondary hover:text-text-primary">
+              <svg class="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              <span class="text-[13px] font-medium">Create App</span>
+            </button>
+          ) : (
+            <a href="/dashboard/billing" class="w-full px-2 py-1.5 flex items-center gap-2 hover:bg-accent/10 rounded-md transition-colors text-left text-accent">
+              <svg class="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              <span class="text-[12px] font-medium leading-tight">{upgradeMessage}</span>
+            </a>
+          )}
         </div>
       </div>
     </details>
