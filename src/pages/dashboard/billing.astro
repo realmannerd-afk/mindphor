@@ -192,7 +192,15 @@ const isPro = currentPlan === 'pro';
     userId: userData.user.id
   }}>
     Paddle.Environment.set('sandbox');
-    Paddle.Initialize({ token: paddleToken });
+    Paddle.Initialize({ 
+      token: paddleToken,
+      eventCallback: function(data) {
+        if (data.name === "checkout.completed") {
+          // Refresh the page so the server fetches the newly updated subscription from Supabase
+          setTimeout(() => window.location.reload(), 2000); 
+        }
+      }
+    });
 
     // IMPORTANT: Inject customData so the webhook can link the payment to the user in the database
     const checkoutOptions = {
