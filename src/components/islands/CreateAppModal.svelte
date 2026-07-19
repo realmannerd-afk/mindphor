@@ -18,6 +18,44 @@
   let loading = false;
   let error = '';
 
+  // App Preview State
+  let appPreview = null;
+  let fetchingPreview = false;
+  let previewTimer = null;
+
+  $: {
+    if (platforms.playStore) {
+      if (previewTimer) clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => {
+        fetchPlayStorePreview(platforms.playStore);
+      }, 600);
+    } else {
+      appPreview = null;
+    }
+  }
+
+  async function fetchPlayStorePreview(url: string) {
+    if (!url.trim() || url.length < 5) return;
+    fetchingPreview = true;
+    try {
+      const res = await fetch(`/api/apps/playstore-info?url=${encodeURIComponent(url)}`);
+      if (res.ok) {
+        const data = await res.json();
+        appPreview = data;
+        // Auto fill name if empty
+        if (!name.trim() && data.title) {
+          name = data.title;
+        }
+      } else {
+        appPreview = null;
+      }
+    } catch (e) {
+      appPreview = null;
+    } finally {
+      fetchingPreview = false;
+    }
+  }
+
   onMount(() => {
     const handleOpen = () => {
       show = true;
@@ -28,6 +66,8 @@
       platforms = { appStore: '', playStore: '', reddit: '' };
       competitors = [{ domain: '', category: '' }];
       error = '';
+      appPreview = null;
+      fetchingPreview = false;
     };
 
     window.addEventListener('open-create-app-modal', handleOpen);
@@ -193,10 +233,29 @@
             <textarea id="appDesc" bind:value={description} placeholder="What does this workspace focus on?" rows="1" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all resize-none"></textarea>
           </div>
           
-          <div class="space-y-1.5">
-            <label for="playStoreUrl" class="block text-[13px] font-semibold text-text-primary">Google Play Store URL <span class="text-red-500">*</span></label>
-            <input id="playStoreUrl" type="url" bind:value={platforms.playStore} placeholder="e.g. https://play.google.com/store/apps/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+          <div class="space-y-1.5 relative">
+            <label for="playStoreUrl" class="block text-[13px] font-semibold text-text-primary">Google Play Store URL or App ID <span class="text-red-500">*</span></label>
+            <input id="playStoreUrl" type="text" bind:value={platforms.playStore} placeholder="e.g. https://play.google.com/store/apps/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+            
+            {#if fetchingPreview}
+              <div class="absolute right-3 bottom-2.5">
+                <svg class="animate-spin w-4 h-4 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              </div>
+            {/if}
           </div>
+
+          {#if appPreview}
+            <div class="mt-2 p-3 bg-bg-subtle border border-border-faint rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <img src={appPreview.icon} alt={appPreview.title} class="w-12 h-12 rounded-[10px] shadow-sm object-cover bg-white" />
+              <div class="flex-1 min-w-0">
+                <h4 class="text-[14px] font-bold text-text-primary truncate">{appPreview.title}</h4>
+                <p class="text-[12px] text-text-secondary truncate mt-0.5">{appPreview.developer}</p>
+              </div>
+              <div class="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 flex-shrink-0">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+              </div>
+            </div>
+          {/if}
         {:else if step === 2}
           <div class="space-y-4">
             {#each competitors as comp, index}
