@@ -66,10 +66,16 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
+    const appId = cookies.get('mindphor_app_id')?.value;
+    if (!appId) {
+      return new Response(JSON.stringify({ error: "No active workspace selected for deletion" }), { status: 400 });
+    }
+
     const { error } = await supabase
       .from("apps")
       .delete()
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .eq('id', appId);
 
     if (error) {
       console.error("Error deleting app:", error);

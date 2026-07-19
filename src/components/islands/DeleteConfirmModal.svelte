@@ -30,6 +30,10 @@
         const data = await res.json();
         throw new Error(data.error || 'Failed to delete project');
       }
+      
+      // Clear the cookie so the dashboard auto-selects a remaining app (if any)
+      document.cookie = "mindphor_app_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      
       window.location.href = '/dashboard';
     } catch (err: any) {
       error = err.message;
