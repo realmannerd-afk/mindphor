@@ -1,0 +1,205 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { getSupabaseClient } from '../../lib/supabase';
+
+const supabase = getSupabaseClient(Astro.cookies);
+const { data: userData } = await supabase.auth.getUser();
+
+if (!userData?.user) {
+  return Astro.redirect('/login');
+}
+
+const paddleToken = import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN;
+const starterPrice = import.meta.env.PUBLIC_PADDLE_STARTER_PRICE_ID;
+const growthPrice = import.meta.env.PUBLIC_PADDLE_GROWTH_PRICE_ID;
+const proPrice = import.meta.env.PUBLIC_PADDLE_PRO_PRICE_ID;
+
+// Optional: fetch the user's current subscription status from the database
+const { data: sub } = await supabase
+  .from('subscriptions')
+  .select('plan, status')
+  .eq('user_id', userData.user.id)
+  .maybeSingle();
+
+const currentPlan = sub?.plan || null;
+const isStarter = currentPlan === 'starter';
+const isGrowth = currentPlan === 'growth';
+const isPro = currentPlan === 'pro';
+---
+
+<DashboardLayout title="Billing & Plans">
+  <div class="w-full max-w-[1000px] mx-auto py-8">
+    <div class="mb-8">
+      <h1 class="text-[clamp(18px,2vw,24px)] font-semibold text-text-primary leading-tight tracking-tight mb-2">Manage your subscription</h1>
+      <p class="text-[13px] text-text-secondary">Upgrade your plan to track more apps, monitor competitors, and unlock real-time anomaly alerts.</p>
+    </div>
+
+    <!-- Pricing Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+      
+      <!-- Starter Card -->
+      <div class="flex flex-col h-full bg-bg-base border border-border-default rounded-[12px] p-8 text-left transition-all hover:border-text-primary/20 relative">
+        {isStarter && <div class="absolute -top-3 left-8 bg-text-primary text-bg-base text-[10px] uppercase tracking-wider font-semibold px-3 py-1 rounded-full">Current Plan</div>}
+        <div class="text-[11px] uppercase tracking-wider text-text-muted font-mono font-semibold mb-2">Starter</div>
+        <div class="flex items-end gap-1 mb-6">
+          <span class="text-[32px] font-semibold text-text-primary leading-none">$0</span>
+          <span class="text-[12px] text-text-muted mb-1">/mo</span>
+        </div>
+        <ul class="text-[13px] text-text-secondary space-y-3.5 mb-8 flex-1">
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>1 Android App tracked</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Up to 1,000 reviews/mo</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>1 Competitor tracked</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Basic sentiment metrics</span>
+          </li>
+        </ul>
+        <button
+          id="btn-starter"
+          disabled={isStarter}
+          class={`mt-auto block w-full border rounded-full py-3 text-[13px] font-medium transition-colors text-center ${isStarter ? 'bg-bg-subtle text-text-muted border-transparent cursor-not-allowed' : 'bg-transparent border-border-default text-text-primary hover:bg-bg-elevated'}`}
+        >
+          {isStarter ? 'Current Plan' : 'Downgrade to Starter'}
+        </button>
+      </div>
+
+      <!-- Growth Card -->
+      <div class="flex flex-col h-full bg-bg-base border border-accent/30 rounded-[12px] p-8 text-left relative shadow-sm">
+        {isGrowth ? 
+          <div class="absolute -top-3 left-8 bg-text-primary text-bg-base text-[10px] uppercase tracking-wider font-semibold px-3 py-1 rounded-full">Current Plan</div>
+          : 
+          <div class="absolute -top-3 left-8 bg-accent text-bg-base text-[10px] uppercase tracking-wider font-semibold px-3 py-1 rounded-full">Most Popular</div>
+        }
+        <div class="text-[11px] uppercase tracking-wider text-text-muted font-mono font-semibold mb-2">Growth</div>
+        <div class="flex items-end gap-1 mb-6">
+          <span class="text-[32px] font-semibold text-text-primary leading-none">$29</span>
+          <span class="text-[12px] text-text-muted mb-1">/mo</span>
+        </div>
+        <ul class="text-[13px] text-text-secondary space-y-3.5 mb-8 flex-1">
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Up to 3 Android Apps tracked</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Unlimited review ingestion</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Up to 5 Competitors tracked</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Real-time anomaly alerts</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>AI-generated action plans</span>
+          </li>
+        </ul>
+        <button
+          id="btn-growth"
+          disabled={isGrowth}
+          class={`mt-auto block w-full rounded-full py-3 text-[13px] font-medium transition-colors text-center ${isGrowth ? 'bg-bg-subtle text-text-muted border border-transparent cursor-not-allowed' : 'bg-text-primary text-bg-base hover:opacity-90'}`}
+        >
+          {isGrowth ? 'Current Plan' : 'Upgrade to Growth'}
+        </button>
+      </div>
+
+      <!-- Pro Card -->
+      <div class="flex flex-col h-full bg-bg-base border border-border-default rounded-[12px] p-8 text-left transition-all hover:border-text-primary/20 relative">
+        {isPro && <div class="absolute -top-3 left-8 bg-text-primary text-bg-base text-[10px] uppercase tracking-wider font-semibold px-3 py-1 rounded-full">Current Plan</div>}
+        <div class="text-[11px] uppercase tracking-wider text-text-muted font-mono font-semibold mb-2">Pro</div>
+        <div class="flex items-end gap-1 mb-6">
+          <span class="text-[32px] font-semibold text-text-primary leading-none">$79</span>
+          <span class="text-[12px] text-text-muted mb-1">/mo</span>
+        </div>
+        <ul class="text-[13px] text-text-secondary space-y-3.5 mb-8 flex-1">
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Up to 10 Android Apps tracked</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Unlimited review ingestion</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Up to 15 Competitors tracked</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Priority email support</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg class="w-4 h-4 text-text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>API Access & Webhooks</span>
+          </li>
+        </ul>
+        <button
+          id="btn-pro"
+          disabled={isPro}
+          class={`mt-auto block w-full border rounded-full py-3 text-[13px] font-medium transition-colors text-center ${isPro ? 'bg-bg-subtle text-text-muted border-transparent cursor-not-allowed' : 'bg-transparent border-border-default text-text-primary hover:bg-bg-elevated'}`}
+        >
+          {isPro ? 'Current Plan' : 'Upgrade to Pro'}
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js" is:inline></script>
+  <script define:vars={{
+    paddleToken,
+    starterPrice,
+    growthPrice,
+    proPrice,
+    userId: userData.user.id
+  }}>
+    Paddle.Environment.set('sandbox');
+    Paddle.Initialize({ token: paddleToken });
+
+    // IMPORTANT: Inject customData so the webhook can link the payment to the user in the database
+    const checkoutOptions = {
+      customData: {
+        supabase_user_id: userId
+      }
+    };
+
+    document.getElementById('btn-starter')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (starterPrice) {
+        Paddle.Checkout.open({ items: [{ priceId: starterPrice, quantity: 1 }], ...checkoutOptions });
+      } else {
+        console.error("Missing Starter Price ID");
+      }
+    });
+
+    document.getElementById('btn-growth')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (growthPrice) {
+        Paddle.Checkout.open({ items: [{ priceId: growthPrice, quantity: 1 }], ...checkoutOptions });
+      } else {
+        console.error("Missing Growth Price ID");
+      }
+    });
+
+    document.getElementById('btn-pro')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (proPrice) {
+        Paddle.Checkout.open({ items: [{ priceId: proPrice, quantity: 1 }], ...checkoutOptions });
+      } else {
+        console.error("Missing Pro Price ID");
+      }
+    });
+  </script>
+</DashboardLayout>
