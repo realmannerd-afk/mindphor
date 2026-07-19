@@ -194,11 +194,8 @@
           </div>
           
           <div class="space-y-1.5">
-            <label class="flex items-center gap-2 text-[13px] font-semibold text-text-primary">
-              <Logo domain="play.google.com" className="w-4 h-4" />
-              Google Play Store URL <span class="text-red-500">*</span>
-            </label>
-            <input type="url" bind:value={platforms.playStore} placeholder="e.g. https://play.google.com/store/apps/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+            <label for="playStoreUrl" class="block text-[13px] font-semibold text-text-primary">Google Play Store URL <span class="text-red-500">*</span></label>
+            <input id="playStoreUrl" type="url" bind:value={platforms.playStore} placeholder="e.g. https://play.google.com/store/apps/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
           </div>
         {:else if step === 2}
           <div class="space-y-4">
