@@ -1,9 +1,34 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   export let projectId: string;
   export let playStoreUrl: string;
 
   let syncing = false;
   let error = '';
+  
+  let appPreview = null;
+  let fetchingPreview = true;
+
+  onMount(() => {
+    if (playStoreUrl) {
+      fetchPreview();
+    } else {
+      fetchingPreview = false;
+    }
+  });
+
+  async function fetchPreview() {
+    try {
+      const res = await fetch(`/api/apps/playstore-info?url=${encodeURIComponent(playStoreUrl)}`);
+      if (res.ok) {
+        appPreview = await res.json();
+      }
+    } catch (e) {
+      console.error("Failed to fetch app preview", e);
+    } finally {
+      fetchingPreview = false;
+    }
+  }
 
   async function fetchDetails() {
     if (!projectId || !playStoreUrl) {
@@ -27,8 +52,16 @@
         })
       });
 
+      if (!res.ok) {
+        let errorMsg = 'Failed to fetch details';
+        try {
+          const json = await res.json();
+          errorMsg = json.error || errorMsg;
+        } catch (e) {}
+        throw new Error(errorMsg);
+      }
+      
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to fetch details');
       
       if (json.total_fetched === 0) {
         throw new Error('No reviews found for this App URL. Please check the URL in Settings.');
@@ -47,14 +80,28 @@
 </script>
 
 <div class="max-w-2xl mx-auto mt-10 px-6 text-center">
-  <div class="w-12 h-12 bg-bg-elevated text-text-secondary rounded-full flex items-center justify-center mx-auto mb-4 border border-border-default">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M22 12h-6l-2 3h-4l-2-3H2" />
-      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-    </svg>
-  </div>
+  {#if fetchingPreview}
+    <div class="w-16 h-16 bg-bg-elevated rounded-2xl mx-auto mb-4 border border-border-default flex items-center justify-center">
+      <svg class="animate-spin w-6 h-6 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+    </div>
+  {:else if appPreview}
+    <img src={appPreview.icon} alt={appPreview.title} class="w-16 h-16 bg-white rounded-2xl mx-auto mb-4 shadow-sm object-cover border border-border-default" />
+  {:else}
+    <div class="w-16 h-16 bg-bg-elevated text-text-secondary rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border-default">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+        <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+      </svg>
+    </div>
+  {/if}
   
-  <h1 class="text-[18px] font-bold text-text-primary tracking-tight mb-1.5">Your workspace is ready!</h1>
+  <h1 class="text-[18px] font-bold text-text-primary tracking-tight mb-1.5">
+    {#if appPreview}
+      Ready to sync {appPreview.title}!
+    {:else}
+      Your workspace is ready!
+    {/if}
+  </h1>
   <p class="text-[13px] leading-relaxed text-text-secondary max-w-lg mx-auto mb-6">
     We're ready to pull the latest reviews and market signals from the Google Play Store to populate your dashboard.
   </p>
