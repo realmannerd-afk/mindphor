@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { getSupabaseClient } from "../../lib/supabase";
+import { getUserPlanLimits } from "../../lib/planLimits";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
@@ -15,6 +16,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     if (!name) {
       return new Response(JSON.stringify({ error: "App name is required" }), { status: 400 });
+    }
+
+    // Check plan limits
+    const { limits, plan } = await getUserPlanLimits(cookies);
+    const { count, error: countError } = await supabase
+      .from('apps')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if (count !== null && count >= limits.apps) {
+      return new Response(JSON.stringify({ 
+        error: `Upgrade Required: Your current ${plan} plan is limited to ${limits.apps} apps. Please upgrade your subscription to add more.` 
+      }), { status: 403 });
     }
 
     const { data, error } = await supabase

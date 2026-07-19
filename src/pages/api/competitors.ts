@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
+import { getUserPlanLimits } from "../../lib/planLimits";
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -110,6 +111,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     if (appError || !app) {
       return new Response(JSON.stringify({ error: "Invalid app_id" }), { status: 401 });
+    }
+
+    // Check plan limits
+    const { limits, plan } = await getUserPlanLimits(cookies);
+    const { count, error: countError } = await supabase
+      .from('competitors')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if (count !== null && count >= limits.competitors) {
+      return new Response(JSON.stringify({ 
+        error: `Upgrade Required: Your current ${plan} plan is limited to ${limits.competitors} competitors total. Please upgrade to add more.` 
+      }), { status: 403 });
     }
 
     const { error: upsertError } = await supabase
