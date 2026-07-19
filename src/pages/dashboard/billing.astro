@@ -35,23 +35,36 @@ const isPro = currentPlan === 'pro';
     </div>
 
     <!-- Current Subscription Details -->
+    <!-- Current Subscription Details -->
     {sub && (
-      <div class="mb-10 p-6 bg-bg-base border border-border-default rounded-[12px] shadow-sm">
-        <h2 class="text-[15px] font-semibold text-text-primary mb-4">Current Subscription</h2>
+      <div class="mb-10 p-6 bg-bg-base border border-border-default rounded-[12px]">
+        <h2 class="text-[15px] font-semibold text-text-primary mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"></path></svg>
+          Current Subscription
+        </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <div class="text-[11px] text-text-muted mb-1 uppercase tracking-wider font-mono font-medium">Active Plan</div>
+            <div class="flex items-center gap-1.5 text-[11px] text-text-muted mb-1 uppercase tracking-wider font-mono font-medium">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+              Active Plan
+            </div>
             <div class="text-[14px] font-medium text-text-primary capitalize">{sub.plan} Plan</div>
           </div>
           <div>
-            <div class="text-[11px] text-text-muted mb-1 uppercase tracking-wider font-mono font-medium">Status</div>
+            <div class="flex items-center gap-1.5 text-[11px] text-text-muted mb-1 uppercase tracking-wider font-mono font-medium">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              Status
+            </div>
             <div class="text-[14px] font-medium text-text-primary capitalize flex items-center gap-2">
               <span class={`w-2 h-2 rounded-full ${sub.status === 'active' ? 'bg-[#10b981]' : (sub.status === 'canceled' ? 'bg-[#ef4444]' : 'bg-[#f59e0b]')}`}></span>
               {sub.status}
             </div>
           </div>
           <div>
-            <div class="text-[11px] text-text-muted mb-1 uppercase tracking-wider font-mono font-medium">Billing Period Ends</div>
+            <div class="flex items-center gap-1.5 text-[11px] text-text-muted mb-1 uppercase tracking-wider font-mono font-medium">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              Billing Period Ends
+            </div>
             <div class="text-[14px] font-medium text-text-primary">
               {sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
             </div>
@@ -99,7 +112,7 @@ const isPro = currentPlan === 'pro';
       </div>
 
       <!-- Growth Card -->
-      <div class="flex flex-col h-full bg-bg-base border border-accent/30 rounded-[12px] p-8 text-left relative shadow-sm">
+      <div class="flex flex-col h-full bg-bg-base border border-accent/30 rounded-[12px] p-8 text-left relative">
         {isGrowth ? 
           <div class="absolute -top-3 left-8 bg-text-primary text-bg-base text-[10px] uppercase tracking-wider font-semibold px-3 py-1 rounded-full">Current Plan</div>
           : 
