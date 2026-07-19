@@ -17,7 +17,7 @@ const proPrice = import.meta.env.PUBLIC_PADDLE_PRO_PRICE_ID;
 // Optional: fetch the user's current subscription status from the database
 const { data: sub } = await supabase
   .from('subscriptions')
-  .select('plan, status')
+  .select('plan, status, current_period_end')
   .eq('user_id', userData.user.id)
   .maybeSingle();
 
@@ -33,6 +33,32 @@ const isPro = currentPlan === 'pro';
       <h1 class="text-[clamp(18px,2vw,24px)] font-semibold text-text-primary leading-tight tracking-tight mb-2">Manage your subscription</h1>
       <p class="text-[13px] text-text-secondary">Upgrade your plan to track more apps, monitor competitors, and unlock real-time anomaly alerts.</p>
     </div>
+
+    <!-- Current Subscription Details -->
+    {sub && (
+      <div class="mb-10 p-6 bg-bg-base border border-border-default rounded-[12px] shadow-sm">
+        <h2 class="text-[15px] font-semibold text-text-primary mb-4">Current Subscription</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <div class="text-[11px] text-text-muted mb-1 uppercase tracking-wider font-mono font-medium">Active Plan</div>
+            <div class="text-[14px] font-medium text-text-primary capitalize">{sub.plan} Plan</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-text-muted mb-1 uppercase tracking-wider font-mono font-medium">Status</div>
+            <div class="text-[14px] font-medium text-text-primary capitalize flex items-center gap-2">
+              <span class={`w-2 h-2 rounded-full ${sub.status === 'active' ? 'bg-[#10b981]' : (sub.status === 'canceled' ? 'bg-[#ef4444]' : 'bg-[#f59e0b]')}`}></span>
+              {sub.status}
+            </div>
+          </div>
+          <div>
+            <div class="text-[11px] text-text-muted mb-1 uppercase tracking-wider font-mono font-medium">Billing Period Ends</div>
+            <div class="text-[14px] font-medium text-text-primary">
+              {sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
 
     <!-- Pricing Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
