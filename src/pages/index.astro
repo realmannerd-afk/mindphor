@@ -12,10 +12,7 @@ import FeatureShowcase from "../components/islands/FeatureShowcase.tsx";
 import { Highlighter } from "../components/magicui/highlighter";
 import { StraightHighlighter } from "../components/magicui/straight-highlighter";
 
-const paddleToken = import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN;
-const starterPrice = import.meta.env.PUBLIC_PADDLE_STARTER_PRICE_ID;
-const growthPrice = import.meta.env.PUBLIC_PADDLE_GROWTH_PRICE_ID;
-const proPrice = import.meta.env.PUBLIC_PADDLE_PRO_PRICE_ID;
+
 
 const cookieHeader = Astro.request.headers.get('cookie') || '';
 const hasSessionCookie = cookieHeader.includes('sb-');
@@ -201,12 +198,12 @@ if (userData?.user) {
               <span>Basic sentiment metrics</span>
             </li>
           </ul>
-          <button
-            id="btn-starter"
+          <a
+            href="/signup?plan=starter"
             class="mt-auto block w-full bg-transparent border border-border-default text-text-primary rounded-full py-3 text-[13px] font-medium hover:bg-bg-elevated transition-colors text-center"
           >
             Start for free
-          </button>
+          </a>
         </div>
 
         <!-- Growth Card -->
@@ -239,12 +236,12 @@ if (userData?.user) {
               <span>AI-generated action plans</span>
             </li>
           </ul>
-          <button
-            id="btn-growth"
+          <a
+            href="/signup?plan=growth"
             class="mt-auto block w-full bg-text-primary text-bg-base border border-transparent rounded-full py-3 text-[13px] font-medium hover:opacity-90 transition-opacity text-center"
           >
             Get Started
-          </button>
+          </a>
         </div>
 
         <!-- Pro Card -->
@@ -276,12 +273,12 @@ if (userData?.user) {
               <span>API Access & Webhooks</span>
             </li>
           </ul>
-          <button
-            id="btn-pro"
+          <a
+            href="/signup?plan=pro"
             class="mt-auto block w-full bg-transparent border border-border-default text-text-primary rounded-full py-3 text-[13px] font-medium hover:bg-bg-elevated transition-colors text-center"
           >
             Start Pro Plan
-          </button>
+          </a>
         </div>
 
       </div>
@@ -337,41 +334,5 @@ if (userData?.user) {
     </footer>
   </div>
 
-  <script src="https://cdn.paddle.com/paddle/v2/paddle.js" is:inline></script>
-  <script define:vars={{
-    paddleToken,
-    starterPrice,
-    growthPrice,
-    proPrice
-  }}>
-    Paddle.Environment.set('sandbox');
-    Paddle.Initialize({ token: paddleToken });
 
-    document.getElementById('btn-starter')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (starterPrice) {
-        Paddle.Checkout.open({ items: [{ priceId: starterPrice, quantity: 1 }] });
-      } else {
-        console.error("Missing Starter Price ID in .env");
-      }
-    });
-
-    document.getElementById('btn-growth')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (growthPrice) {
-        Paddle.Checkout.open({ items: [{ priceId: growthPrice, quantity: 1 }] });
-      } else {
-        console.error("Missing Growth Price ID in .env");
-      }
-    });
-
-    document.getElementById('btn-pro')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (proPrice) {
-        Paddle.Checkout.open({ items: [{ priceId: proPrice, quantity: 1 }] });
-      } else {
-        console.error("Missing Pro Price ID in .env");
-      }
-    });
-  </script>
 </RootLayout>
