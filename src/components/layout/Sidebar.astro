@@ -39,8 +39,8 @@ try {
       Astro.cookies.set('mindphor_app_id', projectId, { path: '/', maxAge: 31536000 });
     }
 
-    const limits = await getUserPlanLimits(user.id);
-    if (apps.length >= limits.maxApps) {
+    const planData = await getUserPlanLimits(Astro.cookies);
+    if (apps.length >= planData.limits.apps) {
       canCreateApp = false;
       upgradeMessage = "Upgrade plan to add more apps";
     }
