@@ -99,6 +99,12 @@
           layout: {
             padding: { top: 10, right: 15, bottom: 5, left: 5 }
           },
+          animation: {
+            y: {
+              duration: 1000,
+              from: 0
+            }
+          },
           responsive: true,
           maintainAspectRatio: false,
           interaction: { mode: 'index', intersect: false },
