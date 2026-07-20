@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import gplay from 'google-play-scraper';
+import gplay from '../../../lib/scrapers/vendor/index.js';
 
 export const GET: APIRoute = async ({ request }) => {
   try {

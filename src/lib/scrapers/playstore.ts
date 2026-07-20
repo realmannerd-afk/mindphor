@@ -1,4 +1,4 @@
-import gplay from 'google-play-scraper';
+import gplay from './vendor/index.js';
 
 export interface ReviewItem {
   content: string;
