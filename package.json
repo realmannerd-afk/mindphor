@@ -10,7 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "postinstall": "node -e \"try { require('fs').rmSync('node_modules/es5-ext/node_modules/es5-ext', {recursive:true, force:true}) } catch(e) {}\" && patch-package"
+    "postinstall": "node scripts/clean-es5ext-symlinks.cjs && patch-package"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
