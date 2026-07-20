@@ -10,7 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "postinstall": "node scripts/clean-es5ext-symlinks.cjs && patch-package"
+    "postinstall": "node scripts/clean-es5ext-symlinks.cjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
