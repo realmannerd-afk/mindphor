@@ -7,10 +7,11 @@ const supabase = getSupabaseClient(Astro.cookies);
 const { data: userData } = await supabase.auth.getUser();
 
 let projectId = null;
+let playStoreUrl = null;
 if (userData?.user) {
   projectId = Astro.cookies.get('mindphor_app_id')?.value;
   
-  let query = supabase.from('apps').select('id').eq('user_id', userData.user.id);
+  let query = supabase.from('apps').select('id, play_store_url').eq('user_id', userData.user.id);
   if (projectId) {
     query = query.eq('id', projectId);
   } else {
@@ -19,6 +20,7 @@ if (userData?.user) {
   
   let { data: apps } = await query.limit(1);
   projectId = apps?.[0]?.id;
+  playStoreUrl = apps?.[0]?.play_store_url;
 } else {
   
 }
@@ -33,6 +35,6 @@ const selectedDate = Astro.url.searchParams.get('date') || '';
 
 <DashboardLayout title="Alerts">
   <div class="w-full flex-1 flex flex-col pb-10">
-    <AlertsFeed client:load projectId={projectId} expanded={true} date={selectedDate} />
+    <AlertsFeed client:load projectId={projectId} playStoreUrl={playStoreUrl} expanded={true} date={selectedDate} />
   </div>
 </DashboardLayout>

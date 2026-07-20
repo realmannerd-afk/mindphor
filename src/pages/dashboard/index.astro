@@ -70,7 +70,7 @@ const selectedDate = Astro.url.searchParams.get('date') || '';
         
         <!-- Right: Alerts feed (45%) -->
         <div class="w-full lg:w-[45%] h-[364px]">
-          <AlertsFeed client:load projectId={projectId} overviewLink={true} date={selectedDate} />
+          <AlertsFeed client:load projectId={projectId} playStoreUrl={playStoreUrl} overviewLink={true} date={selectedDate} />
         </div>
       </div>
     </Fragment>

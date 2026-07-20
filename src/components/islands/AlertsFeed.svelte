@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   export let projectId: string = '';
+  export let playStoreUrl: string = '';
   export let overviewLink: boolean = false;
   export let date: string = '';
   export let expanded: boolean = false;
@@ -30,6 +31,32 @@
     isRefreshing = true;
     await loadData();
     isRefreshing = false;
+  }
+
+  let isSyncing = false;
+  async function syncNow() {
+    if (isSyncing || !projectId || !playStoreUrl) return;
+    isSyncing = true;
+    try {
+      const res = await fetch('/api/ingest/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          app_id: projectId,
+          target_type: 'app',
+          target_id: projectId,
+          store: 'playstore',
+          store_identifier: playStoreUrl
+        })
+      });
+      if (res.ok) {
+        await manualReload();
+      }
+    } catch (e) {
+      console.error('Failed to sync alerts:', e);
+    } finally {
+      isSyncing = false;
+    }
   }
 
   function getRelativeTime(isoString: string) {
@@ -209,7 +236,15 @@
             </a>
           </div>
           
-          <div class="relative group/tooltip flex items-center">
+          <div class="relative group/tooltip flex items-center gap-2">
+            <button on:click={syncNow} disabled={isSyncing} class="text-[11px] font-medium text-text-primary bg-bg-elevated hover:bg-bg-subtle border border-border-default rounded-md px-2 py-1 transition-colors flex items-center gap-1 focus:outline-none" aria-label="Sync Now">
+              {#if isSyncing}
+                <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              {:else}
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m-8-8h16" /></svg>
+              {/if}
+              Sync Now
+            </button>
             <button on:click={manualReload} class="p-1.5 text-text-muted hover:text-text-primary transition-colors rounded-md hover:bg-bg-elevated focus:outline-none" aria-label="Refresh alerts">
               <svg class={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-text-primary' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><polyline points="21 3 21 8 16 8"></polyline></svg>
             </button>
@@ -279,7 +314,20 @@
           {/if}
         </div>
         
-        <div class="relative">
+        <div class="relative flex items-center gap-2">
+          <button 
+            class={`flex items-center h-8 px-3 gap-1.5 rounded-full border transition-all focus:outline-none ${isSyncing ? 'bg-bg-subtle text-text-muted border-border-default cursor-wait' : 'bg-text-primary text-bg-base hover:opacity-90 border-transparent'}`}
+            on:click={syncNow}
+            disabled={isSyncing}
+          >
+            {#if isSyncing}
+              <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              <span class="text-[13px] font-medium">Syncing...</span>
+            {:else}
+              <span class="text-[13px] font-medium">Sync Now</span>
+            {/if}
+          </button>
+          
           <button 
             class={`flex items-center h-8 px-3 gap-1.5 rounded-full border transition-all focus-within:ring-2 focus-within:ring-border-strong/50 focus:outline-none ${
               isOptionsOpen
