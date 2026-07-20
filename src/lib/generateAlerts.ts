@@ -57,7 +57,7 @@ export async function generateAlerts({
   // Fetch the full content of newly inserted feedback rows
   const { data: newRows, error } = await supabase
     .from("feedback")
-    .select("id, content, sentiment, source, competitor_id")
+    .select("id, content, sentiment, source, competitor_id, score")
     .in("id", newFeedbackIds);
 
   if (error || !newRows || newRows.length === 0) return 0;
@@ -69,20 +69,23 @@ export async function generateAlerts({
   const insertAlert = async (
     type: "error" | "warning" | "info",
     title: string,
-    description: string
+    description: string,
+    force: boolean = false
   ) => {
-    // Dedup check: same app + same type + same day
-    const { data: existing } = await supabase
-      .from("alerts")
-      .select("id")
-      .eq("app_id", appId)
-      .eq("type", type)
-      .gte("created_at", `${today}T00:00:00Z`)
-      .lte("created_at", `${today}T23:59:59Z`)
-      .eq("title", title)
-      .maybeSingle();
+    if (!force) {
+      // Dedup check: same app + same type + same day
+      const { data: existing } = await supabase
+        .from("alerts")
+        .select("id")
+        .eq("app_id", appId)
+        .eq("type", type)
+        .gte("created_at", `${today}T00:00:00Z`)
+        .lte("created_at", `${today}T23:59:59Z`)
+        .eq("title", title)
+        .maybeSingle();
 
-    if (existing) return; // already fired today
+      if (existing) return; // already fired today
+    }
 
     const { error: insertErr } = await supabase.from("alerts").insert({
       app_id: appId,
@@ -140,6 +143,35 @@ export async function generateAlerts({
       "info",
       "Competitor product update detected",
       snippet
+    );
+  }
+
+  // ── Rule 4: INFO — Sync digest summary ───────────────────────────
+  if (newRows.length > 0) {
+    const numNeg = newRows.filter(r => r.sentiment === 'negative').length;
+    const numNeu = newRows.filter(r => r.sentiment === 'neutral').length;
+    const numPos = newRows.filter(r => r.sentiment === 'positive').length;
+    
+    await insertAlert(
+      "info",
+      `Sync summary: ${newRows.length} new reviews`,
+      `${newRows.length} new reviews synced — ${numNeg} negative, ${numNeu} neutral, ${numPos} positive.`
+    );
+  }
+
+  // ── Rule 5: INFO — Positive 5-star callout ───────────────────────
+  const fiveStarPositive = newRows.filter(r => r.sentiment === "positive" && r.score === 5);
+  for (const row of fiveStarPositive) {
+    const snippet = (row.content || "").length > 120
+      ? (row.content || "").slice(0, 120) + "…"
+      : (row.content || "");
+    
+    // Pass force=true so each 5-star review gets its own individual alert
+    await insertAlert(
+      "info",
+      "🎉 New 5-star review",
+      snippet,
+      true
     );
   }
 
