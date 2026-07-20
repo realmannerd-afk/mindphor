@@ -70,11 +70,7 @@
     }
   }
 
-  async function handleRefresh() {
-    isRefreshing = true;
-    await new Promise(r => setTimeout(r, 600)); // simulate network fetch
-    isRefreshing = false;
-  }
+
 
   let isOptionsOpen = false;
 
@@ -318,7 +314,7 @@
           
           <!-- Refresh/Action Col -->
           <div class="flex items-center justify-center relative">
-            <button class="text-text-muted hover:text-text-primary transition-colors focus:outline-none flex items-center justify-center" aria-label="Refresh alerts" on:click={handleRefresh}>
+            <button class="text-text-muted hover:text-text-primary transition-colors focus:outline-none flex items-center justify-center" aria-label="Refresh alerts" on:click={manualReload}>
               <svg class="w-[16px] h-[16px] {isRefreshing ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><polyline points="21 3 21 8 16 8"></polyline></svg>
             </button>
           </div>
