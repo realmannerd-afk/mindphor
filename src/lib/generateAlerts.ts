@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getUserPlanLimits } from "./planLimits";
 
 /**
  * generateAlerts
@@ -46,6 +47,12 @@ export async function generateAlerts({
   newFeedbackIds,
 }: GenerateAlertsOptions): Promise<number> {
   if (!newFeedbackIds.length) return 0;
+
+  // Plan Check: Only Growth and Pro users get alerts
+  const { plan } = await getUserPlanLimits(null, supabase, userId);
+  if (plan === 'starter') {
+    return 0; // Skip alert generation for starter
+  }
 
   // Fetch the full content of newly inserted feedback rows
   const { data: newRows, error } = await supabase

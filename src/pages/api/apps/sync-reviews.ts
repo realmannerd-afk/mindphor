@@ -86,7 +86,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Generate alerts for new feedback
-    const alertsGenerated = await generateAlerts(appId, appData.alert_threshold || 10, newFeedbackIds);
+    const alertsGenerated = await generateAlerts({
+      supabase,
+      appId,
+      userId: user.id,
+      alertThreshold: appData.alert_threshold || 10,
+      newFeedbackIds
+    });
 
     return new Response(JSON.stringify({ success: true, inserted, skipped, total_fetched: reviews.length, alertsGenerated }), {
       status: 200,

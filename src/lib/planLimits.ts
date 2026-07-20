@@ -6,19 +6,24 @@ export const PLAN_LIMITS = {
   pro: { apps: 10, competitors: 15 },
 };
 
-export async function getUserPlanLimits(cookies: any) {
+export async function getUserPlanLimits(cookies: any, overrideSupabase?: any, overrideUserId?: string) {
   try {
-    const supabase = getSupabaseClient(cookies);
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = overrideSupabase || getSupabaseClient(cookies);
+    let userId = overrideUserId;
     
-    if (!user) {
+    if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id;
+    }
+    
+    if (!userId) {
       return { plan: 'starter', limits: PLAN_LIMITS.starter };
     }
 
     const { data: sub } = await supabase
       .from('subscriptions')
       .select('plan, status')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('status', 'active')
       .maybeSingle();
 
