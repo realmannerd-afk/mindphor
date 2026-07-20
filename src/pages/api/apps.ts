@@ -66,7 +66,18 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    const appId = cookies.get('mindphor_app_id')?.value;
+    let appId = cookies.get('mindphor_app_id')?.value;
+    
+    // Try to get appId from body
+    try {
+      const body = await request.json();
+      if (body && body.appId) {
+        appId = body.appId;
+      }
+    } catch (e) {
+      // Body might be empty
+    }
+
     if (!appId) {
       return new Response(JSON.stringify({ error: "No active workspace selected for deletion" }), { status: 400 });
     }

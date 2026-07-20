@@ -109,11 +109,13 @@ export async function generateAlerts({
     }
   }
 
-  // ── Rule 2: WARNING — negative spike (3+ negative reviews in this batch) ─
+  // ── Rule 2: WARNING — negative spike (exceeds threshold) ─
   const negativeRows = newRows.filter(
     (r) => r.sentiment === "negative" && !r.competitor_id
   );
-  if (negativeRows.length >= 3) {
+  // Default threshold is 3 if alertThreshold is undefined or 0
+  const threshold = alertThreshold > 0 ? alertThreshold : 3;
+  if (negativeRows.length >= threshold) {
     await insertAlert(
       "warning",
       `Negative review spike: ${negativeRows.length} new negative reviews`,

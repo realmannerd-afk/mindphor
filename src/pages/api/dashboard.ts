@@ -15,9 +15,12 @@ export const GET: APIRoute = async ({ request }) => {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     let targetDate = new Date();
-    if (dateParam) {
-      targetDate = new Date(dateParam);
-      targetDate.setUTCHours(23, 59, 59, 999);
+    if (dateParam && dateParam !== 'null' && dateParam !== 'undefined') {
+      const parsedDate = new Date(dateParam);
+      if (!isNaN(parsedDate.getTime())) {
+        targetDate = parsedDate;
+        targetDate.setUTCHours(23, 59, 59, 999);
+      }
     }
 
 
@@ -26,11 +29,14 @@ export const GET: APIRoute = async ({ request }) => {
       import.meta.env.SUPABASE_SERVICE_KEY
     );
 
-    const fourteenDaysAgo = new Date(targetDate);
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    const rangeParam = parseInt(url.searchParams.get('range') || '7', 10);
+    const rangeDays = isNaN(rangeParam) ? 7 : rangeParam;
+
+    const previousPeriodStart = new Date(targetDate);
+    previousPeriodStart.setDate(previousPeriodStart.getDate() - (rangeDays * 2));
     
-    const sevenDaysAgo = new Date(targetDate);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const currentPeriodStart = new Date(targetDate);
+    currentPeriodStart.setDate(currentPeriodStart.getDate() - rangeDays);
 
     let currentTraces: any[] = [];
     let previousTraces: any[] = [];
@@ -40,7 +46,7 @@ export const GET: APIRoute = async ({ request }) => {
         .from('feedback')
         .select('id, content, source, sentiment, created_at, url, score, version')
         .eq('app_id', appId)
-        .gte('created_at', fourteenDaysAgo.toISOString())
+        .gte('created_at', previousPeriodStart.toISOString())
         .lte('created_at', targetDate.toISOString())
         .order('created_at', { ascending: true }); // ascending for version tracking
 
@@ -58,7 +64,7 @@ export const GET: APIRoute = async ({ request }) => {
             version: fb.version ?? null,
             created_at: fb.created_at
           };
-          if (new Date(fb.created_at) >= sevenDaysAgo) {
+          if (new Date(fb.created_at) >= currentPeriodStart) {
             currentTraces.push(item);
           } else {
             previousTraces.push(item);
@@ -122,8 +128,8 @@ export const GET: APIRoute = async ({ request }) => {
       'Google Play': { total: 0, count: 0 },
     };
 
-    // Initialize last 7 days sequentially
-    for (let i = 6; i >= 0; i--) {
+    // Initialize last 'rangeDays' sequentially
+    for (let i = rangeDays - 1; i >= 0; i--) {
       const d = new Date(targetDate);
       d.setDate(d.getDate() - i);
       const dayName = dayNames[d.getDay()];
@@ -217,20 +223,20 @@ export const GET: APIRoute = async ({ request }) => {
 
     // ── Trend strings ─────────────────────────────────────────────────────────
     const avgScoreDiff = avg_score - prev_avg_score;
-    const avgScoreTrend = avgScoreDiff > 0 ? `↑ +${avgScoreDiff}% this week` : avgScoreDiff < 0 ? `↓ ${avgScoreDiff}% this week` : `Stable this week`;
+    const avgScoreTrend = avgScoreDiff > 0 ? `↑ +${avgScoreDiff}% vs prev period` : avgScoreDiff < 0 ? `↓ ${avgScoreDiff}% vs prev period` : `Stable`;
 
     const posDiff = memoryAccuracy - prevMemoryAccuracy;
-    const posTrend = posDiff > 0 ? `↑ +${posDiff}% this week` : posDiff < 0 ? `↓ ${posDiff}% this week` : `Stable this week`;
+    const posTrend = posDiff > 0 ? `↑ +${posDiff}% vs prev period` : posDiff < 0 ? `↓ ${posDiff}% vs prev period` : `Stable`;
 
     const regDiff = regression_count - prev_regression_count;
-    const regTrend = regDiff > 0 ? `↑ +${regDiff} vs last week` : regDiff < 0 ? `↓ ${regDiff} vs last week` : `Stable this week`;
+    const regTrend = regDiff > 0 ? `↑ +${regDiff} vs prev period` : regDiff < 0 ? `↓ ${regDiff} vs prev period` : `Stable`;
 
-    let callTrend = `Stable this week`;
+    let callTrend = `Stable`;
     if (prev_total_calls > 0) {
       const callDiffPerc = Math.round(((total_calls - prev_total_calls) / prev_total_calls) * 100);
-      callTrend = callDiffPerc > 0 ? `↑ +${callDiffPerc}% this week` : callDiffPerc < 0 ? `↓ ${callDiffPerc}% this week` : `Stable this week`;
+      callTrend = callDiffPerc > 0 ? `↑ +${callDiffPerc}% vs prev period` : callDiffPerc < 0 ? `↓ ${callDiffPerc}% vs prev period` : `Stable`;
     } else if (total_calls > 0) {
-      callTrend = `↑ +100% this week`;
+      callTrend = `↑ +100% vs prev period`;
     }
 
     return new Response(JSON.stringify({

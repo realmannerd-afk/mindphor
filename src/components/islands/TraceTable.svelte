@@ -6,12 +6,15 @@
   export let projectId: string;
   export let overviewLink = false;
   export let date: string = '';
+  export let playStoreUrl: string = '';
 
   let traces: any[] = [];
   let loading = true;
+  let loadingMore = false;
   let isRefreshing = false;
   let offset = 0;
   let limit = 30;
+  let hasMore = true;
   let isMounted = false;
   let prevSentimentFilter = 'all';
   let pollInterval: any;
@@ -115,8 +118,38 @@
   async function resetAndReload() {
     offset = 0;
     traces = [];
+    hasMore = true;
     loading = true;
     await loadData();
+  }
+
+  let isSyncing = false;
+  async function syncMoreReviews() {
+    if (isSyncing || !projectId || !playStoreUrl) return;
+    isSyncing = true;
+    try {
+      const res = await fetch('/api/ingest/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          app_id: projectId,
+          target_type: 'app',
+          target_id: projectId,
+          store: 'playstore',
+          store_identifier: playStoreUrl
+        })
+      });
+      if (res.ok) {
+        toastMessage = 'Successfully synced more reviews!';
+        showNewToast = true;
+        setTimeout(() => showNewToast = false, 3000);
+        await resetAndReload();
+      }
+    } catch (e) {
+      console.error('Failed to sync more reviews:', e);
+    } finally {
+      isSyncing = false;
+    }
   }
 
   async function loadData() {
@@ -168,6 +201,72 @@
     }
   }
 
+  async function loadMore() {
+    if (loading || loadingMore || !hasMore) return;
+    loadingMore = true;
+    offset += limit;
+    
+    try {
+      let apiUrl = `/api/feedback?app_id=${projectId}&limit=${limit}&offset=${offset}`;
+      
+      if (sentimentFilter && sentimentFilter !== 'all') {
+        apiUrl += `&sentiment=${encodeURIComponent(sentimentFilter)}`;
+      }
+      if (searchQuery) {
+        apiUrl += `&search=${encodeURIComponent(searchQuery)}`;
+      }
+      
+      const res = await fetch(apiUrl);
+      if (res.ok) {
+        const json = await res.json();
+        const rawList = json.feedback || json.traces || [];
+        
+        if (rawList.length < limit) {
+          hasMore = false;
+        }
+
+        const formatted = rawList.map((item: any) => {
+          let derivedSentiment = item.sentiment;
+          if (item.score !== undefined && item.score !== null) {
+            if (item.score < 3) derivedSentiment = 'critical';
+            else if (item.score === 3) derivedSentiment = 'neutral';
+            else derivedSentiment = 'positive';
+          }
+          return {
+            ...item,
+            id: item.id,
+            input: item.content || item.input || '',
+            model: (item.source || item.model || '').replace('Play Store', 'play_store'),
+            status: derivedSentiment,
+            score: item.score !== undefined ? item.score : null,
+            raw_score: item.raw_score !== undefined ? item.raw_score : null,
+            author: item.author || 'Anonymous User',
+            url: item.url || ''
+          };
+        });
+        
+        traces = [...traces, ...formatted];
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      loadingMore = false;
+    }
+  }
+
+  function infiniteScroll(node: HTMLElement) {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadMore();
+      }
+    }, { rootMargin: '100px' });
+    
+    observer.observe(node);
+    return {
+      destroy() { observer.disconnect(); }
+    };
+  }
+
   // Debounced search — re-fetches from API after 400ms of no typing
   function handleSearchInput() {
     clearTimeout(refreshTimeout);
@@ -188,6 +287,7 @@
   $: if (isMounted && sentimentFilter !== prevSentimentFilter) {
     prevSentimentFilter = sentimentFilter;
     offset = 0;
+    hasMore = true;
     traces = [];
     loading = true;
     loadData();
@@ -433,6 +533,32 @@
               
             </a>
           {/each}
+          
+          <!-- Infinite Scroll Trigger -->
+          {#if hasMore && filteredTraces.length > 0}
+            <div use:infiniteScroll class="py-8 flex justify-center items-center w-full">
+              {#if loadingMore}
+                <svg class="animate-spin h-6 w-6 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              {/if}
+            </div>
+          {:else if !hasMore && filteredTraces.length > 0 && playStoreUrl}
+            <div class="py-12 flex flex-col items-center justify-center w-full gap-4">
+              <span class="text-[13px] text-text-muted">You've reached the end of the currently synced reviews.</span>
+              <button 
+                onclick={syncMoreReviews}
+                disabled={isSyncing}
+                class="flex items-center gap-2 px-5 py-2.5 bg-bg-surface hover:bg-bg-elevated border border-border-default rounded-full text-[13px] font-medium text-text-primary transition-colors disabled:opacity-50"
+              >
+                {#if isSyncing}
+                  <svg class="animate-spin h-4 w-4 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  Fetching older reviews...
+                {:else}
+                  <svg class="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"></path></svg>
+                  Sync Older Reviews
+                {/if}
+              </button>
+            </div>
+          {/if}
         {/if}
       </div>
     </div>

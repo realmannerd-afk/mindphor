@@ -7,10 +7,11 @@ const supabase = getSupabaseClient(Astro.cookies);
 const { data: userData } = await supabase.auth.getUser();
 
 let projectId = null;
+let playStoreUrl = '';
 if (userData?.user) {
   projectId = Astro.cookies.get('mindphor_app_id')?.value;
   
-  let query = supabase.from('apps').select('id').eq('user_id', userData.user.id);
+  let query = supabase.from('apps').select('id, play_store_url').eq('user_id', userData.user.id);
   if (projectId) {
     query = query.eq('id', projectId);
   } else {
@@ -19,6 +20,7 @@ if (userData?.user) {
   
   let { data: apps } = await query.limit(1);
   projectId = apps?.[0]?.id;
+  playStoreUrl = apps?.[0]?.play_store_url || '';
 } else {
   return Astro.redirect('/login');
 }
@@ -28,6 +30,6 @@ const selectedDate = Astro.url.searchParams.get('date') || '';
 
 <DashboardLayout title="Feedback">
   <div class="absolute inset-0 px-10 pb-10 pt-6 flex flex-col min-h-0">
-    <TraceTable client:load projectId={projectId} date={selectedDate} />
+    <TraceTable client:load projectId={projectId} date={selectedDate} playStoreUrl={playStoreUrl} />
   </div>
 </DashboardLayout>

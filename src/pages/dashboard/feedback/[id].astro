@@ -3,6 +3,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout.astro';
 import { getSupabaseClient } from '../../../lib/supabase';
 import UserAvatar from '../../../components/islands/UserAvatar.svelte';
 import Logo from '../../../components/islands/Logo.svelte';
+import ReviewTranslator from '../../../components/islands/ReviewTranslator.svelte';
 
 const { id } = Astro.params;
 
@@ -70,7 +71,6 @@ const formatDate = (dateStr: string) => {
 };
 
 const authorName = entry.author || 'Anonymous User';
-const seoTitle = `Feedback from ${authorName} on ${targetName} | Mindphor`;
 const plainTextContent = (entry.content || '').replace(/<[^>]*>?/gm, '');
 const seoDescription = plainTextContent.length > 150 ? plainTextContent.substring(0, 147) + '...' : plainTextContent;
 
@@ -84,7 +84,7 @@ if (contentLower.includes('price') || contentLower.includes('subscription') || c
 if (tags.length === 0) tags.push('General Feedback');
 ---
 
-<DashboardLayout title={seoTitle} description={seoDescription}>
+<DashboardLayout title="Feedback Details" description={seoDescription}>
   
   <div class="w-full flex flex-col pt-0 pb-6 pr-6 max-w-[1400px]">
     <!-- Top Nav / Header Toolbar -->
@@ -132,10 +132,8 @@ if (tags.length === 0) tags.push('General Feedback');
 
         <div class="w-full h-px bg-border-faint"></div>
 
-        <!-- The actual feedback content -->
-        <div class="text-[18px] md:text-[20px] leading-[1.6] text-text-primary font-medium">
-          &quot;{entry.content}&quot;
-        </div>
+        <!-- The actual feedback content with Native Translation -->
+        <ReviewTranslator client:load content={entry.content || ''} />
         
         <!-- Profile Section -->
         <div class="flex items-center gap-3 mt-2 pt-6 border-t border-border-faint">

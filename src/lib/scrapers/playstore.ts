@@ -36,7 +36,8 @@ export async function scrapePlayStoreReviews(packageName: string, count: number 
       reviews = await gplay.reviews({
         appId: appId,
         sort: gplay.sort.NEWEST,
-        num: count
+        num: count,
+        paginate: true
       });
       
       // gplay.reviews doesn't throw an error for invalid apps, it just returns empty data
@@ -52,7 +53,8 @@ export async function scrapePlayStoreReviews(packageName: string, count: number 
         reviews = await gplay.reviews({
           appId: appId,
           sort: gplay.sort.NEWEST,
-          num: count
+          num: count,
+          paginate: true
         });
       } else {
         console.warn('Play Store fallback search also failed for term', packageName);

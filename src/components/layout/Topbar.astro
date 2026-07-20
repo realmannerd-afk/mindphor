@@ -15,8 +15,7 @@ const selectedDate = Astro.url.searchParams.get('date');
   <h2 class="text-[15px] font-medium text-text-primary">{title}</h2>
   
   <div class="flex items-center gap-4">
-    <!-- Date Filter -->
-    <DatePicker client:load initialDate={selectedDate} />
+    <!-- Spacer for right alignment if needed -->
+    <div></div>
   </div>
 </header>
-

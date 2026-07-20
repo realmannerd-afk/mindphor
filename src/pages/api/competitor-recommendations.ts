@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { getSupabaseClient } from "../../lib/supabase";
 import { generateCompetitorRecommendations } from "../../lib/ai/competitorSummary";
+import { getUserPlanLimits } from "../../lib/planLimits";
 
 export const GET: APIRoute = async ({ request, cookies }) => {
   try {
@@ -18,6 +19,13 @@ export const GET: APIRoute = async ({ request, cookies }) => {
 
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
+
+    const { plan } = await getUserPlanLimits(cookies);
+    if (plan === 'starter') {
+      return new Response(JSON.stringify({ 
+        error: "Upgrade Required: AI-generated Strategic Briefs and Action Plans are only available on the Growth plan and above." 
+      }), { status: 403 });
     }
 
     const { data: fb } = await supabase

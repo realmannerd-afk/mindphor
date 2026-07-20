@@ -15,7 +15,7 @@ export default defineConfig({
       exclude: ['@astrojs/cloudflare']
     },
     ssr: {
-      noExternal: ['google-play-scraper', 'memoizee', 'es5-ext']
+      external: ['google-play-scraper', 'memoizee', 'es5-ext']
     }
   },
 

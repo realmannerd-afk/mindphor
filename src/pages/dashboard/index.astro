@@ -57,7 +57,7 @@ const selectedDate = Astro.url.searchParams.get('date') || '';
 <DashboardLayout title="Overview">
   {hasTraces ? (
     <Fragment>
-      <MetricCards client:load projectId={projectId} date={selectedDate} />
+      <MetricCards client:load projectId={projectId} date={selectedDate} playStoreUrl={playStoreUrl} />
       <ScoreChart client:load projectId={projectId} date={selectedDate} />
       <TraceTable client:load projectId={projectId} overviewLink={true} date={selectedDate} />
 

@@ -3,9 +3,11 @@
   let show = false;
   let loading = false;
   let error = '';
+  let activeAppId = '';
 
   onMount(() => {
-    const handleOpen = () => {
+    const handleOpen = (e: any) => {
+      activeAppId = e.detail?.appId || '';
       show = true;
       error = '';
     };
@@ -25,7 +27,11 @@
     error = '';
 
     try {
-      const res = await fetch('/api/apps', { method: 'DELETE' });
+      const res = await fetch('/api/apps', { 
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appId: activeAppId })
+      });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to delete project');

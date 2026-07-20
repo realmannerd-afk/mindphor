@@ -5,6 +5,8 @@
   export let projectId: string;
   export let date: string = '';
 
+  let range = '7';
+
   let lineCanvas: HTMLCanvasElement;
   let lineChart: Chart;
   let pollInterval: any;
@@ -16,7 +18,7 @@
   async function loadData() {
     if (!projectId) return;
     try {
-      const url = `/api/dashboard?app_id=${projectId}${date ? `&date=${date}` : ''}`;
+      const url = `/api/dashboard?app_id=${projectId}&range=${range}${date ? `&date=${date}` : ''}`;
       const res = await fetch(url);
       const json = await res.json();
       if (json.rating_by_day && lineChart) {
@@ -30,16 +32,6 @@
         });
         let ratingData = json.rating_by_day.map((d: any) => d.avg_rating);
         
-        const versionMarkers = json.rating_by_day.map((d: any) => {
-          const change = json.version_changes ? json.version_changes.find((vc: any) => vc.date === d.date) : null;
-          return change ? d.avg_rating : null;
-        });
-        
-        versionLabels = json.rating_by_day.map((d: any) => {
-          const change = json.version_changes ? json.version_changes.find((vc: any) => vc.date === d.date) : null;
-          return change ? change.version : null;
-        });
-
         validPointsCount = ratingData.filter((r: any) => r !== null && r !== undefined).length;
         
         if (validPointsCount > 0) {
@@ -52,7 +44,8 @@
         lineChart.data.labels = labels.length ? labels : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         lineChart.data.datasets[0].data = ratingData.length ? ratingData : [1, 1, 1, 1, 1, 1, 1];
         
-        lineChart.data.datasets[0].pointRadius = validPointsCount === 1 ? 4 : 0;
+        // Show dots if there are very few data points, otherwise hide them for a cleaner line
+        lineChart.data.datasets[0].pointRadius = validPointsCount <= 5 ? 4 : 0;
         
         lineChart.update('none');
       }
@@ -160,25 +153,29 @@
 
 <div class="bg-bg-surface border border-border-default rounded-[16px] overflow-hidden mb-10">
   <div class="w-full p-[24px]">
-    <div class="text-[11px] uppercase tracking-wider text-text-muted mb-2">Rating & Sentiment Trend</div>
+    <div class="flex justify-between items-center mb-2">
+      <div class="flex items-center gap-3">
+        <div class="text-[11px] uppercase tracking-wider text-text-muted">Rating & Sentiment Trend</div>
+        {#if isLoaded && validPointsCount < 3}
+          <span class="text-[10px] text-black tracking-wide">(Requires 3+ days of data)</span>
+        {/if}
+      </div>
+      <select bind:value={range} on:change={loadData} class="text-[11px] bg-bg-base border border-border-default text-text-primary rounded-full px-3 py-1 font-medium hover:border-border-strong hover:bg-bg-subtle focus:outline-none transition-all cursor-pointer appearance-none pr-7 relative bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M7%2010L12%2015L17%2010%22%20stroke%3D%22%23AAA9A5%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_6px_center] bg-[length:14px]">
+        <option value="7">Last 7 Days</option>
+        <option value="30">Last 30 Days</option>
+        <option value="90">Last 3 Months</option>
+        <option value="365">Last Year</option>
+        <option value="730">Last 2 Years</option>
+      </select>
+    </div>
     
     {#if !isLoaded}
       <div class="w-full h-[100px] flex items-center justify-center text-[13px] text-text-secondary">
         Loading...
       </div>
-    {:else if validPointsCount < 3}
-      <div class="flex flex-col items-center justify-center py-16 text-center">
-        <div class="text-[14px] font-medium text-text-primary">Building trend graph...</div>
-        {#if validPointsCount > 0}
-          <div class="text-[13px] text-text-secondary mt-2">
-            Current rating is <span class="text-accent font-semibold">{currentAvgRating}</span> ({validPointsCount} {validPointsCount === 1 ? 'day' : 'days'} collected)
-          </div>
-        {/if}
-        <div class="text-[12px] text-text-muted mt-2">Requires at least 3 days of monitoring to plot.</div>
-      </div>
     {/if}
 
-    <div class="relative w-full h-[280px] {!isLoaded || validPointsCount < 3 ? 'hidden' : 'mt-4'}">
+    <div class="relative w-full h-[280px] {!isLoaded ? 'hidden' : 'mt-4'}">
       <canvas bind:this={lineCanvas}></canvas>
     </div>
   </div>

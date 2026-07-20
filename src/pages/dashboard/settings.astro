@@ -104,25 +104,10 @@ try {
       <!-- Competitor Domains -->
       <div class="px-6 py-4 flex items-start justify-between hover:bg-bg-subtle/50 transition-colors group">
         <div class="pt-1.5">
-          <div class="text-[14px] font-medium text-text-primary mb-0.5">Competitor Domains</div>
-          <div class="text-[13px] text-text-secondary">Comma-separated list of competitor URLs to monitor</div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Competitor App IDs</div>
+          <div class="text-[13px] text-text-secondary">Comma-separated list of competitor Play Store App IDs to monitor</div>
         </div>
         <CompetitorsSetting client:load value={Astro.locals.competitorDomains || ''} appId={Astro.locals.appId} />
-      </div>
-
-      <!-- Sync Reviews Button -->
-      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group">
-        <div>
-          <div class="text-[14px] font-medium text-text-primary mb-0.5">Sync Source Reviews</div>
-          <div class="text-[13px] text-text-secondary">Manually trigger ingestion of new reviews from Google Play.</div>
-        </div>
-        <div class="flex items-center gap-3">
-          <span id="sync-status" class="hidden text-[13px] text-text-muted text-right">Syncing...</span>
-          <button id="sync-reviews-btn" class="flex-shrink-0 whitespace-nowrap px-5 py-2 rounded-full border border-border-default bg-bg-surface text-text-primary text-[13px] font-medium hover:bg-bg-subtle transition-colors flex items-center gap-2">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><polyline points="21 3 21 8 16 8"></polyline></svg>
-            Sync Reviews
-          </button>
-        </div>
       </div>
 
 
@@ -150,73 +135,7 @@ try {
         </div>
       </div>
 
-      <!-- Advanced Configuration Group Header -->
-      <div class="px-5 py-1.5 bg-bg-subtle border-t border-border-faint">
-        <div class="text-[10px] font-medium tracking-[0.1em] text-text-secondary uppercase">Advanced Configuration</div>
-      </div>
-      
-      <!-- Alert Threshold -->
-      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="alert_threshold">
-        <div>
-          <div class="text-[14px] font-medium text-text-primary mb-0.5">Alert Threshold (Negative Reviews)</div>
-          <div class="text-[13px] text-text-secondary">Number of negative reviews in a day to trigger an anomaly alert</div>
-        </div>
-        <div class="flex items-center gap-2">
-          <input type="number" value={Astro.locals.alertThreshold} class="w-[120px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
-          
-          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
-          </button>
-          
-          <button class="w-8 h-8 flex items-center justify-center rounded-md bg-text-primary text-bg-base hover:bg-text-secondary transition-colors hidden" data-save-btn>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </button>
-          
-          <span class="text-[13px] text-green-500 font-medium hidden ml-2" data-success-msg>Saved</span>
-        </div>
-      </div>
 
-      <!-- Retention Days -->
-      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="retention_days">
-        <div>
-          <div class="text-[14px] font-medium text-text-primary mb-0.5">Data Retention (Days)</div>
-          <div class="text-[13px] text-text-secondary">How long to store historical review data before automatic deletion</div>
-        </div>
-        <div class="flex items-center gap-2">
-          <input type="number" value={Astro.locals.retentionDays} class="w-[120px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
-          
-          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
-          </button>
-          
-          <button class="w-8 h-8 flex items-center justify-center rounded-md bg-text-primary text-bg-base hover:bg-text-secondary transition-colors hidden" data-save-btn>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </button>
-          
-          <span class="text-[13px] text-green-500 font-medium hidden ml-2" data-success-msg>Saved</span>
-        </div>
-      </div>
-
-      <!-- Memory Prune Limit -->
-      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="memory_prune_limit">
-        <div>
-          <div class="text-[14px] font-medium text-text-primary mb-0.5">Memory Index Limit</div>
-          <div class="text-[13px] text-text-secondary">Maximum number of traces to keep in the semantic search index</div>
-        </div>
-        <div class="flex items-center gap-2">
-          <input type="number" value={Astro.locals.memoryPruneLimit} class="w-[120px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
-          
-          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
-          </button>
-          
-          <button class="w-8 h-8 flex items-center justify-center rounded-md bg-text-primary text-bg-base hover:bg-text-secondary transition-colors hidden" data-save-btn>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </button>
-          
-          <span class="text-[13px] text-green-500 font-medium hidden ml-2" data-success-msg>Saved</span>
-        </div>
-      </div>
 
 
 
@@ -336,64 +255,7 @@ try {
     const deleteBtn = document.getElementById('delete-project-btn');
     if (deleteBtn) {
       deleteBtn.addEventListener('click', () => {
-        window.dispatchEvent(new CustomEvent('open-delete-modal'));
-      });
-    }
-
-    const syncBtn = document.getElementById('sync-reviews-btn');
-    const syncStatus = document.getElementById('sync-status');
-    if (syncBtn && syncStatus) {
-      syncBtn.addEventListener('click', async () => {
-        syncBtn.setAttribute('disabled', 'true');
-        syncBtn.classList.add('opacity-50');
-        syncStatus.classList.remove('hidden');
-        syncStatus.textContent = 'Syncing...';
-        syncStatus.className = 'text-[13px] text-text-muted';
-
-        const sources = [
-          { store: 'playstore', store_identifier: window.__SYNC_PLAY_STORE__ }
-        ];
-
-        let totalInserted = 0;
-        let totalSkipped = 0;
-
-        try {
-          for (const source of sources) {
-            if (!source.store_identifier) continue;
-            try {
-              const res = await fetch('/api/ingest/reviews', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  app_id: window.__SYNC_APP_ID__,
-                  target_type: 'app',
-                  target_id: window.__SYNC_APP_ID__,
-                  store: source.store,
-                  store_identifier: source.store_identifier
-                })
-              });
-              if (res.ok) {
-                const data = await res.json();
-                totalInserted += data.inserted || 0;
-                totalSkipped += data.skipped || 0;
-              }
-            } catch (err) {
-              console.error(`Failed to sync ${source.store}`, err);
-            }
-          }
-          
-          syncStatus.textContent = `${totalInserted} new reviews found`;
-          syncStatus.className = 'text-[13px] text-green-500 font-medium';
-        } catch (err) {
-          syncStatus.textContent = 'Sync failed. Try again.';
-          syncStatus.className = 'text-[13px] text-red-500 font-medium';
-        } finally {
-          syncBtn.removeAttribute('disabled');
-          syncBtn.classList.remove('opacity-50');
-          setTimeout(() => {
-            syncStatus.classList.add('hidden');
-          }, 5000);
-        }
+        window.dispatchEvent(new CustomEvent('open-delete-modal', { detail: { appId: window.__SYNC_APP_ID__ } }));
       });
     }
 

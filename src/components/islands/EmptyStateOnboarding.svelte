@@ -63,10 +63,6 @@
       
       const json = await res.json();
       
-      if (json.total_fetched === 0) {
-        throw new Error('No reviews found for this App URL. Please check the URL in Settings.');
-      }
-      
       // Wait a moment for UX, then reload to show the dashboard
       setTimeout(() => {
         window.location.reload();
@@ -103,7 +99,7 @@
     {/if}
   </h1>
   <p class="text-[13px] leading-relaxed text-text-secondary max-w-lg mx-auto mb-6">
-    We're ready to pull the latest reviews and market signals from the Google Play Store to populate your dashboard.
+    We're ready to pull the full app profile, market signals, and feedback from the Google Play Store to populate your dashboard.
   </p>
 
   {#if error}

@@ -40,10 +40,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     try {
       const cleanId = store_identifier.trim();
       if (store === 'playstore') {
-        reviews = await scrapePlayStoreReviews(cleanId);
+        reviews = await scrapePlayStoreReviews(cleanId, 300);
         sourceName = 'Google Play';
       } else if (store === 'appstore') {
-        reviews = await scrapeAppStoreReviews(cleanId);
+        reviews = await scrapeAppStoreReviews(cleanId, 300);
         sourceName = 'App Store';
       } else if (store === 'reddit') {
         reviews = await scrapeReddit(cleanId);
