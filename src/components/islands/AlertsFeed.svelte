@@ -27,6 +27,12 @@
     unreadCount = Math.max(0, alerts.length - lastSeen);
   }
 
+  $: {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('alerts-updated', { detail: unreadCount }));
+    }
+  }
+
   async function manualReload() {
     isRefreshing = true;
     await loadData();

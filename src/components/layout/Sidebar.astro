@@ -154,8 +154,12 @@ const navItems = [
           }`}
         >
           {item.name}
-          {item.badgeCount !== undefined && item.badgeCount > 0 && (
-            <div class="px-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white flex items-center justify-center text-[11px] font-bold leading-none">
+          {item.badgeCount !== undefined && (
+            <div 
+              id={item.name === 'Alerts' ? 'sidebar-alerts-badge' : undefined}
+              class="px-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white flex items-center justify-center text-[11px] font-bold leading-none"
+              style={item.badgeCount > 0 ? '' : 'display: none;'}
+            >
               {item.badgeCount > 99 ? '99+' : item.badgeCount}
             </div>
           )}
@@ -193,4 +197,18 @@ const navItems = [
       }
     }
   });
+
+  // Dynamically update the alerts badge in the sidebar without requiring a page reload
+  window.addEventListener('alerts-updated', ((e: CustomEvent) => {
+    const unreadCount = e.detail;
+    const badgeEl = document.getElementById('sidebar-alerts-badge');
+    if (badgeEl) {
+      if (unreadCount > 0) {
+        badgeEl.style.display = 'flex';
+        badgeEl.textContent = unreadCount > 99 ? '99+' : unreadCount.toString();
+      } else {
+        badgeEl.style.display = 'none';
+      }
+    }
+  }) as EventListener);
 </script>
