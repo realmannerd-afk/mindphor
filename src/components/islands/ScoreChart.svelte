@@ -96,18 +96,9 @@
           }]
         },
         options: {
+          animation: false,
           layout: {
             padding: { top: 10, right: 15, bottom: 5, left: 5 }
-          },
-          animation: {
-            x: {
-              duration: 0 // Disable default left-to-right sliding
-            },
-            y: {
-              duration: 1000, // Make it rise from bottom over 1 second
-              from: 0,
-              easing: 'easeOutQuart'
-            }
           },
           responsive: true,
           maintainAspectRatio: false,
@@ -190,3 +181,5 @@
     </div>
   </div>
 </div>
+
+
