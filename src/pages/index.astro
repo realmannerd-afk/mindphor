@@ -75,28 +75,28 @@ if (userData?.user) {
   <!-- STATS BAR -->
   <div class="w-full bg-bg-subtle border-y border-border-faint py-16">
     <div class="max-w-[1400px] mx-auto px-[clamp(20px,5vw,80px)]">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-border-faint">
-        <div class="flex flex-col items-center justify-center text-center">
-          <div class="text-[28px] font-medium text-text-primary tracking-tighter"><NumberTicker value={12.4} decimalPlaces={1} client:load />k</div>
-          <div class="text-[12px] text-text-muted mt-1.5">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-0 md:divide-x divide-border-faint">
+        <div class="flex flex-col items-center justify-center text-center h-full">
+          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={12.4} decimalPlaces={1} client:load />k</div>
+          <div class="text-[12px] text-text-muted mt-2 min-h-[36px] flex items-start justify-center">
             feedbacks tracked today
           </div>
         </div>
-        <div class="flex flex-col items-center justify-center text-center pt-6 md:pt-0">
-          <div class="text-[28px] font-medium text-text-primary tracking-tighter"><NumberTicker value={91} client:load />%</div>
-          <div class="text-[12px] text-text-muted mt-1.5">
+        <div class="flex flex-col items-center justify-center text-center h-full">
+          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={91} client:load />%</div>
+          <div class="text-[12px] text-text-muted mt-2 min-h-[36px] flex items-start justify-center">
             avg positive sentiment
           </div>
         </div>
-        <div class="flex flex-col items-center justify-center text-center pt-6 md:pt-0">
-          <div class="text-[28px] font-medium text-text-primary tracking-tighter"><NumberTicker value={84} client:load />%</div>
-          <div class="text-[12px] text-text-muted mt-1.5">
+        <div class="flex flex-col items-center justify-center text-center h-full">
+          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={84} client:load />%</div>
+          <div class="text-[12px] text-text-muted mt-2 min-h-[36px] flex items-start justify-center">
             avg rating score
           </div>
         </div>
-        <div class="flex flex-col items-center justify-center text-center pt-6 md:pt-0">
-          <div class="text-[28px] font-medium text-text-primary tracking-tighter"><NumberTicker value={100} client:load />%</div>
-          <div class="text-[12px] text-text-muted mt-1.5">automated tracking</div>
+        <div class="flex flex-col items-center justify-center text-center h-full">
+          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={100} client:load />%</div>
+          <div class="text-[12px] text-text-muted mt-2 min-h-[36px] flex items-start justify-center">automated tracking</div>
         </div>
       </div>
     </div>
@@ -117,17 +117,16 @@ if (userData?.user) {
       <div class="text-[11px] uppercase tracking-[0.1em] text-text-muted mb-4 font-medium font-mono">SUPPORTED PLATFORMS</div>
       <h2 class="text-[clamp(18px,2vw,24px)] font-semibold text-text-primary leading-tight tracking-tight mb-6">The definitive pulse of your user base</h2>
       <p class="text-[13px] text-text-secondary max-w-[620px] mb-16 leading-relaxed">
-        <strong>Google Play Store is live:</strong> Start tracking Android feedback, analyzing sentiment, and monitoring your competitors immediately.<br/><br/>
-        <strong>Apple App Store is coming soon:</strong> We are actively building deep integration for iOS apps. Sign up today, and you'll be the first to know the moment our App Store tracking goes live!
+        Track unlimited feedback, analyze sentiment, and monitor competitors across the Apple App Store and Google Play Store—all from one unified dashboard.
       </p>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
         <!-- Core scale -->
         <div>
           <IconDevices class="text-text-primary w-6 h-6 mb-5 opacity-80" stroke-width="1.5" />
-          <h3 class="text-[15px] font-medium text-text-primary mb-2">Unmatched Volume</h3>
+          <h3 class="text-[15px] font-medium text-text-primary mb-2">Unified Dashboard</h3>
           <p class="text-[13px] text-text-secondary leading-relaxed">
-            Android's massive global market share means you get statistically significant feedback faster than any other platform.
+            Monitor Apple App Store and Google Play Store reviews side-by-side to understand exactly how your app performs across the entire mobile ecosystem.
           </p>
         </div>
 
@@ -136,7 +135,7 @@ if (userData?.user) {
           <IconSearch class="text-text-primary w-6 h-6 mb-5 opacity-80" stroke-width="1.5" />
           <h3 class="text-[15px] font-medium text-text-primary mb-2">Technical Depth</h3>
           <p class="text-[13px] text-text-secondary leading-relaxed">
-            Android users don't just complain; they report specific device models, OS versions, and exact replication steps for crashes.
+            Users don't just complain; they report specific OS bugs and exact replication steps. We catch these technical issues on both platforms instantly.
           </p>
         </div>
 
@@ -145,7 +144,7 @@ if (userData?.user) {
           <IconBrain class="text-text-primary w-6 h-6 mb-5 opacity-80" stroke-width="1.5" />
           <h3 class="text-[15px] font-medium text-text-primary mb-2">Immediate Validation</h3>
           <p class="text-[13px] text-text-secondary leading-relaxed">
-            With staged rollouts and fast review publishing, Play Store feedback gives you instant validation on your newest features.
+            With our high-frequency ingestion engine, app store feedback gives you instant validation and immediate course-correction on your newest features.
           </p>
         </div>
       </div>
@@ -184,11 +183,11 @@ if (userData?.user) {
           <ul class="text-[13px] text-text-secondary space-y-3.5 mb-8 flex-1">
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>1 Android App tracked</span>
+              <span>1 App tracked</span>
             </li>
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>Deep app analysis & review tracking</span>
+              <span>Unlimited Play Store reviews + up to 200 App Store reviews/mo</span>
             </li>
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -218,11 +217,11 @@ if (userData?.user) {
           <ul class="text-[13px] text-text-secondary space-y-3.5 mb-8 flex-1">
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>Up to 3 Android Apps tracked</span>
+              <span>Up to 3 Apps tracked</span>
             </li>
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>Unlimited review ingestion</span>
+              <span>Unlimited Play Store reviews + up to 1,000 App Store reviews/mo</span>
             </li>
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -235,6 +234,10 @@ if (userData?.user) {
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               <span>AI-generated action plans</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <svg class="w-4 h-4 text-accent mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>Slack & Discord Webhooks</span>
             </li>
           </ul>
           <a
@@ -255,11 +258,11 @@ if (userData?.user) {
           <ul class="text-[13px] text-text-secondary space-y-3.5 mb-8 flex-1">
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>Up to 10 Android Apps tracked</span>
+              <span>Up to 10 Apps tracked</span>
             </li>
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>Unlimited review ingestion</span>
+              <span>Unlimited Play Store reviews + up to 3,000 App Store reviews/mo</span>
             </li>
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -271,7 +274,11 @@ if (userData?.user) {
             </li>
             <li class="flex items-start gap-2.5">
               <svg class="w-4 h-4 text-text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>API Access & Webhooks</span>
+              <span>Custom HMAC Webhooks</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <svg class="w-4 h-4 text-text-primary mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>Unlimited API Key Access</span>
             </li>
           </ul>
           <a

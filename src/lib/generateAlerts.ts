@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getUserPlanLimits } from "./planLimits";
+import { notifyIntegrations } from "./notifyIntegrations";
 
 /**
  * generateAlerts
@@ -99,7 +100,16 @@ export async function generateAlerts({
       is_read: false,
     });
 
-    if (!insertErr) created++;
+    if (!insertErr) {
+      created++;
+      // Fire webhooks asynchronously (don't await so we don't slow down ingestion)
+      notifyIntegrations(userId, {
+        title,
+        description,
+        type: type === "error" ? "critical" : type === "warning" ? "warning" : "info",
+        app_id: appId
+      }).catch(e => console.error("Webhook integration error:", e));
+    }
   };
 
   // ── Rule 1: CRITICAL — individual review with crash/failure keywords ─────

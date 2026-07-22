@@ -2,7 +2,7 @@
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import RootLayout from '../../layouts/RootLayout.astro';
 import MetricCards from '../../components/islands/MetricCards.svelte';
-import ScoreChart from '../../components/islands/ScoreChart.svelte';
+import { ScoreChartReact } from '../../components/islands/ScoreChartReact';
 import TraceTable from '../../components/islands/TraceTable.svelte';
 import MemoryViewer from '../../components/islands/MemoryViewer.svelte';
 import AlertsFeed from '../../components/islands/AlertsFeed.svelte';
@@ -58,7 +58,7 @@ const selectedDate = Astro.url.searchParams.get('date') || '';
   {hasTraces ? (
     <Fragment>
       <MetricCards client:load projectId={projectId} date={selectedDate} playStoreUrl={playStoreUrl} />
-      <ScoreChart client:load projectId={projectId} date={selectedDate} />
+      <ScoreChartReact client:load projectId={projectId} date={selectedDate} />
       <TraceTable client:load projectId={projectId} overviewLink={true} date={selectedDate} />
 
       <!-- Memory + Alerts Row -->

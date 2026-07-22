@@ -46,7 +46,7 @@ export default function FeatureShowcase() {
     <div className="w-full flex flex-col lg:flex-row gap-8 lg:gap-16 items-stretch select-none">
         
         {/* Left Side: Clickable Accordion Tabs */}
-        <div className="w-full lg:w-[420px] flex-shrink-0 flex flex-col justify-center gap-6 py-2">
+        <div className="w-full lg:w-[420px] flex-shrink-0 flex flex-col justify-center gap-6 py-2 min-h-[400px] lg:min-h-0">
           {features.map((feature, index) => {
             const isActive = activeTab === index;
             return (

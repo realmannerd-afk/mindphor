@@ -29,6 +29,11 @@
       previewTimer = setTimeout(() => {
         fetchPlayStorePreview(platforms.playStore);
       }, 600);
+    } else if (platforms.appStore) {
+      if (previewTimer) clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => {
+        fetchAppStorePreview(platforms.appStore);
+      }, 600);
     } else {
       appPreview = null;
     }
@@ -41,16 +46,39 @@
       const res = await fetch(`/api/apps/playstore-info?url=${encodeURIComponent(url)}`);
       if (res.ok) {
         const data = await res.json();
-        appPreview = data;
+        appPreview = { ...data, platform: 'playstore' };
         // Auto fill name if empty
         if (!name.trim() && data.title) {
           name = data.title;
         }
       } else {
-        appPreview = null;
+        // don't clear if we have an appStore preview already
+        if (appPreview?.platform !== 'appstore') appPreview = null;
       }
     } catch (e) {
-      appPreview = null;
+      if (appPreview?.platform !== 'appstore') appPreview = null;
+    } finally {
+      fetchingPreview = false;
+    }
+  }
+
+  async function fetchAppStorePreview(url: string) {
+    if (!url.trim() || url.length < 5) return;
+    fetchingPreview = true;
+    try {
+      const res = await fetch(`/api/apps/appstore-info?url=${encodeURIComponent(url)}`);
+      if (res.ok) {
+        const data = await res.json();
+        appPreview = { ...data, platform: 'appstore' };
+        // Auto fill name if empty
+        if (!name.trim() && data.title) {
+          name = data.title;
+        }
+      } else {
+        if (appPreview?.platform !== 'playstore') appPreview = null;
+      }
+    } catch (e) {
+      if (appPreview?.platform !== 'playstore') appPreview = null;
     } finally {
       fetchingPreview = false;
     }
@@ -97,8 +125,8 @@
         error = 'Workspace name is required.';
         return;
       }
-      if (!platforms.playStore.trim()) {
-        error = 'Google Play Store URL is required.';
+      if (!platforms.playStore.trim() && !platforms.appStore.trim()) {
+        error = 'At least one store URL (Google Play or Apple App Store) is required.';
         return;
       }
       error = '';
@@ -234,10 +262,21 @@
           </div>
           
           <div class="space-y-1.5 relative">
-            <label for="playStoreUrl" class="block text-[13px] font-semibold text-text-primary">Google Play Store URL or App ID <span class="text-red-500">*</span></label>
+            <label for="playStoreUrl" class="block text-[13px] font-semibold text-text-primary">Google Play Store URL <span class="text-text-faint font-normal">(Optional)</span></label>
             <input id="playStoreUrl" type="text" bind:value={platforms.playStore} placeholder="e.g. https://play.google.com/store/apps/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
             
             {#if fetchingPreview}
+              <div class="absolute right-3 bottom-2.5">
+                <svg class="animate-spin w-4 h-4 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              </div>
+            {/if}
+          </div>
+
+          <div class="space-y-1.5 relative">
+            <label for="appStoreUrl" class="block text-[13px] font-semibold text-text-primary">Apple App Store URL <span class="text-text-faint font-normal">(Optional)</span></label>
+            <input id="appStoreUrl" type="text" bind:value={platforms.appStore} placeholder="e.g. https://apps.apple.com/us/app/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+            
+            {#if fetchingPreview && !platforms.playStore}
               <div class="absolute right-3 bottom-2.5">
                 <svg class="animate-spin w-4 h-4 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
               </div>
@@ -251,9 +290,16 @@
                 <h4 class="text-[14px] font-bold text-text-primary truncate">{appPreview.title}</h4>
                 <p class="text-[12px] text-text-secondary truncate mt-0.5">{appPreview.developer}</p>
               </div>
-              <div class="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 flex-shrink-0">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-              </div>
+              
+              {#if appPreview.platform === 'appstore'}
+                <div class="w-7 h-7 rounded-full bg-bg-surface border border-border-faint flex items-center justify-center flex-shrink-0">
+                  <img src="/local_logos/appstore.svg" alt="App Store" class="w-4 h-4 object-contain opacity-80" />
+                </div>
+              {:else}
+                <div class="w-7 h-7 rounded-full bg-bg-surface border border-border-faint flex items-center justify-center flex-shrink-0">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" alt="Google Play" class="w-4 h-4 object-contain opacity-80" />
+                </div>
+              {/if}
             </div>
           {/if}
         {:else if step === 2}

@@ -48,6 +48,14 @@
     if (isRefreshing) return;
     isRefreshing = true;
     
+    try {
+      toastMessage = 'Scraping live reviews...';
+      showNewToast = true;
+      await fetch(`/api/apps/sync-reviews?app_id=${projectId}`, { method: 'POST' });
+    } catch(e) {
+      console.warn("Live sync failed", e);
+    }
+    
     // Remember the top ID to see what's new
     const currentTopId = traces.length > 0 ? traces[0].id : null;
     
@@ -301,7 +309,7 @@
   // Handle rating representation
   function getScoreBadge(score: number | null, rawScore: number | null, source: string) {
     const srcLower = (source || '').toLowerCase();
-    const isAppReview = srcLower.includes('play') || srcLower.includes('app store') || srcLower.includes('ios') || srcLower.includes('android');
+    const isAppReview = srcLower.includes('play') || srcLower.includes('app store') || srcLower.includes('appstore') || srcLower.includes('ios') || srcLower.includes('android');
     
     if (score === null && rawScore === null) {
        return { class: 'text-text-muted text-[12px]', text: isAppReview ? 'No Rating' : 'Pending', type: 'text', score: 0 };

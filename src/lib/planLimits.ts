@@ -1,9 +1,9 @@
 import { getSupabaseClient } from './supabase';
 
 export const PLAN_LIMITS = {
-  starter: { apps: 1, competitors: 1 },
-  growth: { apps: 3, competitors: 5 },
-  pro: { apps: 10, competitors: 15 },
+  starter: { apps: 1, competitors: 1, appStoreReviewsPerMonth: 200 },
+  growth: { apps: 3, competitors: 5, appStoreReviewsPerMonth: 1000 },
+  pro: { apps: 10, competitors: 15, appStoreReviewsPerMonth: 3000 },
 };
 
 export async function getUserPlanLimits(cookies: any, overrideSupabase?: any, overrideUserId?: string) {

@@ -9,28 +9,28 @@ import {
 const faqItems = [
   {
     value: "item-1",
-    question: "How does Mindphor track Google Play reviews?",
-    answer: "We connect to public Google Play Store data to monitor your app. Our engine automatically ingests new user reviews in real-time, analyzes their underlying sentiment, and highlights critical issues before they severely impact your app's rating."
+    question: "Which app stores do you currently support?",
+    answer: "Mindphor supports fully automated review tracking for both the Google Play Store and the Apple App Store. You can monitor unlimited Android apps, and track up to 3,000 iOS reviews per month depending on your plan."
   },
   {
     value: "item-2",
     question: "How does Competitor Intelligence work?",
-    answer: "Simply provide the Play Store URL of any competitor app. Mindphor will instantly begin tracking their reviews, analyzing what their users love or hate, and sending you alerts when they experience bugs or negative sentiment spikes."
+    answer: "Simply paste the app store URL of any competitor app. Mindphor instantly begins tracking their reviews and analyzing what their users love or hate, sending you alerts when they experience bugs or negative sentiment spikes."
   },
   {
     value: "item-3",
     question: "What exactly are AI Action Plans?",
-    answer: "Instead of just showing you raw data, our AI engine synthesizes thousands of user reviews into a prioritized, step-by-step action plan. It tells your engineering and product teams exactly which bugs to fix and which features to build next to maximize user satisfaction."
+    answer: "Instead of just showing you raw data, our AI engine synthesizes thousands of user reviews into prioritized, step-by-step action plans. It tells your engineering and product teams exactly which bugs to fix and which features to build next."
   },
   {
     value: "item-4",
-    question: "Can I customize the anomaly alerts?",
-    answer: "Yes! You can configure custom keywords (e.g., 'crash', 'battery', 'refund') or set thresholds for sudden drops in your average rating. When a trigger is hit, you receive an immediate alert on your dashboard."
+    question: "How do I receive anomaly alerts?",
+    answer: "You can view real-time anomaly alerts directly in your Mindphor dashboard, or you can route them straight to your team's workflow using our native Slack, Discord, and Custom HMAC webhook integrations."
   },
   {
     value: "item-5",
     question: "Do I need technical skills to set this up?",
-    answer: "Not at all. You can get started by just pasting your app's Play Store link. No SDKs, coding, or complex integrations are required to start tracking sentiment."
+    answer: "Not at all. You can get started by just pasting your app's store link. No SDKs, no code, and no complex engineering integrations are required to start tracking sentiment."
   }
 ];
 

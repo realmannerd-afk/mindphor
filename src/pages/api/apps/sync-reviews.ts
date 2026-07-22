@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { scrapePlayStoreReviews } from "../../../lib/scrapers/playstore";
+import { scrapeAppStoreReviews } from "../../../lib/scrapers/appstore";
 import { classifySentiment } from "../../../lib/classifier";
 import { generateAlerts } from "../../../lib/generateAlerts";
 
@@ -23,22 +24,48 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Fetch the app details
     const { data: appData, error: appError } = await supabase
       .from('apps')
-      .select('id, play_store_id, alert_threshold')
+      .select('id, play_store_url, app_store_url, alert_threshold')
       .eq('id', appId)
       .eq('user_id', user.id)
       .single();
 
-    if (appError || !appData || !appData.play_store_id) {
-      return new Response(JSON.stringify({ error: "App not found or missing Play Store ID" }), { status: 404 });
+    if (appError || !appData) {
+      return new Response(JSON.stringify({ error: "App not found" }), { status: 404 });
+    }
+
+    if (!appData.play_store_url && !appData.app_store_url) {
+      return new Response(JSON.stringify({ error: "No store URLs configured for this app" }), { status: 400 });
     }
 
     // Fetch a massive batch of reviews (up to 3000) so we grab as much historical data as possible
     let reviews: any[] = [];
-    try {
-      reviews = await scrapePlayStoreReviews(appData.play_store_id, 1500);
-    } catch (e) {
-      console.error("Scraper error:", e);
-      return new Response(JSON.stringify({ error: "Scraper failed" }), { status: 500 });
+    
+    // Play Store ingestion
+    if (appData.play_store_url) {
+      try {
+        const playStoreReviews = await scrapePlayStoreReviews(appData.play_store_url, 1500);
+        reviews = [...reviews, ...playStoreReviews];
+      } catch (e) {
+        console.error("Play Store Scraper error:", e);
+      }
+    }
+
+    // App Store ingestion
+    if (appData.app_store_url) {
+      try {
+        // Extract the numerical App ID from an Apple App Store URL (e.g. id284882215)
+        const match = appData.app_store_url.match(/id(\d+)/i);
+        const appleId = match ? match[1] : appData.app_store_url;
+        
+        const appStoreReviews = await scrapeAppStoreReviews(appId, appleId, 1500);
+        reviews = [...reviews, ...appStoreReviews];
+      } catch (e) {
+        console.error("App Store Scraper error:", e);
+      }
+    }
+
+    if (reviews.length === 0) {
+      console.warn("No reviews returned from any scrapers.");
     }
 
     let inserted = 0;
@@ -67,7 +94,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         .insert({
           app_id: appId,
           user_id: user.id,
-          source: 'Google Play',
+          source: review.source || 'Google Play',
           content: review.content,
           sentiment,
           date: review.date.toISOString(),

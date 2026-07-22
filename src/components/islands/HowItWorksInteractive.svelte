@@ -113,7 +113,7 @@
 
 <div class="w-full flex flex-col lg:flex-row gap-8 lg:gap-16 items-stretch select-none">
   <!-- Left Side: Interactive Step Selectors -->
-  <div class="w-full lg:w-[420px] flex-shrink-0 flex flex-col justify-center gap-6 py-2">
+  <div class="w-full lg:w-[420px] flex-shrink-0 flex flex-col justify-center gap-6 py-2 min-h-[350px] lg:min-h-0">
     <!-- Step 1 Trigger -->
     <button 
       on:click={() => activeStep = 0} 
@@ -130,7 +130,7 @@
           {#if activeStep === 0}
             <div transition:slide={{ duration: 300 }}>
               <p class="text-[13px] text-text-secondary leading-relaxed mt-2">
-                Link your Google Play Store app link securely in one simple step. No-code required setup.
+                Link your Google Play or Apple App Store link securely in one simple step. No-code required setup.
               </p>
             </div>
           {/if}
@@ -194,7 +194,7 @@
       <!-- SIMULATION 1: CONNECT CHANNELS -->
       <div transition:fade={{ duration: 150 }} class="col-start-1 row-start-1 relative z-10 flex flex-col justify-between h-full w-full">
         <div class="mb-8 text-center px-4">
-          <h4 class="text-[15px] font-medium text-text-primary mb-2">Connect Google Play Link</h4>
+          <h4 class="text-[15px] font-medium text-text-primary mb-2">Connect Your App Link</h4>
           <p class="text-[13px] text-text-secondary leading-relaxed mb-6">Enter your app bundle URL below to connect the real-time review feed:</p>
         </div>
 

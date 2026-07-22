@@ -3,6 +3,7 @@
   import { animate, stagger } from 'motion';
 
   const activities = [
+    { type: 'Issue', source: 'App Store', sourceColor: '#007aff', summary: 'Crash on launch (iOS 16)', confidence: '98%', status: 'New', statusColor: 'text-blue-500 bg-blue-500/10 border-blue-500/20', created: '1h ago' },
     { type: 'Feature Request', source: 'Reddit', sourceColor: '#ff4500', summary: 'Users requesting AI Search', confidence: '94%', status: 'New', statusColor: 'text-blue-500 bg-blue-500/10 border-blue-500/20', created: '2h ago' },
     { type: 'Issue', source: 'Google Play', sourceColor: '#3bccff', summary: 'Login failures reported', confidence: '97%', status: 'Investigating', statusColor: 'text-orange-500 bg-orange-500/10 border-orange-500/20', created: '4h ago' },
     { type: 'Competitor', source: 'Twitter', sourceColor: '#1da1f2', summary: 'Linear mentioned frequently', confidence: '91%', status: 'Monitoring', statusColor: 'text-text-secondary bg-bg-subtle border-border-default', created: '5h ago' }

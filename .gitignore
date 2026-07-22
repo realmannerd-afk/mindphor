@@ -45,3 +45,4 @@ test_schema.ts
 
 # local assets not meant for github
 public/local_logos/
+.env*

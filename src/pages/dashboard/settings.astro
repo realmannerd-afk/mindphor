@@ -2,9 +2,12 @@
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import CompetitorsSetting from '../../components/islands/CompetitorsSetting.svelte';
 import DeleteConfirmModal from '../../components/islands/DeleteConfirmModal.svelte';
+import IntegrationsManager from '../../components/islands/IntegrationsManager.svelte';
 import { getSupabaseClient } from '../../lib/supabase';
+import { getUserPlanLimits } from '../../lib/planLimits';
 
 let appName = 'Production App';
+let userPlan = 'starter';
 
 try {
   const supabase = getSupabaseClient(Astro.cookies);
@@ -26,6 +29,7 @@ try {
       // Expose these as globals for the client script
       Astro.locals.appId = app.id;
       Astro.locals.playStoreUrl = app.play_store_url || '';
+      Astro.locals.appStoreUrl = app.app_store_url || '';
       Astro.locals.syncFrequency = app.sync_frequency || 'daily';
       Astro.locals.alertThreshold = app.alert_threshold || 5;
       Astro.locals.retentionDays = app.retention_days || 90;
@@ -39,6 +43,9 @@ try {
       Astro.locals.competitorDomains = (competitorRows || []).map((c: any) => c.domain).join(', ');
       Astro.locals.appId = app.id;
     }
+
+    const planData = await getUserPlanLimits(Astro.cookies);
+    userPlan = planData.plan;
   }
 } catch (e) {
   console.error("Failed to fetch settings", e);
@@ -64,11 +71,11 @@ try {
         <div class="flex items-center gap-2">
           <input type="text" value={appName} class="w-[260px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
           
-          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
+          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors cursor-pointer" data-edit-btn>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
           </button>
           
-          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity" data-save-btn>
+          <button class="hidden px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity cursor-pointer" data-save-btn>
             Save
           </button>
         </div>
@@ -80,7 +87,7 @@ try {
       </div>
       
       <!-- Play Store URL -->
-      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="play_store_url">
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group border-b border-border-faint" data-setting-row="play_store_url">
         <div>
           <div class="text-[14px] font-medium text-text-primary mb-0.5">Play Store App ID</div>
           <div class="text-[13px] text-text-secondary">E.g., com.whatsapp (Used for pulling Android reviews)</div>
@@ -88,11 +95,32 @@ try {
         <div class="flex items-center gap-2">
           <input type="text" value={Astro.locals.playStoreUrl} placeholder="e.g. com.example.app" class="w-[260px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
           
-          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors" data-edit-btn>
+          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors cursor-pointer" data-edit-btn>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
           </button>
           
-          <button class="w-8 h-8 flex items-center justify-center rounded-md bg-text-primary text-bg-base hover:bg-text-secondary transition-colors hidden" data-save-btn>
+          <button class="w-8 h-8 flex items-center justify-center rounded-md bg-text-primary text-bg-base hover:bg-text-secondary transition-colors hidden cursor-pointer" data-save-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
+          
+          <span class="text-[13px] text-green-500 font-medium hidden ml-2" data-success-msg>Saved</span>
+        </div>
+      </div>
+
+      <!-- App Store URL -->
+      <div class="px-6 py-4 flex items-center justify-between hover:bg-bg-subtle/50 transition-colors group" data-setting-row="app_store_url">
+        <div>
+          <div class="text-[14px] font-medium text-text-primary mb-0.5">Apple App Store URL</div>
+          <div class="text-[13px] text-text-secondary">E.g., https://apps.apple.com/us/app/... (Used for iOS reviews)</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="text" value={Astro.locals.appStoreUrl} placeholder="e.g. https://apps.apple.com/..." class="w-[260px] bg-transparent border border-transparent rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none text-left transition-colors data-[editing=true]:bg-bg-subtle data-[editing=true]:border-border-default data-[editing=true]:shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] data-[editing=true]:focus:border-border-strong" readonly data-setting-input />
+          
+          <button class="w-8 h-8 flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-bg-subtle transition-colors cursor-pointer" data-edit-btn>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>
+          </button>
+          
+          <button class="w-8 h-8 flex items-center justify-center rounded-md bg-text-primary text-bg-base hover:bg-text-secondary transition-colors hidden cursor-pointer" data-save-btn>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </button>
           
@@ -150,16 +178,19 @@ try {
           <div class="text-[14px] font-medium text-text-primary mb-0.5">Delete Project</div>
           <div class="text-[13px] text-text-secondary">Permanently delete this project and all traces. This cannot be undone.</div>
         </div>
-        <button id="delete-project-btn" class="px-5 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-600 text-[13px] font-medium hover:bg-red-500/20 transition-colors whitespace-nowrap">
+        <button id="delete-project-btn" class="px-5 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-red-600 text-[13px] font-medium hover:bg-red-500/20 transition-colors whitespace-nowrap cursor-pointer">
           Delete Project
         </button>
       </div>
     
     <DeleteConfirmModal client:load />
-
     </div>
 
+    <!-- Integrations & API Section -->
+    <div class="mt-12">
+      <IntegrationsManager client:load plan={userPlan} />
     </div>
+
   </div>
   
   <script is:inline define:vars={{ 
@@ -204,7 +235,7 @@ try {
         const rowId = row.getAttribute('data-setting-row');
         const successMsg = row.querySelector('[data-success-msg]') as HTMLSpanElement;
         
-        const saveableFields = ['name', 'play_store_url', 'alert_threshold', 'retention_days', 'memory_prune_limit'];
+        const saveableFields = ['name', 'play_store_url', 'app_store_url', 'alert_threshold', 'retention_days', 'memory_prune_limit'];
         
         if (rowId && saveableFields.includes(rowId)) {
           let val: any = input.value;
