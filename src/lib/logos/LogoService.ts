@@ -77,7 +77,7 @@ export class LogoService {
     
     if (logoName === 'app-store') {
       return [
-        '/local_logos/appstore.svg',
+        'https://raw.githubusercontent.com/ln-dev7/logos-apps/master/logos/apple.svg',
         `https://www.google.com/s2/favicons?domain=apple.com&sz=${size}`
       ];
     }

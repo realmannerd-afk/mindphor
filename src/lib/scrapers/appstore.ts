@@ -11,7 +11,7 @@ export interface ReviewItem {
   reviewId?: string;
 }
 
-export async function scrapeAppStoreReviews(internalAppId: string, appStoreId: string, count: number = 50): Promise<ReviewItem[]> {
+export async function scrapeAppStoreReviews(internalAppId: string, appStoreId: string, count: number = 50, country: string = "in"): Promise<ReviewItem[]> {
   try {
     const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.SUPABASE_URL || process.env.SUPABASE_URL;
     const supabaseKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -73,7 +73,7 @@ export async function scrapeAppStoreReviews(internalAppId: string, appStoreId: s
       body: JSON.stringify({
         mode: "App reviews",
         appIds: [appStoreId],
-        country: "us"
+        country: country
       })
     });
 

@@ -56,8 +56,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         // Extract the numerical App ID from an Apple App Store URL (e.g. id284882215)
         const match = appData.app_store_url.match(/id(\d+)/i);
         const appleId = match ? match[1] : appData.app_store_url;
-        
-        const appStoreReviews = await scrapeAppStoreReviews(appId, appleId, 1500);
+        // Extract country code from URL if present
+        let country = "in";
+        const countryMatch = appData.app_store_url.match(/apple\.com\/([a-z]{2})\/app/i);
+        if (countryMatch) {
+          country = countryMatch[1].toLowerCase();
+        }
+
+        const appStoreReviews = await scrapeAppStoreReviews(appId, appleId, 1500, country);
         reviews = [...reviews, ...appStoreReviews];
       } catch (e) {
         console.error("App Store Scraper error:", e);

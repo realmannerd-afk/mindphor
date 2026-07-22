@@ -74,6 +74,7 @@ let unreadCount = 0;
 
 if (isAlertsPage) {
   unreadCount = 0;
+  Astro.cookies.set('last_seen_alerts_count', alertsCount.toString(), { path: '/', maxAge: 31536000 });
 } else {
   const lastSeen = parseInt(Astro.cookies.get('last_seen_alerts_count')?.value || '0');
   unreadCount = Math.max(0, alertsCount - lastSeen);
