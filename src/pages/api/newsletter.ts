@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { supabase } from '../../lib/supabase';
+import { getSupabaseClient } from '../../lib/supabase';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -12,6 +12,13 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    // Get the Supabase client
+    const supabase = getSupabaseClient({
+      get: (key: string) => request.headers.get('cookie')?.split('; ').find(c => c.startsWith(key + '='))?.split('=')[1],
+      set: () => {},
+      delete: () => {}
+    } as any);
 
     // Insert the email into the newsletter_subscribers table
     const { error } = await supabase
