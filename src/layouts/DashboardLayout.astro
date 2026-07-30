@@ -26,10 +26,7 @@ try {
   user = data?.user;
 
   if (user) {
-    const { data: apps } = await supabase.from('apps').select('id').eq('user_id', user.id).limit(1);
-    if (!apps || apps.length === 0) {
-      return Astro.redirect('/dashboard/onboarding');
-    }
+
 
     const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
     if (profile?.name) {

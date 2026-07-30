@@ -33,6 +33,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
         return redirect("/login");
       }
 
+      if (isProtectedRoute && hasSession) {
+        const allowedWithoutApps = [
+          '/dashboard/onboarding',
+          '/dashboard/new',
+          '/logout'
+        ];
+        
+        if (!allowedWithoutApps.includes(url.pathname)) {
+          const { data: apps } = await supabase.from('apps').select('id').eq('user_id', data.user.id).limit(1);
+          if (!apps || apps.length === 0) {
+            return redirect('/dashboard/onboarding');
+          }
+        }
+      }
+
       if (isPublicRoute && hasSession) {
         return redirect("/dashboard");
       }
