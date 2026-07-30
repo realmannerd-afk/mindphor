@@ -375,7 +375,7 @@
               
               {#if platforms.appStore && platforms.appStore.trim().length > 5}
                 <div class="w-7 h-7 rounded-full bg-bg-surface border border-border-faint flex items-center justify-center flex-shrink-0" title="Apple App Store">
-                  <img src="/local_logos/appstore.svg" alt="App Store" class="w-4 h-4 object-contain opacity-80" />
+                  <img src="/icons/app-store.svg" alt="App Store" class="w-4 h-4 object-contain opacity-80" />
                 </div>
               {/if}
               {#if platforms.playStore && platforms.playStore.trim().length > 5}

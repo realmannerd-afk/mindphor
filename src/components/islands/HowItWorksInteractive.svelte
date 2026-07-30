@@ -236,7 +236,7 @@
                         <img src="/icons/google-play.svg" alt="Play Store" class="w-4 h-4 object-contain" />
                      </div>
                      <div class="flex items-center justify-center">
-                        <img src="/local_logos/appstore.svg" alt="App Store" class="w-4 h-4 object-contain opacity-80" />
+                        <img src="/icons/app-store.svg" alt="App Store" class="w-4 h-4 object-contain opacity-80" />
                      </div>
                  </div>
               </div>
