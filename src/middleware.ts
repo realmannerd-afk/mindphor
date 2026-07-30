@@ -5,7 +5,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect } = context;
 
   if (url.pathname === '/logout') {
-    cookies.delete('sb-ryewtqnqovpianuwsnpp-auth-token', { path: '/' });
+    const supabase = getSupabaseClient(cookies);
+    await supabase.auth.signOut();
     return redirect("/login");
   }
 
@@ -25,8 +26,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (isProtectedRoute || isPublicRoute) {
     try {
       const supabase = getSupabaseClient(cookies);
-      const { data } = await supabase.auth.getSession();
-      const hasSession = !!data?.session;
+      const { data, error } = await supabase.auth.getUser();
+      const hasSession = !error && !!data?.user;
 
       if (isProtectedRoute && !hasSession) {
         return redirect("/login");

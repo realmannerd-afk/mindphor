@@ -30,6 +30,10 @@ export const getSupabaseClient = (cookies: any) => {
         },
         set(key: string, value: string, options: any) {
           try {
+            // Remove domain if it's empty to prevent Astro error
+            if (options && options.domain === "") {
+              delete options.domain;
+            }
             cookies.set(key, value, { 
               ...options,
               httpOnly: true,
@@ -38,14 +42,17 @@ export const getSupabaseClient = (cookies: any) => {
               path: "/"
             });
           } catch (error) {
-            // Ignored if called from a Server Component
+            console.error("Supabase SSR Cookie Set Error:", error);
           }
         },
         remove(key: string, options: any) {
           try {
+            if (options && options.domain === "") {
+              delete options.domain;
+            }
             cookies.delete(key, { ...options, path: '/' });
           } catch (error) {
-            // Ignored
+            console.error("Supabase SSR Cookie Remove Error:", error);
           }
         }
       },
