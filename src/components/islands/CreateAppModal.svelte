@@ -3,6 +3,7 @@
   import Logo from './Logo.svelte';
   export let forceShow = false;
   export let wideMode = false;
+  $: if (forceShow) wideMode = true;
   let show = forceShow;
   
   // State
@@ -225,11 +226,11 @@
 </script>
 
 {#if show}
-  <div class={forceShow ? `relative z-10 w-full flex ${wideMode ? 'justify-start py-0' : 'justify-center py-10'} transition-all` : "fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all py-10"} aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class={forceShow ? `relative z-10 w-full flex justify-center py-0 transition-all` : "fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all py-10"} aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class={`w-full ${wideMode ? 'max-w-[700px] bg-bg-surface border border-border-default rounded-[16px]' : 'bg-bg-surface max-w-[440px] rounded-[20px] shadow-none border border-border-default'} overflow-hidden animate-in fade-in zoom-in-95 duration-200`}>
       
       <!-- Progress Bar (Steps 1 & 2 only) -->
-      {#if step < 3 && !wideMode}
+      {#if step < 3}
       <div class="w-full bg-border-faint h-1.5 flex">
         <div class="bg-[linear-gradient(to_right,#eab308,#f97316,#ef4444,#f43f5e)] h-full transition-all duration-300 relative overflow-hidden" style="width: {step === 1 ? '50%' : '100%'}">
           <div class="absolute inset-0 opacity-[0.35] mix-blend-overlay grain-overlay"></div>
@@ -269,60 +270,24 @@
       <!-- Body -->
       <div class={`space-y-4 ${wideMode ? 'px-7 py-4' : 'p-6'}`}>
         {#if step === 1}
-          <!-- Workspace Name -->
-          <div class="space-y-1.5">
-            {#if !name || focusedField === 'name'}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Workspace Name -->
+            <div class="space-y-1.5 col-span-1">
               <label for="appName" class="block text-[13px] font-semibold text-text-primary">Workspace Name <span class="text-red-500">*</span></label>
-              <input id="appName" type="text" bind:value={name} on:focus={() => focusedField = 'name'} on:blur={() => setTimeout(() => { if(focusedField === 'name') focusedField = '' }, 150)} placeholder="e.g. Acme Corp" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
-            {:else}
-              <div class="flex items-center justify-between p-3 bg-bg-subtle border border-border-default rounded-[10px] cursor-pointer hover:border-accent transition-colors animate-in fade-in zoom-in-95" on:click={() => focusedField = 'name'}>
-                <div>
-                  <div class="text-[11px] text-text-muted font-medium uppercase tracking-wider">Workspace Name</div>
-                  <div class="text-[14px] text-text-primary font-medium mt-0.5">{name}</div>
-                </div>
-                <div class="text-[12px] text-accent font-medium">Edit</div>
-              </div>
-            {/if}
-          </div>
+              <input id="appName" type="text" bind:value={name} placeholder="e.g. Acme Corp" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+            </div>
 
-          <!-- Website URL -->
-          <div class="space-y-1.5">
-            {#if !url || focusedField === 'url'}
+            <!-- Website URL -->
+            <div class="space-y-1.5 col-span-1">
               <label for="appUrl" class="block text-[13px] font-semibold text-text-primary">Website URL <span class="text-text-faint font-normal">(Optional)</span></label>
-              <input id="appUrl" type="url" bind:value={url} on:focus={() => focusedField = 'url'} on:blur={() => setTimeout(() => { if(focusedField === 'url') focusedField = '' }, 150)} placeholder="e.g. https://acme.com" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
-            {:else}
-              <div class="flex items-center justify-between p-3 bg-bg-subtle border border-border-default rounded-[10px] cursor-pointer hover:border-accent transition-colors animate-in fade-in zoom-in-95" on:click={() => focusedField = 'url'}>
-                <div>
-                  <div class="text-[11px] text-text-muted font-medium uppercase tracking-wider">Website URL</div>
-                  <div class="text-[14px] text-text-primary font-medium mt-0.5">{url}</div>
-                </div>
-                <div class="text-[12px] text-accent font-medium">Edit</div>
-              </div>
-            {/if}
-          </div>
+              <input id="appUrl" type="url" bind:value={url} placeholder="e.g. https://acme.com" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+            </div>
 
-          <!-- Description -->
-          <div class="space-y-1.5">
-            {#if !description || focusedField === 'description'}
-              <label for="appDesc" class="block text-[13px] font-semibold text-text-primary">Short Description <span class="text-text-faint font-normal">(Optional)</span></label>
-              <textarea id="appDesc" bind:value={description} on:focus={() => focusedField = 'description'} on:blur={() => setTimeout(() => { if(focusedField === 'description') focusedField = '' }, 150)} placeholder="What does this workspace focus on?" rows="1" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all resize-none"></textarea>
-            {:else}
-              <div class="flex items-center justify-between p-3 bg-bg-subtle border border-border-default rounded-[10px] cursor-pointer hover:border-accent transition-colors animate-in fade-in zoom-in-95" on:click={() => focusedField = 'description'}>
-                <div>
-                  <div class="text-[11px] text-text-muted font-medium uppercase tracking-wider">Short Description</div>
-                  <div class="text-[14px] text-text-primary font-medium mt-0.5 truncate max-w-[300px]">{description}</div>
-                </div>
-                <div class="text-[12px] text-accent font-medium">Edit</div>
-              </div>
-            {/if}
-          </div>
-          
-          <!-- Play Store URL -->
-          <div class="space-y-1.5">
-            {#if !platforms.playStore || focusedField === 'playStore'}
+            <!-- Play Store URL -->
+            <div class="space-y-1.5 col-span-1">
               <label for="playStoreUrl" class="block text-[13px] font-semibold text-text-primary">Google Play Store URL <span class="text-text-faint font-normal">(Optional)</span></label>
               <div class="relative">
-                <input id="playStoreUrl" type="text" bind:value={platforms.playStore} on:focus={() => focusedField = 'playStore'} on:blur={() => setTimeout(() => { if(focusedField === 'playStore') focusedField = '' }, 150)} placeholder="e.g. https://play.google.com/store/apps/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 pr-10 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+                <input id="playStoreUrl" type="text" bind:value={platforms.playStore} placeholder="e.g. https://play.google.com/store/apps/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 pr-10 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
                 
                 {#if fetchingPlay}
                   <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
@@ -330,23 +295,13 @@
                   </div>
                 {/if}
               </div>
-            {:else}
-              <div class="flex items-center justify-between p-3 bg-bg-subtle border border-border-default rounded-[10px] cursor-pointer hover:border-accent transition-colors animate-in fade-in zoom-in-95" on:click={() => focusedField = 'playStore'}>
-                <div>
-                  <div class="text-[11px] text-text-muted font-medium uppercase tracking-wider">Play Store URL</div>
-                  <div class="text-[14px] text-text-primary font-medium mt-0.5 truncate max-w-[300px]">{platforms.playStore}</div>
-                </div>
-                <div class="text-[12px] text-accent font-medium">Edit</div>
-              </div>
-            {/if}
-          </div>
+            </div>
 
-          <!-- App Store URL -->
-          <div class="space-y-1.5">
-            {#if !platforms.appStore || focusedField === 'appStore'}
+            <!-- App Store URL -->
+            <div class="space-y-1.5 col-span-1">
               <label for="appStoreUrl" class="block text-[13px] font-semibold text-text-primary">Apple App Store URL <span class="text-text-faint font-normal">(Optional)</span></label>
               <div class="relative">
-                <input id="appStoreUrl" type="text" bind:value={platforms.appStore} on:focus={() => focusedField = 'appStore'} on:blur={() => setTimeout(() => { if(focusedField === 'appStore') focusedField = '' }, 150)} placeholder="e.g. https://apps.apple.com/us/app/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 pr-10 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+                <input id="appStoreUrl" type="text" bind:value={platforms.appStore} placeholder="e.g. https://apps.apple.com/us/app/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 pr-10 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
                 
                 {#if fetchingApple}
                   <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
@@ -354,15 +309,13 @@
                   </div>
                 {/if}
               </div>
-            {:else}
-              <div class="flex items-center justify-between p-3 bg-bg-subtle border border-border-default rounded-[10px] cursor-pointer hover:border-accent transition-colors animate-in fade-in zoom-in-95" on:click={() => focusedField = 'appStore'}>
-                <div>
-                  <div class="text-[11px] text-text-muted font-medium uppercase tracking-wider">App Store URL</div>
-                  <div class="text-[14px] text-text-primary font-medium mt-0.5 truncate max-w-[300px]">{platforms.appStore}</div>
-                </div>
-                <div class="text-[12px] text-accent font-medium">Edit</div>
-              </div>
-            {/if}
+            </div>
+
+            <!-- Description -->
+            <div class="space-y-1.5 md:col-span-2">
+              <label for="appDesc" class="block text-[13px] font-semibold text-text-primary">Short Description <span class="text-text-faint font-normal">(Optional)</span></label>
+              <textarea id="appDesc" bind:value={description} placeholder="What does this workspace focus on?" rows="2" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all resize-none"></textarea>
+            </div>
           </div>
 
           {#if appPreview}
