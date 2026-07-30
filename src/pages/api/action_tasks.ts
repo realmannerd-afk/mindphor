@@ -43,6 +43,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
 
+    // Verify app ownership
+    const { data: appData, error: appErr } = await supabase
+      .from('apps')
+      .select('id')
+      .eq('id', app_id)
+      .eq('user_id', user.id)
+      .single();
+      
+    if (appErr || !appData) {
+      return new Response(JSON.stringify({ error: "Unauthorized: You do not own this app." }), { status: 403 });
+    }
+
     const { data, error } = await supabase
       .from('action_tasks')
       .insert({ app_id, user_id: user.id, text, completed, order_index })

@@ -14,8 +14,24 @@
   let loadingKeys = true;
   let loadingWebhooks = true;
   
-  let errorMsg = "";
+  let errorMsgKeys = "";
+  let errorMsgWebhooks = "";
   let isDropdownOpen = false;
+
+  let confirmModal = {
+    isOpen: false,
+    title: "",
+    description: "",
+    actionLabel: "Confirm",
+    onConfirm: () => {}
+  };
+
+  let infoModal = {
+    isOpen: false,
+    title: "",
+    description: "",
+    isError: false
+  };
 
   async function loadKeys() {
     if (plan !== 'pro') {
@@ -55,7 +71,7 @@
   });
 
   async function createKey() {
-    errorMsg = "";
+    errorMsgKeys = "";
     newKeyResult = null;
     const res = await fetch("/api/keys", {
       method: "POST",
@@ -68,22 +84,30 @@
       newKeyName = "";
       loadKeys();
     } else {
-      errorMsg = data.error || "Failed to create key";
+      errorMsgKeys = data.error || "Failed to create key";
     }
   }
 
   async function revokeKey(id: string) {
-    if (!confirm("Are you sure you want to revoke this key? Any integrations using it will break.")) return;
-    const res = await fetch("/api/keys", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id })
-    });
-    if (res.ok) loadKeys();
+    confirmModal = {
+      isOpen: true,
+      title: "Revoke API Key",
+      description: "Are you sure you want to revoke this key? Any integrations using it will instantly break. This action cannot be undone.",
+      actionLabel: "Revoke Key",
+      onConfirm: async () => {
+        const res = await fetch("/api/keys", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id })
+        });
+        if (res.ok) loadKeys();
+        confirmModal.isOpen = false;
+      }
+    };
   }
 
   async function addWebhook() {
-    errorMsg = "";
+    errorMsgWebhooks = "";
     const res = await fetch("/api/webhooks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -94,7 +118,7 @@
       loadWebhooks();
     } else {
       const data = await res.json();
-      errorMsg = data.error || "Failed to add webhook";
+      errorMsgWebhooks = data.error || "Failed to add webhook";
     }
   }
 
@@ -108,17 +132,61 @@
   }
 
   async function deleteWebhook(id: string) {
-    if (!confirm("Are you sure?")) return;
-    await fetch("/api/webhooks", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id })
-    });
-    loadWebhooks();
+    confirmModal = {
+      isOpen: true,
+      title: "Delete Webhook",
+      description: "Are you sure you want to remove this alert integration? You will no longer receive notifications.",
+      actionLabel: "Delete Integration",
+      onConfirm: async () => {
+        await fetch("/api/webhooks", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id })
+        });
+        loadWebhooks();
+        confirmModal.isOpen = false;
+      }
+    };
   }
 
   async function testWebhook(webhook: any) {
-    alert("To test this webhook, wait for the next sync or trigger a manual sync that generates an alert.");
+    try {
+      const btn = document.getElementById(`test-btn-${webhook.id}`);
+      if (btn) btn.innerText = "Testing...";
+      
+      const res = await fetch("/api/webhooks/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: webhook.id })
+      });
+      
+      if (res.ok) {
+        infoModal = {
+          isOpen: true,
+          title: "Test Sent Successfully",
+          description: "A test alert payload has been fired to your <strong>webhook URL</strong>.<br><br>Please check your destination platform to verify the message arrived properly.",
+          isError: false
+        };
+      } else {
+        const data = await res.json();
+        infoModal = {
+          isOpen: true,
+          title: "Test Failed",
+          description: `The webhook test failed to send. Server responded with: ${data.error}`,
+          isError: true
+        };
+      }
+      if (btn) btn.innerText = "Test";
+    } catch (e) {
+      infoModal = {
+        isOpen: true,
+        title: "Test Failed",
+        description: "An unexpected network error occurred while trying to send the test alert.",
+        isError: true
+      };
+      const btn = document.getElementById(`test-btn-${webhook.id}`);
+      if (btn) btn.innerText = "Test";
+    }
   }
 </script>
 
@@ -142,16 +210,16 @@
         <a href="/dashboard/billing" class="h-[32px] px-4 bg-text-primary text-bg-base text-[13px] font-medium rounded-full hover:bg-text-secondary transition-colors inline-flex items-center justify-center">Upgrade</a>
       </div>
     {:else}
-      {#if errorMsg && newWebhookPlatform}
-        <div class="bg-red-500/10 text-red-500 p-3 rounded-[16px] text-[13px] mb-4 border border-red-500/20">{errorMsg}</div>
+      {#if errorMsgWebhooks}
+        <div class="bg-red-500/10 text-red-500 p-3 rounded-[12px] text-[13px] mb-4 border border-red-500/20">{errorMsgWebhooks}</div>
       {/if}
 
-      <div class="bg-bg-surface border border-border-default rounded-[16px] overflow-hidden">
+      <div class="bg-bg-surface border border-border-default rounded-[16px]">
         <div class="p-4 border-b border-border-default flex flex-col md:flex-row items-end gap-3 bg-bg-base/30">
           <div class="w-full md:w-auto shrink-0">
             <label class="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-1.5">Platform</label>
             <div class="relative w-full md:w-[150px]">
-              <button class="w-full appearance-none bg-bg-subtle border border-border-strong rounded-full pl-4 pr-8 py-2 text-[13px] text-text-primary outline-none focus:border-text-primary focus:ring-1 focus:ring-text-primary transition-colors cursor-pointer text-left flex items-center gap-2" on:click={() => isDropdownOpen = !isDropdownOpen}>
+              <button class="w-full appearance-none bg-bg-subtle border border-transparent rounded-md pl-4 pr-8 py-2 text-[13px] text-text-primary outline-none focus:bg-bg-muted hover:bg-bg-muted transition-all duration-200 cursor-pointer text-left flex items-center gap-2" on:click={() => isDropdownOpen = !isDropdownOpen}>
                 {#if newWebhookPlatform === 'slack'}
                   <svg viewBox="0 0 2447.6 2452.5" class="w-4 h-4 shrink-0"><g clip-rule="evenodd" fill-rule="evenodd"><path d="m897.4 0c-135.3.1-244.8 109.9-244.7 245.2-.1 135.3 109.5 245.1 244.8 245.2h244.8v-245.1c.1-135.3-109.5-245.1-244.9-245.3.1 0 .1 0 0 0m0 654h-652.6c-135.3.1-244.9 109.9-244.8 245.2-.2 135.3 109.4 245.1 244.7 245.3h652.7c135.3-.1 244.9-109.9 244.8-245.2.1-135.4-109.5-245.2-244.8-245.3z" fill="#36c5f0"/><path d="m2447.6 899.2c.1-135.3-109.5-245.1-244.8-245.2-135.3.1-244.9 109.9-244.8 245.2v245.3h244.8c135.3-.1 244.9-109.9 244.8-245.3zm-652.7 0v-654c.1-135.2-109.4-245-244.7-245.2-135.3.1-244.9 109.9-244.8 245.2v654c-.2 135.3 109.4 245.1 244.7 245.3 135.3-.1 244.9-109.9 244.8-245.3z" fill="#2eb67d"/><path d="m1550.1 2452.5c135.3-.1 244.9-109.9 244.8-245.2.1-135.3-109.5-245.1-244.8-245.2h-244.8v245.2c-.1 135.2 109.5 245 244.8 245.2zm0-654.1h652.7c135.3-.1 244.9-109.9 244.8-245.2.2-135.3-109.4-245.1-244.7-245.3h-652.7c-135.3.1-244.9 109.9-244.8 245.2-.1 135.4 109.4 245.2 244.7 245.3z" fill="#ecb22e"/><path d="m0 1553.2c-.1 135.3 109.5 245.1 244.8 245.2 135.3-.1 244.9-109.9 244.8-245.2v-245.2h-244.8c-135.3.1-244.9 109.9-244.8 245.2zm652.7 0v654c-.2 135.3 109.4 245.1 244.7 245.3 135.3-.1 244.9-109.9 244.8-245.2v-653.9c.2-135.3-109.4-245.1-244.7-245.3-135.4 0-244.9 109.8-244.8 245.1 0 0 0 .1 0 0" fill="#e01e5a"/></g></svg>
                   Slack
@@ -164,11 +232,11 @@
                 {/if}
               </button>
               <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                <svg class="w-3.5 h-3.5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                <svg class="w-3.5 h-3.5 text-text-secondary transition-transform {isDropdownOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
               </div>
 
               {#if isDropdownOpen}
-                <div class="absolute z-50 mt-1 w-full bg-bg-subtle border border-border-strong rounded-[16px] shadow-lg overflow-hidden py-1">
+                <div class="absolute z-50 top-full left-0 mt-1 w-full bg-bg-subtle border border-border-default rounded-md shadow-xl overflow-hidden py-1">
                   <button class="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-text-primary hover:bg-bg-base cursor-pointer text-left transition-colors" on:click={() => { newWebhookPlatform = 'slack'; isDropdownOpen = false; }}>
                     <svg viewBox="0 0 2447.6 2452.5" class="w-4 h-4 shrink-0"><g clip-rule="evenodd" fill-rule="evenodd"><path d="m897.4 0c-135.3.1-244.8 109.9-244.7 245.2-.1 135.3 109.5 245.1 244.8 245.2h244.8v-245.1c.1-135.3-109.5-245.1-244.9-245.3.1 0 .1 0 0 0m0 654h-652.6c-135.3.1-244.9 109.9-244.8 245.2-.2 135.3 109.4 245.1 244.7 245.3h652.7c135.3-.1 244.9-109.9 244.8-245.2.1-135.4-109.5-245.2-244.8-245.3z" fill="#36c5f0"/><path d="m2447.6 899.2c.1-135.3-109.5-245.1-244.8-245.2-135.3.1-244.9 109.9-244.8 245.2v245.3h244.8c135.3-.1 244.9-109.9 244.8-245.3zm-652.7 0v-654c.1-135.2-109.4-245-244.7-245.2-135.3.1-244.9 109.9-244.8 245.2v654c-.2 135.3 109.4 245.1 244.7 245.3 135.3-.1 244.9-109.9 244.8-245.3z" fill="#2eb67d"/><path d="m1550.1 2452.5c135.3-.1 244.9-109.9 244.8-245.2.1-135.3-109.5-245.1-244.8-245.2h-244.8v245.2c-.1 135.2 109.5 245 244.8 245.2zm0-654.1h652.7c135.3-.1 244.9-109.9 244.8-245.2.2-135.3-109.4-245.1-244.7-245.3h-652.7c-135.3.1-244.9 109.9-244.8 245.2-.1 135.4 109.4 245.2 244.7 245.3z" fill="#ecb22e"/><path d="m0 1553.2c-.1 135.3 109.5 245.1 244.8 245.2 135.3-.1 244.9-109.9 244.8-245.2v-245.2h-244.8c-135.3.1-244.9 109.9-244.8 245.2zm652.7 0v654c-.2 135.3 109.4 245.1 244.7 245.3 135.3-.1 244.9-109.9 244.8-245.2v-653.9c.2-135.3-109.4-245.1-244.7-245.3-135.4 0-244.9 109.8-244.8 245.1 0 0 0 .1 0 0" fill="#e01e5a"/></g></svg>
                     Slack
@@ -180,7 +248,7 @@
                   {#if plan === 'pro'}
                   <button class="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-text-primary hover:bg-bg-base cursor-pointer text-left transition-colors" on:click={() => { newWebhookPlatform = 'custom'; isDropdownOpen = false; }}>
                     <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                    Custom (HMAC)
+                    Custom
                   </button>
                   {/if}
                 </div>
@@ -189,7 +257,7 @@
           </div>
           <div class="flex-1 w-full">
             <label class="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-1.5">Webhook URL</label>
-            <input bind:value={newWebhookUrl} type="url" placeholder="https://..." class="w-full bg-bg-subtle border border-border-strong rounded-md px-3 py-2 text-[13px] text-text-primary outline-none focus:border-text-primary focus:ring-1 focus:ring-text-primary transition-colors" />
+            <input bind:value={newWebhookUrl} type="url" placeholder="https://..." class="w-full bg-bg-subtle border border-transparent rounded-md px-3 py-2 text-[13px] text-text-primary outline-none focus:bg-bg-muted hover:bg-bg-muted transition-all duration-200" />
           </div>
           <button on:click={addWebhook} class="w-full md:w-auto h-[36px] px-5 bg-text-primary text-bg-base text-[13px] font-medium rounded-full hover:bg-text-secondary transition-colors whitespace-nowrap cursor-pointer">
             Add
@@ -233,7 +301,7 @@
                       </button>
                     </td>
                     <td class="px-4 py-3 text-right space-x-3">
-                      <button on:click={() => testWebhook(wh)} class="text-[12px] text-text-secondary hover:text-text-primary cursor-pointer">Test</button>
+                      <button id="test-btn-{wh.id}" on:click={() => testWebhook(wh)} disabled={!wh.enabled} class="inline-block min-w-[55px] text-center text-[12px] {wh.enabled ? 'text-text-secondary hover:text-text-primary cursor-pointer' : 'text-text-muted opacity-50 cursor-not-allowed'} transition-colors">Test</button>
                       <button on:click={() => deleteWebhook(wh.id)} class="text-[12px] text-red-500 hover:text-red-400 cursor-pointer">Delete</button>
                     </td>
                   </tr>
@@ -265,25 +333,51 @@
         <a href="/dashboard/billing" class="h-[32px] px-4 bg-text-primary text-bg-base text-[13px] font-medium rounded-full hover:bg-text-secondary transition-colors inline-flex items-center justify-center">Upgrade</a>
       </div>
     {:else}
-      {#if errorMsg && !newWebhookPlatform}
-        <div class="bg-red-500/10 text-red-500 p-3 rounded-[16px] text-[13px] mb-4 border border-red-500/20">{errorMsg}</div>
+      {#if errorMsgKeys}
+        <div class="bg-red-500/10 text-red-500 p-3 rounded-[12px] text-[13px] mb-4 border border-red-500/20">{errorMsgKeys}</div>
       {/if}
 
       {#if newKeyResult}
-        <div class="bg-green-500/10 border border-green-500/20 p-4 rounded-[16px] mb-4">
-          <h4 class="text-[13px] font-medium text-green-600 mb-1">Save your new key</h4>
-          <p class="text-[12px] text-green-600/80 mb-2">This key will never be shown again. Copy it securely.</p>
-          <code class="block bg-bg-base px-3 py-2 rounded-lg text-[13px] text-text-primary border border-border-default font-mono break-all select-all">{newKeyResult}</code>
+        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div class="bg-bg-base border border-border-default rounded-[16px] p-6 w-[440px] shadow-2xl relative">
+            <h3 class="text-[16px] font-medium text-text-primary mb-2">API Key Generated</h3>
+            <p class="text-[13px] text-text-secondary mb-5">Please copy this key now. For security reasons, you won't be able to see it again.</p>
+            
+            <div class="relative mb-6">
+              <input type="text" readonly value={newKeyResult} class="w-full bg-bg-subtle border border-border-default rounded-[8px] pl-3 pr-10 py-2.5 text-[13px] text-text-primary font-mono focus:outline-none selection:bg-text-primary selection:text-bg-base" />
+              <button on:click={(e) => { 
+                navigator.clipboard.writeText(newKeyResult as string);
+                const svg = e.currentTarget.querySelector('svg');
+                if (svg) {
+                  const originalPath = svg.innerHTML;
+                  svg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>`;
+                  svg.classList.add('text-green-500');
+                  setTimeout(() => { 
+                    svg.innerHTML = originalPath; 
+                    svg.classList.remove('text-green-500');
+                  }, 2000);
+                }
+              }} class="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-text-muted hover:text-text-primary transition-colors cursor-pointer rounded-md hover:bg-border-faint">
+                <svg class="w-4 h-4 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+              </button>
+            </div>
+            
+            <div class="flex justify-end">
+              <button on:click={() => newKeyResult = null} class="px-5 py-2 bg-text-primary text-bg-base text-[13px] font-medium rounded-full hover:opacity-90 transition-opacity cursor-pointer">
+                Done
+              </button>
+            </div>
+          </div>
         </div>
       {/if}
 
       <div class="bg-bg-surface border border-border-default rounded-[16px] overflow-hidden">
         <div class="p-4 border-b border-border-default flex flex-col sm:flex-row items-end gap-3 bg-bg-base/30">
           <div class="flex-1 w-full">
-            <label class="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-1.5">Key Name (Optional)</label>
-            <input bind:value={newKeyName} type="text" placeholder="e.g. Production Server" class="w-full bg-bg-subtle border border-border-strong rounded-md px-3 py-2 text-[13px] text-text-primary outline-none focus:border-text-primary focus:ring-1 focus:ring-text-primary transition-colors" />
+            <label class="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-1.5">Key Name</label>
+            <input bind:value={newKeyName} type="text" placeholder="e.g. Zapier Integration" class="w-full bg-bg-subtle border border-transparent rounded-md px-3 py-2 text-[13px] text-text-primary outline-none focus:bg-bg-muted hover:bg-bg-muted transition-all duration-200" />
           </div>
-          <button on:click={createKey} class="w-full sm:w-auto h-[36px] px-5 bg-text-primary text-bg-base text-[13px] font-medium rounded-full hover:bg-text-secondary transition-colors whitespace-nowrap cursor-pointer">
+          <button on:click={createKey} disabled={!newKeyName.trim()} class="w-full sm:w-auto h-[36px] px-5 bg-text-primary text-bg-base text-[13px] font-medium rounded-full hover:bg-text-secondary transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
             Generate Key
           </button>
         </div>
@@ -322,7 +416,52 @@
             </table>
           </div>
         {/if}
+
+{#if infoModal.isOpen}
+  <div class="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-bg-base border border-border-default rounded-[16px] p-6 w-[400px] shadow-2xl relative">
+      <div class="flex items-center gap-3 mb-2">
+        {#if infoModal.isError}
+          <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          </div>
+        {:else}
+          <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          </div>
+        {/if}
+        <h3 class="text-[16px] font-medium text-text-primary">{infoModal.title}</h3>
+      </div>
+      
+      <p class="text-[13px] text-text-secondary mb-6 pl-11 leading-relaxed">{@html infoModal.description}</p>
+      
+      <div class="flex justify-end">
+        <button on:click={() => infoModal.isOpen = false} class="px-5 py-2 bg-text-primary text-bg-base text-[13px] font-medium rounded-full hover:opacity-90 transition-opacity cursor-pointer">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
       </div>
     {/if}
   </div>
 </div>
+
+{#if confirmModal.isOpen}
+  <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-bg-base border border-border-default rounded-[16px] p-6 w-[400px] shadow-2xl relative">
+      <h3 class="text-[16px] font-medium text-text-primary mb-2">{confirmModal.title}</h3>
+      <p class="text-[13px] text-text-secondary mb-6">{confirmModal.description}</p>
+      
+      <div class="flex justify-end gap-3">
+        <button on:click={() => confirmModal.isOpen = false} class="px-5 py-2 border border-border-default text-text-secondary text-[13px] font-medium rounded-full hover:bg-bg-subtle hover:text-text-primary transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button on:click={confirmModal.onConfirm} class="px-5 py-2 bg-red-500 text-white text-[13px] font-medium rounded-full hover:bg-red-600 transition-colors cursor-pointer shadow-sm shadow-red-500/20">
+          {confirmModal.actionLabel}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}

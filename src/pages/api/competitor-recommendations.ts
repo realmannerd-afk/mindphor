@@ -12,8 +12,6 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: "Missing competitor_id" }), { status: 400 });
     }
 
-    // Guest mode bypass
-
     const supabase = getSupabaseClient(cookies);
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -21,7 +19,10 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    const { plan } = await getUserPlanLimits(cookies);
+    const { data: comp } = await supabase.from('competitors').select('user_id').eq('id', competitorId).single();
+    const targetUserId = user.id;
+
+    const { plan } = await getUserPlanLimits(cookies, supabase, targetUserId);
     if (plan === 'starter') {
       return new Response(JSON.stringify({ 
         error: "Upgrade Required: AI-generated Strategic Briefs and Action Plans are only available on the Growth plan and above." 

@@ -1,0 +1,117 @@
+---
+import RootLayout from "../layouts/RootLayout.astro";
+import PublicNav from "../components/layout/PublicNav.astro";
+---
+
+<RootLayout title="Privacy Policy - Mindphor">
+  <PublicNav hideLinks={true} />
+  
+  <div class="w-full max-w-[800px] mx-auto px-[clamp(20px,5vw,80px)] pt-[140px] pb-[120px]">
+    <h1 class="text-[clamp(24px,3vw,34px)] font-semibold text-text-primary leading-[1.15] mb-[20px] tracking-tight">Privacy Policy</h1>
+    <p class="text-[14px] text-text-muted mb-8 font-medium"><strong>Last updated: July 24, 2026</strong></p>
+
+    <div class="space-y-6 text-[14px] text-text-secondary leading-relaxed">
+      <p>This Privacy Policy explains how Mindphor Intelligence ("we," "us") collects, uses, and protects your information when you use our Service. We are currently operated by Santhosh Kumar, an individual based in India.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">1. Information We Collect</h2>
+      <p><strong>Account information:</strong> name, email address, and authentication data when you sign up via email/password, GitHub, or Google. If you sign in via GitHub and your email is private, we may not receive an email address for your account; we accommodate this gracefully, and your account functions normally.</p>
+      <p><strong>App/competitor data you provide:</strong> the app(s) and competitor(s) you configure for monitoring.</p>
+      <p><strong>Usage data:</strong> how you interact with the Service (e.g., pages visited, features used), collected to improve the product.</p>
+      <p><strong>Payment information:</strong> we do <strong>not</strong> collect or store your payment card details. All payments are processed by <strong>Paddle.com</strong>, acting as our Merchant of Record. Paddle collects your billing details directly and processes them under its own privacy policy. We only receive non-sensitive subscription status information (e.g., plan tier, active/cancelled) linked to your account ID.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">2. Information We Collect About Third Parties</h2>
+      <p>To provide the Service, we collect publicly available data not directly about you, including:</p>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>Public app store reviews (e.g., Google Play Store and Apple App Store, fetched directly by us) for apps you choose to monitor.</li>
+        <li>Public competitor changelog data.</li>
+      </ul>
+      <p class="mt-4">This data may incidentally include personal opinions or usernames of third-party reviewers who posted publicly. We do not use this data for any purpose beyond generating sentiment analysis and insights for our customers.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">3. How We Use Your Information</h2>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>To provide, maintain, and improve the Service.</li>
+        <li>To generate AI-based sentiment analysis and insights (processed via third-party AI providers, including Google Gemini).</li>
+        <li>To send you service-related notifications (e.g., alerts, digest summaries) if applicable to your plan.</li>
+        <li>To communicate with you about your account or support requests.</li>
+      </ul>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">4. Third-Party Services We Use</h2>
+      <div class="overflow-x-auto border border-border-default rounded-lg my-6">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-bg-subtle border-b border-border-default">
+              <th class="px-4 py-3 font-medium text-text-primary border-r border-border-default">Service</th>
+              <th class="px-4 py-3 font-medium text-text-primary">Purpose</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border-default">
+            <tr>
+              <td class="px-4 py-3 border-r border-border-default">Supabase</td>
+              <td class="px-4 py-3">Database, authentication, and backend infrastructure</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 border-r border-border-default">Vercel</td>
+              <td class="px-4 py-3">Application hosting</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 border-r border-border-default">Paddle</td>
+              <td class="px-4 py-3">Payment processing (Merchant of Record)</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 border-r border-border-default">Google (Gemini)</td>
+              <td class="px-4 py-3">AI-based summarization and sentiment classification</td>
+            </tr>
+
+            <tr>
+              <td class="px-4 py-3 border-r border-border-default">GitHub & Google OAuth</td>
+              <td class="px-4 py-3">Optional sign-in methods</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-4">Each of these providers processes data under their own privacy policies and security practices.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">5. Cookies</h2>
+      <p>We use essential cookies for authentication and session management, as well as functional cookies (e.g., remembering read/unread alert states). We do not use intrusive analytics or advertising cookies.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">6. Data Retention</h2>
+      <p>We retain your account data for as long as your account is active. Ingested review/changelog data is retained to support historical trend analysis unless you delete your account, at which point we will delete your account data within a reasonable period, except where retention is required by law.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">7. Data Security</h2>
+      <p>We take reasonable technical measures to protect your data, including secure authentication and access controls. However, no method of transmission or storage is 100% secure, and we cannot guarantee absolute security.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">8. Your Rights</h2>
+      <p>Depending on your location, you may have rights to:</p>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>Access the personal data we hold about you.</li>
+        <li>Request correction or deletion of your data.</li>
+        <li>Withdraw consent for optional communications.</li>
+      </ul>
+      <p class="mt-4">To exercise these rights, contact us at <a href="mailto:realmannerd@gmail.com" class="text-text-primary hover:underline">realmannerd@gmail.com</a>.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">9. Children's Privacy</h2>
+      <p>The Service is not directed at individuals under 18. We do not knowingly collect data from children.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">10. International Data Transfers</h2>
+      <p>Our infrastructure providers (e.g., Supabase, Vercel) may process and store data outside India. By using the Service, you consent to this transfer.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">11. Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. Material changes will be communicated via email or in-app notice where feasible.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">12. Contact</h2>
+      <p>For privacy questions or requests, contact: <a href="mailto:realmannerd@gmail.com" class="text-text-primary hover:underline">realmannerd@gmail.com</a></p>
+    </div>
+  </div>
+  
+  <div class="w-full bg-bg-subtle pt-16 pb-6 border-t border-border-faint mt-12">
+    <footer class="max-w-[1400px] mx-auto px-[clamp(20px,5vw,80px)]">
+      <div class="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[12px] text-text-muted border-t border-border-faint">
+        <div>&copy; 2026 Mindphor Intelligence. All rights reserved.</div>
+        <div class="flex items-center gap-6">
+          <a href="/terms" class="hover:text-text-primary transition-colors">Terms of Service</a>
+          <a href="/privacy" class="hover:text-text-primary transition-colors">Privacy Policy</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</RootLayout>

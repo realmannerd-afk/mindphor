@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createClient } from '@supabase/supabase-js';
+import { loadEnv } from 'vite';
 import crypto from 'crypto';
 
 // Verify Paddle webhook signature
@@ -49,13 +50,14 @@ export const POST: APIRoute = async ({ request }) => {
     const data = event.data;
 
     // Use service role for DB writes to bypass RLS for server-side webhook processing
-    const supabaseUrl = import.meta.env.SUPABASE_URL;
-    const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_KEY;
+    const env = loadEnv(import.meta.env.MODE, process.cwd(), '');
+    const supabaseUrl = env.SUPABASE_URL || import.meta.env.SUPABASE_URL;
+    const supabaseServiceKey = env.SUPABASE_SERVICE_KEY || import.meta.env.SUPABASE_SERVICE_KEY;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const starterPriceId = import.meta.env.PUBLIC_PADDLE_STARTER_PRICE_ID;
-    const growthPriceId = import.meta.env.PUBLIC_PADDLE_GROWTH_PRICE_ID;
-    const proPriceId = import.meta.env.PUBLIC_PADDLE_PRO_PRICE_ID;
+    const starterPriceId = env.PADDLE_STARTER_PRICE_ID || import.meta.env.PADDLE_STARTER_PRICE_ID;
+    const growthPriceId = env.PADDLE_GROWTH_PRICE_ID || import.meta.env.PADDLE_GROWTH_PRICE_ID;
+    const proPriceId = env.PADDLE_PRO_PRICE_ID || import.meta.env.PADDLE_PRO_PRICE_ID;
 
     const determinePlan = (priceId: string) => {
       if (priceId === starterPriceId) return 'starter';
@@ -65,9 +67,23 @@ export const POST: APIRoute = async ({ request }) => {
     };
 
     if (eventType === 'subscription.created' || eventType === 'subscription.activated') {
-      const userId = data.custom_data?.supabase_user_id;
+      let userId = data.custom_data?.supabase_user_id;
+      
+      // Fallback: If missing (e.g. manual creation in Paddle Sandbox), try to find user by customer_id
+      if (!userId && data.customer_id) {
+        const { data: existingSub } = await supabase
+          .from('subscriptions')
+          .select('user_id')
+          .eq('paddle_customer_id', data.customer_id)
+          .limit(1)
+          .maybeSingle();
+        if (existingSub?.user_id) {
+          userId = existingSub.user_id;
+        }
+      }
+
       if (!userId) {
-        console.error('No supabase_user_id found in custom_data');
+        console.error('No supabase_user_id found in custom_data and no existing customer match');
         return new Response(JSON.stringify({ error: 'Missing supabase_user_id' }), { status: 400 });
       }
 
@@ -91,10 +107,14 @@ export const POST: APIRoute = async ({ request }) => {
       console.log(`Successfully processed ${eventType} for user ${userId}`);
 
     } else if (eventType === 'subscription.updated') {
+      const priceId = data.items?.[0]?.price?.id;
+      const plan = determinePlan(priceId);
+
       const { error } = await supabase.from('subscriptions')
         .update({
           status: data.status === 'active' ? 'active' : data.status,
           current_period_end: data.current_billing_period?.ends_at,
+          plan: plan,
           updated_at: new Date().toISOString()
         })
         .eq('paddle_subscription_id', data.id);
@@ -120,6 +140,20 @@ export const POST: APIRoute = async ({ request }) => {
       console.log(`Successfully processed subscription.canceled for sub ${data.id}`);
 
     } else if (eventType === 'transaction.completed') {
+      const subId = data.subscription_id;
+      if (subId) {
+        const { error } = await supabase.from('subscriptions')
+          .update({
+            status: 'active',
+            updated_at: new Date().toISOString()
+          })
+          .eq('paddle_subscription_id', subId);
+          
+        if (error) {
+          console.error('DB Update Error on Transaction:', error);
+          return new Response(JSON.stringify({ error: 'Database write failed' }), { status: 500 });
+        }
+      }
       console.log(`Transaction completed: ${data.id}`);
     } else {
       console.log(`Unhandled event type: ${eventType}`);

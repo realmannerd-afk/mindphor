@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { fade, slide, fly, scale } from 'svelte/transition';
-  import { IconPlug, IconCircleCheck, IconBrain, IconChartBar, IconRefresh, IconAlertOctagon, IconBell, IconBellRinging, IconTrendingUp } from '@tabler/icons-svelte';
+  import { IconPlug, IconLink, IconCheck, IconCircleCheck, IconBrain, IconChartBar, IconRefresh, IconAlertOctagon, IconBell, IconBellRinging, IconTrendingUp } from '@tabler/icons-svelte';
   import Logo from './Logo.svelte';
   import Apple from '@thesvg/svelte/apple';
   import Github from '@thesvg/svelte/github';
@@ -194,37 +194,54 @@
       <!-- SIMULATION 1: CONNECT CHANNELS -->
       <div transition:fade={{ duration: 150 }} class="col-start-1 row-start-1 relative z-10 flex flex-col justify-between h-full w-full">
         <div class="mb-8 text-center px-4">
-          <h4 class="text-[15px] font-medium text-text-primary mb-2">Connect Your App Link</h4>
-          <p class="text-[13px] text-text-secondary leading-relaxed mb-6">Enter your app bundle URL below to connect the real-time review feed:</p>
+          <h4 class="text-[15px] font-medium text-text-primary mb-2">Connect Your App</h4>
+          <p class="text-[13px] text-text-secondary leading-relaxed mb-6">Search for your app below to instantly connect real-time reviews from all supported platforms:</p>
         </div>
-
         <!-- Connection Visual -->
-        <div class="absolute top-[52%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-6 w-full">
-          <div class="w-16 h-16 rounded-2xl flex items-center justify-center p-3 relative overflow-hidden opacity-100">
-            <img src="/icons/google-play.svg" alt="Google Play" class="w-full h-full object-contain relative z-10" />
-          </div>
-          <div class="flex items-center transition-colors duration-300 {isConnecting ? 'text-accent' : 'text-text-muted'}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="w-8 h-8 rotate-180 opacity-90">
-              <defs>
-                <linearGradient id="shimmerGradient" x1="100%" y1="0" x2="200%" y2="0">
-                  <stop offset="0%" stop-color="currentColor" stop-opacity="0.2" />
-                  <stop offset="50%" stop-color="currentColor" stop-opacity="1" />
-                  <stop offset="100%" stop-color="currentColor" stop-opacity="0.2" />
-                  <animate attributeName="x1" values="100%; -100%" dur="1.5s" repeatCount="indefinite" />
-                  <animate attributeName="x2" values="200%; 0%" dur="1.5s" repeatCount="indefinite" />
-                </linearGradient>
-              </defs>
-              <path fill="none" stroke="url(#shimmerGradient)" stroke-width="1.5" d="M8 5c0 .742-.733 1.85-1.475 2.78c-.954 1.2-2.094 2.247-3.401 3.046C2.144 11.425.956 12 0 12m0 0c.956 0 2.145.575 3.124 1.174c1.307.8 2.447 1.847 3.401 3.045C7.267 17.15 8 18.26 8 19m-8-7h24"/>
-            </svg>
-          </div>
-          <div class="w-16 h-16 rounded-2xl flex items-center justify-center p-3 relative overflow-visible opacity-100">
-            <div class="flex items-end justify-center w-full h-full gap-[1px] relative z-10 scale-[0.8]">
-              <img src="/Group.svg" alt="Mindphor Circle" class="h-[80%] w-auto object-contain" />
-              <img src="/Group-1.svg" alt="Mindphor Bar" class="h-full w-auto object-contain" />
-            </div>
+        <div class="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[280px]">
+          
+          <!-- Mock search -->
+          <div class="w-full bg-bg-surface border border-border-strong rounded-xl p-3 flex items-center gap-3 shadow-none relative z-20">
+              <svg class="w-4 h-4 text-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <div class="flex flex-1 items-center overflow-hidden">
+                 <div class="text-[13px] font-medium text-text-primary truncate flex items-center">
+                    {#if isConnecting || isConnected}
+                      <TypingAnimation text="Uber" duration={100} />
+                    {/if}
+                 </div>
+              </div>
           </div>
 
-
+          <!-- Found Result -->
+          <div class="absolute top-full left-0 mt-4 w-full bg-white border border-border-default rounded-xl p-4 shadow-none flex flex-col gap-3 transition-opacity duration-500 z-10 {isConnected ? 'opacity-100' : 'opacity-0'} pointer-events-none">
+              <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-border-default shadow-none p-1.5 bg-white flex items-center justify-center">
+                     <img src="https://raw.githubusercontent.com/ln-dev7/logos-apps/master/logos/uber.svg" alt="Uber" class="w-full h-full object-contain" />
+                  </div>
+                  <div class="flex-1">
+                      <div class="text-[14px] font-medium text-text-primary leading-tight">Uber</div>
+                      <div class="text-[11px] text-text-muted mt-0.5">Uber Technologies, Inc.</div>
+                  </div>
+                  <div class="flex items-center justify-center pr-2">
+                     <IconLink size={18} stroke={2} class="text-green-500" />
+                  </div>
+              </div>
+              
+              <div class="w-full h-[1px] bg-border-faint my-1"></div>
+              
+              <div class="flex items-center justify-between">
+                 <div class="text-[11px] font-medium text-text-muted">Sources Connected</div>
+                 <div class="flex items-center gap-3">
+                     <div class="flex items-center justify-center">
+                        <img src="/icons/google-play.svg" alt="Play Store" class="w-4 h-4 object-contain" />
+                     </div>
+                     <div class="flex items-center justify-center">
+                        <img src="/local_logos/appstore.svg" alt="App Store" class="w-4 h-4 object-contain opacity-80" />
+                     </div>
+                 </div>
+              </div>
+          </div>
+          
         </div>
 
 
@@ -241,14 +258,6 @@
         <!-- Shimmer AI Engine Visual (No Cards) -->
         <div class="mt-4 mb-auto relative w-full flex flex-col items-center justify-center text-[13px] py-4 overflow-visible">
           
-          <!-- Re-added logo for Step 2 -->
-          <div class="w-16 h-16 rounded-2xl flex items-center justify-center p-2 relative z-10 mx-auto mb-6 transition-opacity duration-500 {showAnalysisResult ? 'opacity-100' : 'opacity-0'} -mt-12">
-            <div class="flex items-end justify-center w-full h-full gap-[1px] relative scale-[0.6]">
-              <img src="/Group.svg" alt="Mindphor Circle" class="h-[80%] w-auto object-contain" />
-              <img src="/Group-1.svg" alt="Mindphor Bar" class="h-full w-auto object-contain" />
-            </div>
-          </div>
-
           <!-- Content Area -->
           <div class="relative z-10 w-full text-center h-[130px] flex flex-col items-center justify-start mt-2">
             {#if isAnalyzing}

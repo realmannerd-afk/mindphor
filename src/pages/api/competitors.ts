@@ -20,6 +20,8 @@ export const GET: APIRoute = async ({ request }) => {
       targetDate = new Date(dateParam);
       targetDate.setUTCHours(23, 59, 59, 999);
     }
+    
+
 
 
 

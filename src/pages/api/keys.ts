@@ -30,6 +30,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   const { name } = await request.json();
+  const finalName = name || "Default Key";
+
+  const { data: existingKeys, error: checkError } = await supabase
+    .from("api_keys")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("name", finalName)
+    .eq("revoked", false)
+    .limit(1);
+
+  if (checkError) return new Response(checkError.message, { status: 500 });
+  if (existingKeys && existingKeys.length > 0) {
+    return new Response(JSON.stringify({ error: "An active API key with this name already exists. Please choose a unique name." }), { status: 400 });
+  }
 
   const rawKey = `mp_${crypto.randomBytes(32).toString("hex")}`;
   const keyHash = crypto.createHash("sha256").update(rawKey).digest("hex");
@@ -41,7 +55,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       user_id: user.id,
       key_hash: keyHash,
       key_prefix: keyPrefix,
-      name: name || "Default Key"
+      name: finalName
     });
 
   if (error) return new Response(error.message, { status: 500 });

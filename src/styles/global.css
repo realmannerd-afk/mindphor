@@ -66,9 +66,9 @@
 
   --btn-text: #FFFFFF; /* Light mode button text */
 
-  --accent: #4F46E5; /* indigo-600 */
-  --accent-hover: #4338CA;
-  --accent-subtle: rgba(79, 70, 229, 0.08);
+  --accent: #000000;
+  --accent-hover: #333333;
+  --accent-subtle: rgba(0, 0, 0, 0.08);
 
   --color-tag-fresh-bg: #E1F5EE;
   --color-tag-fresh-text: #0F6E56;

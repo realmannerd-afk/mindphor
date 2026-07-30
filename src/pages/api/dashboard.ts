@@ -44,11 +44,11 @@ export const GET: APIRoute = async ({ request }) => {
     try {
       const { data, error: tracesError } = await supabase
         .from('feedback')
-        .select('id, content, source, sentiment, created_at, url, score, version')
+        .select('id, content, source, sentiment, created_at, date, url, score, version, reply_text')
         .eq('app_id', appId)
-        .gte('created_at', previousPeriodStart.toISOString())
-        .lte('created_at', targetDate.toISOString())
-        .order('created_at', { ascending: true }); // ascending for version tracking
+        .gte('date', previousPeriodStart.toISOString())
+        .lte('date', targetDate.toISOString())
+        .order('date', { ascending: true }); // ascending for version tracking
 
       if (!tracesError && data) {
         data.forEach(fb => {
@@ -59,12 +59,13 @@ export const GET: APIRoute = async ({ request }) => {
             sentiment: fb.sentiment,
             // Normalised 0-100 score for the sentiment chart
             score: fb.sentiment === 'positive' ? 95 : fb.sentiment === 'negative' ? 25 : 75,
-            // Raw 1-5 star rating for the rating chart
             raw_score: fb.score ?? null,
             version: fb.version ?? null,
-            created_at: fb.created_at
+            reply_text: fb.reply_text ?? null,
+            created_at: fb.created_at,
+            date: fb.date || fb.created_at // fallback to created_at if date is missing
           };
-          if (new Date(fb.created_at) >= currentPeriodStart) {
+          if (new Date(item.date) >= currentPeriodStart) {
             currentTraces.push(item);
           } else {
             previousTraces.push(item);
@@ -151,7 +152,7 @@ export const GET: APIRoute = async ({ request }) => {
           totalScore += trace.score;
           scoredCount++;
 
-          const d = new Date(trace.created_at);
+          const d = new Date(trace.date);
           const dayStr = dayNames[d.getDay()];
           if (daysMap[dayStr]) {
             daysMap[dayStr].total += trace.score;
@@ -161,7 +162,7 @@ export const GET: APIRoute = async ({ request }) => {
 
         // Raw star rating aggregation
         if (trace.raw_score !== null) {
-          const d = new Date(trace.created_at);
+          const d = new Date(trace.date);
           const isoDate = d.toISOString().split('T')[0];
           if (ratingByDayMap[isoDate]) {
             ratingByDayMap[isoDate].total += trace.raw_score;
@@ -207,13 +208,13 @@ export const GET: APIRoute = async ({ request }) => {
     let lastVersion: string | null = null;
     const tracesWithVersion = currentTraces
       .filter(t => t.version)
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     for (const t of tracesWithVersion) {
       if (t.version !== lastVersion) {
         lastVersion = t.version;
         versionChanges.push({
-          date: new Date(t.created_at).toISOString().split('T')[0],
+          date: new Date(t.date).toISOString().split('T')[0],
           version: t.version,
         });
       }

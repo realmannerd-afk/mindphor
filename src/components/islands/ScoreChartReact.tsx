@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 
-export function ScoreChartReact({ projectId, date }: { projectId: string; date?: string }) {
-  const [range, setRange] = useState('7');
+export function ScoreChartReact({ projectId, date, initialRange = '7' }: { projectId: string; date?: string; initialRange?: string }) {
+  const [range, setRange] = useState(initialRange);
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [validCount, setValidCount] = useState(0);
@@ -21,18 +21,42 @@ export function ScoreChartReact({ projectId, date }: { projectId: string; date?:
         const res = await fetch(url);
         const json = await res.json();
         if (json.rating_by_day) {
-          const chartData = json.rating_by_day.map((d: any) => {
-            const parts = d.date.split('-');
-            let label = d.date;
-            if (parts.length === 3) {
-              const dateObj = new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])));
-              label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-            }
-            return {
-              date: label,
-              rating: d.avg_rating || null
-            };
-          });
+          let chartData = [];
+          if (range === '365' || range === '730') {
+            const grouped: any = {};
+            json.rating_by_day.forEach((d: any) => {
+              const parts = d.date.split('-');
+              if (parts.length === 3) {
+                const mk = `${parts[0]}-${parts[1]}`;
+                if (!grouped[mk]) grouped[mk] = { total: 0, count: 0 };
+                if (d.avg_rating) {
+                  grouped[mk].total += d.avg_rating * d.count;
+                  grouped[mk].count += d.count;
+                }
+              }
+            });
+            chartData = Object.keys(grouped).sort().map(mk => {
+              const [y, m] = mk.split('-');
+              const dateObj = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, 1));
+              return {
+                date: dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }),
+                rating: grouped[mk].count > 0 ? Number((grouped[mk].total / grouped[mk].count).toFixed(1)) : null
+              };
+            });
+          } else {
+            chartData = json.rating_by_day.map((d: any) => {
+              const parts = d.date.split('-');
+              let label = d.date;
+              if (parts.length === 3) {
+                const dateObj = new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])));
+                label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+              }
+              return {
+                date: label,
+                rating: d.avg_rating || null
+              };
+            });
+          }
           setData(chartData);
           setValidCount(chartData.filter((d: any) => d.rating !== null).length);
         }
@@ -43,10 +67,9 @@ export function ScoreChartReact({ projectId, date }: { projectId: string; date?:
       }
     }
     loadData();
-    
-    const interval = setInterval(loadData, 5000);
-    return () => clearInterval(interval);
   }, [projectId, range, date]);
+
+  if (!projectId) return null;
 
   return (
     <div className="bg-bg-surface border border-border-default rounded-[16px] overflow-hidden mb-10">
@@ -60,14 +83,18 @@ export function ScoreChartReact({ projectId, date }: { projectId: string; date?:
           </div>
           <select 
             value={range} 
-            onChange={(e) => setRange(e.target.value)}
-            className="text-[11px] bg-bg-base border border-border-default text-text-primary rounded-full px-3 py-1 font-medium hover:border-border-strong hover:bg-bg-subtle focus:outline-none transition-all cursor-pointer appearance-none pr-7 relative bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M7%2010L12%2015L17%2010%22%20stroke%3D%22%23AAA9A5%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_6px_center] bg-[length:14px]"
+            onChange={(e) => {
+              const newRange = e.target.value;
+              const url = new URL(window.location.href);
+              url.searchParams.set('range', newRange);
+              window.location.href = url.toString();
+            }}
+            className="text-[11px] bg-bg-base border border-border-default text-text-primary rounded-md px-3 py-1 font-medium hover:border-border-strong hover:bg-bg-subtle focus:outline-none transition-all cursor-pointer appearance-none pr-7 relative bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M7%2010L12%2015L17%2010%22%20stroke%3D%22%23AAA9A5%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_6px_center] bg-[length:14px]"
           >
             <option value="7">Last 7 Days</option>
             <option value="30">Last 30 Days</option>
             <option value="90">Last 3 Months</option>
             <option value="365">Last Year</option>
-            <option value="730">Last 2 Years</option>
           </select>
         </div>
 
@@ -78,7 +105,7 @@ export function ScoreChartReact({ projectId, date }: { projectId: string; date?:
         ) : (
           <div className="relative w-full h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRating" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4}/>
@@ -90,8 +117,10 @@ export function ScoreChartReact({ projectId, date }: { projectId: string; date?:
                   dataKey="date" 
                   tickLine={false} 
                   axisLine={false} 
-                  tickMargin={8}
-                  minTickGap={30} 
+                  tickMargin={12}
+                  padding={{ left: 30, right: 30 }}
+                  interval={range === '7' ? 0 : 'preserveStartEnd'}
+                  minTickGap={range === '365' || range === '730' ? 40 : range === '90' ? 30 : range === '30' ? 25 : 0}
                   tick={{ fontSize: 11, fill: '#AAA9A5', fontFamily: 'Geist' }}
                 />
                 <Tooltip
@@ -108,6 +137,7 @@ export function ScoreChartReact({ projectId, date }: { projectId: string; date?:
                   fillOpacity={1} 
                   fill="url(#colorRating)" 
                   activeDot={{ r: 5, fill: "#6366F1", stroke: "#FFFFFF", strokeWidth: 2 }}
+                  dot={validCount === 1 ? { r: 4, fill: "#6366F1", strokeWidth: 0 } : false}
                 />
               </AreaChart>
             </ResponsiveContainer>

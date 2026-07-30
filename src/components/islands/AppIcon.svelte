@@ -8,7 +8,20 @@
   let iconUrl = fallbackUrl;
 
   onMount(async () => {
-    if (app && app.play_store_url) {
+    let targetUrl = app?.play_store_url;
+    let storeType = 'playstore';
+    
+    if (!targetUrl && app?.app_store_url) {
+      targetUrl = app.app_store_url;
+      storeType = 'appstore';
+    }
+    
+    if (app && targetUrl) {
+      if (targetUrl.includes('swiftbite')) {
+        iconUrl = fallbackUrl;
+        return;
+      }
+
       const cacheKey = `app_icon_${app.id}`;
       const cached = localStorage.getItem(cacheKey);
       
@@ -16,7 +29,8 @@
         iconUrl = cached;
       } else {
         try {
-          const res = await fetch(`/api/apps/playstore-info?url=${encodeURIComponent(app.play_store_url)}`);
+          const endpoint = storeType === 'playstore' ? '/api/apps/playstore-info' : '/api/apps/appstore-info';
+          const res = await fetch(`${endpoint}?url=${encodeURIComponent(targetUrl)}`);
           if (res.ok) {
             const data = await res.json();
             if (data.icon) {
@@ -32,4 +46,4 @@
   });
 </script>
 
-<img src={iconUrl} alt={app ? app.name : 'App'} class={className} />
+<img src={iconUrl} alt={app ? app.name : 'App'} class={className} on:error={() => { iconUrl = fallbackUrl; }} />

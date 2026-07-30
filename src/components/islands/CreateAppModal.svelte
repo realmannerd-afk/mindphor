@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import Logo from './Logo.svelte';
   export let forceShow = false;
+  export let wideMode = false;
   let show = forceShow;
   
   // State
@@ -19,68 +20,85 @@
   let error = '';
 
   // App Preview State
-  let appPreview = null;
-  let fetchingPreview = false;
-  let previewTimer = null;
+  let playPreview: any = null;
+  let applePreview: any = null;
+  let fetchingPlay = false;
+  let fetchingApple = false;
+  let playTimer: any = null;
+  let appleTimer: any = null;
+  let appMismatch = false;
+  let focusedField = '';
+  
+  $: appPreview = playPreview || applePreview;
+  $: fetchingPreview = fetchingPlay || fetchingApple;
 
   $: {
     if (platforms.playStore) {
-      if (previewTimer) clearTimeout(previewTimer);
-      previewTimer = setTimeout(() => {
-        fetchPlayStorePreview(platforms.playStore);
-      }, 600);
-    } else if (platforms.appStore) {
-      if (previewTimer) clearTimeout(previewTimer);
-      previewTimer = setTimeout(() => {
-        fetchAppStorePreview(platforms.appStore);
-      }, 600);
+      if (playTimer) clearTimeout(playTimer);
+      playTimer = setTimeout(() => fetchPlayStorePreview(platforms.playStore), 600);
     } else {
-      appPreview = null;
+      playPreview = null;
+    }
+  }
+
+  $: {
+    if (platforms.appStore) {
+      if (appleTimer) clearTimeout(appleTimer);
+      appleTimer = setTimeout(() => fetchAppStorePreview(platforms.appStore), 600);
+    } else {
+      applePreview = null;
+    }
+  }
+
+  $: {
+    if (playPreview && applePreview && playPreview.title && applePreview.title) {
+      const pTitle = playPreview.title.toLowerCase();
+      const aTitle = applePreview.title.toLowerCase();
+      
+      // Check if one contains the other, or if the first 4 chars match
+      const isMatch = pTitle.includes(aTitle) || aTitle.includes(pTitle) || 
+                      (pTitle.length > 3 && aTitle.length > 3 && pTitle.substring(0,4) === aTitle.substring(0,4));
+      appMismatch = !isMatch;
+    } else {
+      appMismatch = false;
     }
   }
 
   async function fetchPlayStorePreview(url: string) {
     if (!url.trim() || url.length < 5) return;
-    fetchingPreview = true;
+    fetchingPlay = true;
     try {
       const res = await fetch(`/api/apps/playstore-info?url=${encodeURIComponent(url)}`);
       if (res.ok) {
         const data = await res.json();
-        appPreview = { ...data, platform: 'playstore' };
-        // Auto fill name if empty
-        if (!name.trim() && data.title) {
-          name = data.title;
-        }
+        playPreview = { ...data, platform: 'playstore' };
+        if (!name.trim() && data.title) name = data.title;
       } else {
-        // don't clear if we have an appStore preview already
-        if (appPreview?.platform !== 'appstore') appPreview = null;
+        playPreview = null;
       }
     } catch (e) {
-      if (appPreview?.platform !== 'appstore') appPreview = null;
+      playPreview = null;
     } finally {
-      fetchingPreview = false;
+      fetchingPlay = false;
     }
   }
 
   async function fetchAppStorePreview(url: string) {
     if (!url.trim() || url.length < 5) return;
-    fetchingPreview = true;
+    fetchingApple = true;
     try {
       const res = await fetch(`/api/apps/appstore-info?url=${encodeURIComponent(url)}`);
       if (res.ok) {
         const data = await res.json();
-        appPreview = { ...data, platform: 'appstore' };
-        // Auto fill name if empty
-        if (!name.trim() && data.title) {
-          name = data.title;
-        }
+        applePreview = { ...data, platform: 'appstore' };
+        if (!name.trim() && data.title) name = data.title;
       } else {
-        if (appPreview?.platform !== 'playstore') appPreview = null;
+        applePreview = null;
       }
     } catch (e) {
-      if (appPreview?.platform !== 'playstore') appPreview = null;
+      applePreview = null;
     } finally {
-      fetchingPreview = false;
+      fetchingApple = false;
     }
   }
 
@@ -102,6 +120,11 @@
     return () => {
       window.removeEventListener('open-create-app-modal', handleOpen);
     };
+  });
+
+  onDestroy(() => {
+    if (playTimer) clearTimeout(playTimer);
+    if (appleTimer) clearTimeout(appleTimer);
   });
 
   function close() {
@@ -202,11 +225,11 @@
 </script>
 
 {#if show}
-  <div class={forceShow ? "relative z-10 w-full flex justify-center transition-all py-10" : "fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all py-10"} aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="bg-bg-surface w-full max-w-[500px] rounded-[20px] shadow-none border border-border-default overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+  <div class={forceShow ? `relative z-10 w-full flex ${wideMode ? 'justify-start py-0' : 'justify-center py-10'} transition-all` : "fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all py-10"} aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class={`w-full ${wideMode ? 'max-w-[700px] bg-bg-surface border border-border-default rounded-[16px]' : 'bg-bg-surface max-w-[440px] rounded-[20px] shadow-none border border-border-default'} overflow-hidden animate-in fade-in zoom-in-95 duration-200`}>
       
       <!-- Progress Bar (Steps 1 & 2 only) -->
-      {#if step < 3}
+      {#if step < 3 && !wideMode}
       <div class="w-full bg-border-faint h-1.5 flex">
         <div class="bg-[linear-gradient(to_right,#eab308,#f97316,#ef4444,#f43f5e)] h-full transition-all duration-300 relative overflow-hidden" style="width: {step === 1 ? '50%' : '100%'}">
           <div class="absolute inset-0 opacity-[0.35] mix-blend-overlay grain-overlay"></div>
@@ -215,9 +238,9 @@
       {/if}
 
       <!-- Header -->
-      <div class="px-7 py-6 border-b border-border-default flex items-start justify-between bg-bg-base/50">
+      <div class={`px-7 flex items-start justify-between ${wideMode ? 'py-4' : 'py-6 border-b border-border-default bg-bg-base/50'}`}>
         <div>
-          <h2 id="modal-title" class="text-[20px] font-bold text-text-primary tracking-tight">
+          <h2 id="modal-title" class={`${wideMode ? 'text-[24px]' : 'text-[20px]'} font-bold text-text-primary tracking-tight`}>
             {#if step === 1}
               Create New Workspace
             {:else if step === 2}
@@ -244,41 +267,100 @@
       </div>
 
       <!-- Body -->
-      <div class="p-6 space-y-4">
+      <div class={`space-y-4 ${wideMode ? 'px-7 py-4' : 'p-6'}`}>
         {#if step === 1}
+          <!-- Workspace Name -->
           <div class="space-y-1.5">
-            <label for="appName" class="block text-[13px] font-semibold text-text-primary">Workspace Name <span class="text-red-500">*</span></label>
-            <input id="appName" type="text" bind:value={name} placeholder="e.g. Acme Corp" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
-          </div>
-
-          <div class="space-y-1.5">
-            <label for="appUrl" class="block text-[13px] font-semibold text-text-primary">Website URL <span class="text-text-faint font-normal">(Optional)</span></label>
-            <input id="appUrl" type="url" bind:value={url} placeholder="e.g. https://acme.com" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
-          </div>
-
-          <div class="space-y-1.5">
-            <label for="appDesc" class="block text-[13px] font-semibold text-text-primary">Short Description <span class="text-text-faint font-normal">(Optional)</span></label>
-            <textarea id="appDesc" bind:value={description} placeholder="What does this workspace focus on?" rows="1" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all resize-none"></textarea>
-          </div>
-          
-          <div class="space-y-1.5 relative">
-            <label for="playStoreUrl" class="block text-[13px] font-semibold text-text-primary">Google Play Store URL <span class="text-text-faint font-normal">(Optional)</span></label>
-            <input id="playStoreUrl" type="text" bind:value={platforms.playStore} placeholder="e.g. https://play.google.com/store/apps/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
-            
-            {#if fetchingPreview}
-              <div class="absolute right-3 bottom-2.5">
-                <svg class="animate-spin w-4 h-4 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            {#if !name || focusedField === 'name'}
+              <label for="appName" class="block text-[13px] font-semibold text-text-primary">Workspace Name <span class="text-red-500">*</span></label>
+              <input id="appName" type="text" bind:value={name} on:focus={() => focusedField = 'name'} on:blur={() => setTimeout(() => { if(focusedField === 'name') focusedField = '' }, 150)} placeholder="e.g. Acme Corp" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+            {:else}
+              <div class="flex items-center justify-between p-3 bg-bg-subtle border border-border-default rounded-[10px] cursor-pointer hover:border-accent transition-colors animate-in fade-in zoom-in-95" on:click={() => focusedField = 'name'}>
+                <div>
+                  <div class="text-[11px] text-text-muted font-medium uppercase tracking-wider">Workspace Name</div>
+                  <div class="text-[14px] text-text-primary font-medium mt-0.5">{name}</div>
+                </div>
+                <div class="text-[12px] text-accent font-medium">Edit</div>
               </div>
             {/if}
           </div>
 
-          <div class="space-y-1.5 relative">
-            <label for="appStoreUrl" class="block text-[13px] font-semibold text-text-primary">Apple App Store URL <span class="text-text-faint font-normal">(Optional)</span></label>
-            <input id="appStoreUrl" type="text" bind:value={platforms.appStore} placeholder="e.g. https://apps.apple.com/us/app/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
-            
-            {#if fetchingPreview && !platforms.playStore}
-              <div class="absolute right-3 bottom-2.5">
-                <svg class="animate-spin w-4 h-4 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <!-- Website URL -->
+          <div class="space-y-1.5">
+            {#if !url || focusedField === 'url'}
+              <label for="appUrl" class="block text-[13px] font-semibold text-text-primary">Website URL <span class="text-text-faint font-normal">(Optional)</span></label>
+              <input id="appUrl" type="url" bind:value={url} on:focus={() => focusedField = 'url'} on:blur={() => setTimeout(() => { if(focusedField === 'url') focusedField = '' }, 150)} placeholder="e.g. https://acme.com" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+            {:else}
+              <div class="flex items-center justify-between p-3 bg-bg-subtle border border-border-default rounded-[10px] cursor-pointer hover:border-accent transition-colors animate-in fade-in zoom-in-95" on:click={() => focusedField = 'url'}>
+                <div>
+                  <div class="text-[11px] text-text-muted font-medium uppercase tracking-wider">Website URL</div>
+                  <div class="text-[14px] text-text-primary font-medium mt-0.5">{url}</div>
+                </div>
+                <div class="text-[12px] text-accent font-medium">Edit</div>
+              </div>
+            {/if}
+          </div>
+
+          <!-- Description -->
+          <div class="space-y-1.5">
+            {#if !description || focusedField === 'description'}
+              <label for="appDesc" class="block text-[13px] font-semibold text-text-primary">Short Description <span class="text-text-faint font-normal">(Optional)</span></label>
+              <textarea id="appDesc" bind:value={description} on:focus={() => focusedField = 'description'} on:blur={() => setTimeout(() => { if(focusedField === 'description') focusedField = '' }, 150)} placeholder="What does this workspace focus on?" rows="1" class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all resize-none"></textarea>
+            {:else}
+              <div class="flex items-center justify-between p-3 bg-bg-subtle border border-border-default rounded-[10px] cursor-pointer hover:border-accent transition-colors animate-in fade-in zoom-in-95" on:click={() => focusedField = 'description'}>
+                <div>
+                  <div class="text-[11px] text-text-muted font-medium uppercase tracking-wider">Short Description</div>
+                  <div class="text-[14px] text-text-primary font-medium mt-0.5 truncate max-w-[300px]">{description}</div>
+                </div>
+                <div class="text-[12px] text-accent font-medium">Edit</div>
+              </div>
+            {/if}
+          </div>
+          
+          <!-- Play Store URL -->
+          <div class="space-y-1.5">
+            {#if !platforms.playStore || focusedField === 'playStore'}
+              <label for="playStoreUrl" class="block text-[13px] font-semibold text-text-primary">Google Play Store URL <span class="text-text-faint font-normal">(Optional)</span></label>
+              <div class="relative">
+                <input id="playStoreUrl" type="text" bind:value={platforms.playStore} on:focus={() => focusedField = 'playStore'} on:blur={() => setTimeout(() => { if(focusedField === 'playStore') focusedField = '' }, 150)} placeholder="e.g. https://play.google.com/store/apps/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 pr-10 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+                
+                {#if fetchingPlay}
+                  <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                    <svg class="animate-spin w-4 h-4 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  </div>
+                {/if}
+              </div>
+            {:else}
+              <div class="flex items-center justify-between p-3 bg-bg-subtle border border-border-default rounded-[10px] cursor-pointer hover:border-accent transition-colors animate-in fade-in zoom-in-95" on:click={() => focusedField = 'playStore'}>
+                <div>
+                  <div class="text-[11px] text-text-muted font-medium uppercase tracking-wider">Play Store URL</div>
+                  <div class="text-[14px] text-text-primary font-medium mt-0.5 truncate max-w-[300px]">{platforms.playStore}</div>
+                </div>
+                <div class="text-[12px] text-accent font-medium">Edit</div>
+              </div>
+            {/if}
+          </div>
+
+          <!-- App Store URL -->
+          <div class="space-y-1.5">
+            {#if !platforms.appStore || focusedField === 'appStore'}
+              <label for="appStoreUrl" class="block text-[13px] font-semibold text-text-primary">Apple App Store URL <span class="text-text-faint font-normal">(Optional)</span></label>
+              <div class="relative">
+                <input id="appStoreUrl" type="text" bind:value={platforms.appStore} on:focus={() => focusedField = 'appStore'} on:blur={() => setTimeout(() => { if(focusedField === 'appStore') focusedField = '' }, 150)} placeholder="e.g. https://apps.apple.com/us/app/..." class="w-full bg-bg-base border border-border-default rounded-[10px] px-3.5 py-2 pr-10 text-[14px] text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
+                
+                {#if fetchingApple}
+                  <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                    <svg class="animate-spin w-4 h-4 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  </div>
+                {/if}
+              </div>
+            {:else}
+              <div class="flex items-center justify-between p-3 bg-bg-subtle border border-border-default rounded-[10px] cursor-pointer hover:border-accent transition-colors animate-in fade-in zoom-in-95" on:click={() => focusedField = 'appStore'}>
+                <div>
+                  <div class="text-[11px] text-text-muted font-medium uppercase tracking-wider">App Store URL</div>
+                  <div class="text-[14px] text-text-primary font-medium mt-0.5 truncate max-w-[300px]">{platforms.appStore}</div>
+                </div>
+                <div class="text-[12px] text-accent font-medium">Edit</div>
               </div>
             {/if}
           </div>
@@ -291,16 +373,27 @@
                 <p class="text-[12px] text-text-secondary truncate mt-0.5">{appPreview.developer}</p>
               </div>
               
-              {#if appPreview.platform === 'appstore'}
-                <div class="w-7 h-7 rounded-full bg-bg-surface border border-border-faint flex items-center justify-center flex-shrink-0">
+              {#if platforms.appStore && platforms.appStore.trim().length > 5}
+                <div class="w-7 h-7 rounded-full bg-bg-surface border border-border-faint flex items-center justify-center flex-shrink-0" title="Apple App Store">
                   <img src="/local_logos/appstore.svg" alt="App Store" class="w-4 h-4 object-contain opacity-80" />
                 </div>
-              {:else}
-                <div class="w-7 h-7 rounded-full bg-bg-surface border border-border-faint flex items-center justify-center flex-shrink-0">
+              {/if}
+              {#if platforms.playStore && platforms.playStore.trim().length > 5}
+                <div class="w-7 h-7 rounded-full bg-bg-surface border border-border-faint flex items-center justify-center flex-shrink-0" title="Google Play Store">
                   <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" alt="Google Play" class="w-4 h-4 object-contain opacity-80" />
                 </div>
               {/if}
             </div>
+            
+            {#if appMismatch}
+              <div class="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-[13px] font-bold text-red-500">Apps do not match</h4>
+                  <p class="text-[12px] text-red-400 mt-0.5 leading-snug">The URLs provided appear to point to two different apps. Please ensure both links belong to the same product to track them accurately.</p>
+                </div>
+              </div>
+            {/if}
           {/if}
         {:else if step === 2}
           <div class="space-y-4">
@@ -321,7 +414,7 @@
             {/each}
 
             {#if competitors.length < 3}
-            <button class="text-[13px] font-medium text-accent hover:text-accent-hover transition-colors flex items-center gap-1 mt-2" on:click={addCompetitor}>
+            <button class="text-[13px] font-medium text-text-primary hover:text-text-secondary transition-colors flex items-center gap-1 mt-2" on:click={addCompetitor}>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
               Add another competitor
             </button>
@@ -339,7 +432,7 @@
       </div>
 
       <!-- Footer -->
-      <div class="px-7 py-5 border-t border-border-default flex items-center justify-between bg-bg-base/50">
+      <div class={`px-7 flex items-center justify-between ${wideMode ? 'py-4 mt-2' : 'py-5 border-t border-border-default bg-bg-base/50'}`}>
         {#if step === 1}
           <div class="flex-1">
             {#if error}
@@ -349,7 +442,7 @@
               </div>
             {/if}
           </div>
-          <button class="px-6 py-2.5 rounded-full text-[14px] font-semibold text-white bg-accent hover:bg-accent-hover active:scale-[0.98] transition-all flex items-center gap-2" on:click={nextStep}>
+          <button class="px-6 py-2.5 rounded-full text-[14px] font-semibold text-white bg-black hover:bg-zinc-800 active:scale-[0.98] transition-all flex items-center gap-2" on:click={nextStep}>
             Next Step
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
           </button>
@@ -365,7 +458,7 @@
               </div>
             {/if}
           </div>
-          <button class="px-6 py-2.5 rounded-full text-[14px] font-semibold text-white bg-accent hover:bg-accent-hover active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none" on:click={nextStep} disabled={loading}>
+          <button class="px-6 py-2.5 rounded-full text-[14px] font-semibold text-white bg-black hover:bg-zinc-800 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none" on:click={nextStep} disabled={loading}>
             {#if loading}
               <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
               Saving...
@@ -374,7 +467,7 @@
             {/if}
           </button>
         {:else if step === 3}
-          <button class="w-full px-6 py-3 rounded-full text-[15px] font-bold text-white bg-accent hover:bg-accent-hover active:scale-[0.98] transition-all" on:click={finish}>
+          <button class="w-full px-6 py-3 rounded-full text-[15px] font-bold text-white bg-black hover:bg-zinc-800 active:scale-[0.98] transition-all" on:click={finish}>
             Go to Dashboard
           </button>
         {/if}

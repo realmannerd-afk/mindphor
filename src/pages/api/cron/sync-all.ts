@@ -12,6 +12,8 @@ import { classifySentiment } from "../../../lib/classifier";
 import { generateAlerts } from "../../../lib/generateAlerts";
 import crypto from "crypto";
 
+
+
 /**
  * GET /api/cron/sync-all
  *
@@ -133,7 +135,9 @@ export const GET: APIRoute = async ({ request }) => {
           if (src.store === "playstore") {
             reviews = await scrapePlayStoreReviews(id);
           } else if (src.store === "appstore") {
-            reviews = await scrapeAppStoreReviews(id);
+            const match = id.match(/id(\d+)/i);
+            const appleId = match ? match[1] : id;
+            reviews = await scrapeAppStoreReviews(app.id, appleId, 50);
           } else if (src.store === "reddit") {
             reviews = await scrapeReddit(id);
           }
@@ -141,13 +145,26 @@ export const GET: APIRoute = async ({ request }) => {
           for (const review of reviews) {
             const sentiment = classifySentiment(review.content);
 
-            const { data: existing } = await supabase
-              .from("feedback")
-              .select("id")
-              .eq("app_id", app.id)
-              .eq("content", review.content)
-              .eq("date", review.date.toISOString())
-              .maybeSingle();
+            let existing = null;
+            if (review.url) {
+              const { data: urlMatch } = await supabase
+                .from("feedback")
+                .select("id")
+                .eq("app_id", app.id)
+                .eq("url", review.url)
+                .maybeSingle();
+              existing = urlMatch;
+            }
+            if (!existing) {
+              const { data: contentMatch } = await supabase
+                .from("feedback")
+                .select("id")
+                .eq("app_id", app.id)
+                .eq("content", review.content)
+                .eq("date", review.date.toISOString())
+                .maybeSingle();
+              existing = contentMatch;
+            }
 
             if (!existing) {
               const { data: inserted, error: insertErr } = await supabase
@@ -164,6 +181,7 @@ export const GET: APIRoute = async ({ request }) => {
                   url: review.url ?? null,
                   score: review.score ?? null,
                   version: review.version ?? null,
+                  country: review.country ?? null,
                 })
                 .select("id")
                 .single();
@@ -197,7 +215,8 @@ export const GET: APIRoute = async ({ request }) => {
             content: string,
             sentiment: string,
             date: Date,
-            url = ""
+            url = "",
+            country = null
           ) => {
             const { data: existing } = await supabase
               .from("feedback")
@@ -219,6 +238,7 @@ export const GET: APIRoute = async ({ request }) => {
                   sentiment,
                   date: date.toISOString(),
                   url,
+                  country,
                 })
                 .select("id")
                 .single();

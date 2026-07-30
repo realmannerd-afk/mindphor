@@ -9,7 +9,7 @@ export interface ReviewItem {
   version: string | null; // App version string e.g. "10.3.1"
 }
 
-export async function scrapePlayStoreReviews(packageName: string, count: number = 50): Promise<ReviewItem[]> {
+export async function scrapePlayStoreReviews(packageName: string, count: number = 50, sinceDate?: Date): Promise<ReviewItem[]> {
   try {
     let appId = packageName;
     
@@ -32,11 +32,12 @@ export async function scrapePlayStoreReviews(packageName: string, count: number 
     }
 
     let reviews;
+    let fetchCount = sinceDate ? 5000 : count; // Fetch a large amount if sinceDate is provided
     try {
       reviews = await gplay.reviews({
         appId: appId,
         sort: gplay.sort.NEWEST,
-        num: count,
+        num: fetchCount,
         paginate: true
       });
       
@@ -53,7 +54,7 @@ export async function scrapePlayStoreReviews(packageName: string, count: number 
         reviews = await gplay.reviews({
           appId: appId,
           sort: gplay.sort.NEWEST,
-          num: count,
+          num: fetchCount,
           paginate: true
         });
       } else {
@@ -64,7 +65,7 @@ export async function scrapePlayStoreReviews(packageName: string, count: number 
 
     if (!reviews || !reviews.data) return [];
 
-    return reviews.data.map((review: any) => ({
+    let mapped = reviews.data.map((review: any) => ({
       content: review.text || review.title || `User gave a ${review.score} star rating without text.`,
       author: review.userName,
       date: new Date(review.date),
@@ -72,6 +73,13 @@ export async function scrapePlayStoreReviews(packageName: string, count: number 
       score: typeof review.score === 'number' ? review.score : null,
       version: review.version || null,
     }));
+    
+    if (sinceDate) {
+      mapped = mapped.filter((r: ReviewItem) => r.date >= sinceDate);
+      return mapped;
+    }
+    
+    return mapped.slice(0, count);
   } catch (error) {
     console.error('Error scraping Play Store reviews:', error);
     return [];

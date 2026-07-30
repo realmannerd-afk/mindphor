@@ -1,0 +1,19 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import CreateAppModal from '../../components/islands/CreateAppModal.svelte';
+import { getSupabaseClient } from '../../lib/supabase';
+
+const supabase = getSupabaseClient(Astro.cookies);
+const { data: userData } = await supabase.auth.getUser();
+if (!userData?.user) {
+  return Astro.redirect('/login');
+}
+---
+
+<DashboardLayout title="New Workspace">
+  <div class="w-full max-w-[1100px] mx-auto md:mx-0">
+    <div class="w-full max-w-[700px]">
+      <CreateAppModal client:load forceShow={true} wideMode={true} />
+    </div>
+  </div>
+</DashboardLayout>

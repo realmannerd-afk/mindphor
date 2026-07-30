@@ -1,0 +1,93 @@
+---
+import RootLayout from "../layouts/RootLayout.astro";
+import PublicNav from "../components/layout/PublicNav.astro";
+---
+
+<RootLayout title="Terms of Service - Mindphor">
+  <PublicNav hideLinks={true} />
+  
+  <div class="w-full max-w-[800px] mx-auto px-[clamp(20px,5vw,80px)] pt-[140px] pb-[120px]">
+    <h1 class="text-[clamp(24px,3vw,34px)] font-semibold text-text-primary leading-[1.15] mb-[20px] tracking-tight">Terms of Service</h1>
+    <p class="text-[14px] text-text-muted mb-8 font-medium"><strong>Last updated: July 24, 2026</strong></p>
+
+    <div class="space-y-6 text-[14px] text-text-secondary leading-relaxed">
+      <p>These Terms of Service ("Terms") govern your access to and use of Mindphor Intelligence (the "Service"), operated by Santhosh Kumar ("we," "us," or "the Operator"), currently operating as an individual/sole proprietor based in India. By creating an account or using the Service, you agree to these Terms. If you do not agree, do not use the Service.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">1. What Mindphor Intelligence Does</h2>
+      <p>Mindphor Intelligence is a SaaS platform that monitors publicly available app store reviews (currently Google Play Store and Apple App Store, covering all countries/storefronts) and publicly available competitor changelogs, and uses AI to generate sentiment analysis, summaries, and actionable insights for indie founders and small SaaS teams.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">2. Eligibility and Accounts</h2>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>You must be at least 18 years old to use the Service.</li>
+        <li>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account.</li>
+        <li>You may sign in via email/password, GitHub, or Google. You are responsible for the accuracy of any information you provide.</li>
+      </ul>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">3. Subscriptions and Billing</h2>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>Paid plans are billed through <strong>Paddle.com</strong>, our payment provider and Merchant of Record. Paddle handles all payment processing, card data, invoicing, tax collection/remittance, and refund/chargeback administration on our behalf. We do not collect or store your payment card details.</li>
+        <li>Your purchase is subject to Paddle's own terms and privacy policy, in addition to these Terms.</li>
+        <li>Subscription fees are billed on a recurring basis (monthly, as displayed at checkout) until cancelled. You may cancel at any time; cancellation takes effect at the end of the current billing period unless stated otherwise.</li>
+        <li>Refunds, where applicable, are handled by Paddle in accordance with their refund policy.</li>
+      </ul>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">4. Data Sources and Third-Party Content</h2>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>The Service ingests publicly available data (e.g., app store reviews, public changelogs). We use automated tools to collect this publicly available data. We do not use adversarial scraping techniques to bypass a platform's access controls or terms of service, and some data sources may be unavailable at any given time due to third-party restrictions.</li>
+
+        <li>We do not guarantee the completeness, accuracy, or continued availability of any third-party data source.</li>
+      </ul>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">5. AI-Generated Content</h2>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>The Service uses AI models (including but not limited to Google Gemini) to generate sentiment classifications, summaries, and insights.</li>
+        <li>AI-generated output may contain inaccuracies. You should independently verify any insight before relying on it for business decisions.</li>
+      </ul>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">6. Acceptable Use</h2>
+      <p>You agree not to:</p>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>Use the Service for any unlawful purpose.</li>
+        <li>Attempt to reverse-engineer, scrape, or interfere with the Service's infrastructure.</li>
+        <li>Share your account credentials with unauthorized third parties.</li>
+        <li>Use the Service to harass, defame, or infringe on the rights of others.</li>
+      </ul>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">7. Intellectual Property</h2>
+      <ul class="list-disc pl-5 space-y-2">
+        <li>We retain all rights to the Service's software, design, and branding.</li>
+        <li>You retain ownership of any data you input into the Service (e.g., your app/competitor configurations). You grant us a limited license to process that data solely to provide the Service.</li>
+      </ul>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">8. Termination</h2>
+      <p>We may suspend or terminate your access to the Service if you violate these Terms. You may stop using the Service and cancel your subscription at any time.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">9. Disclaimers</h2>
+      <p class="uppercase">THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR THAT AI-GENERATED INSIGHTS WILL BE ACCURATE.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">10. Limitation of Liability</h2>
+      <p class="uppercase">TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE OPERATOR SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES ARISING FROM YOUR USE OF THE SERVICE. OUR TOTAL LIABILITY FOR ANY CLAIM SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">11. Changes to These Terms</h2>
+      <p>We may update these Terms from time to time. Continued use of the Service after changes take effect constitutes acceptance of the revised Terms. Material changes will be notified via email or in-app notice where feasible.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">12. Governing Law</h2>
+      <p>These Terms are governed by the laws of India, without regard to conflict-of-law principles. Any disputes shall be subject to the exclusive jurisdiction of the courts of India.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">13. Contact</h2>
+      <p>For questions about these Terms, contact us at: <a href="mailto:realmannerd@gmail.com" class="text-text-primary hover:underline">realmannerd@gmail.com</a></p>
+    </div>
+  </div>
+  
+  <div class="w-full bg-bg-subtle pt-16 pb-6 border-t border-border-faint mt-12">
+    <footer class="max-w-[1400px] mx-auto px-[clamp(20px,5vw,80px)]">
+      <div class="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[12px] text-text-muted border-t border-border-faint">
+        <div>&copy; 2026 Mindphor Intelligence. All rights reserved.</div>
+        <div class="flex items-center gap-6">
+          <a href="/terms" class="hover:text-text-primary transition-colors">Terms of Service</a>
+          <a href="/privacy" class="hover:text-text-primary transition-colors">Privacy Policy</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</RootLayout>

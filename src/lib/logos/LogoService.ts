@@ -70,6 +70,7 @@ export class LogoService {
 
     if (logoName === 'google-play') {
       return [
+        '/icons/google-play.svg',
         'https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg',
         `https://www.google.com/s2/favicons?domain=play.google.com&sz=${size}`
       ];
@@ -77,8 +78,9 @@ export class LogoService {
     
     if (logoName === 'app-store') {
       return [
-        'https://raw.githubusercontent.com/ln-dev7/logos-apps/master/logos/apple.svg',
-        `https://www.google.com/s2/favicons?domain=apple.com&sz=${size}`
+        '/icons/app-store.svg',
+        'https://upload.wikimedia.org/wikipedia/commons/6/67/App_Store_%28iOS%29.svg',
+        `https://www.google.com/s2/favicons?domain=apps.apple.com&sz=${size}`
       ];
     }
     

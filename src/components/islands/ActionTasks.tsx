@@ -105,7 +105,7 @@ export default function ActionTasks({ appId, initialTasks }: ActionTasksProps) {
       }
     } else if (e.key === 'Backspace' && item.text === '') {
       e.preventDefault();
-      handleRemoveItem(item.id);
+      handleRemoveItem(item.id as string);
       
       if (order > 0) {
         setTimeout(() => {

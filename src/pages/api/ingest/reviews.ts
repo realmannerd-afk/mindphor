@@ -5,6 +5,7 @@ import { scrapeAppStoreReviews } from "../../../lib/scrapers/appstore";
 import { scrapeReddit } from "../../../lib/scrapers/reddit";
 import { classifySentiment } from "../../../lib/classifier";
 import { generateAlerts } from "../../../lib/generateAlerts";
+import { getUserPlanLimits } from "../../../lib/planLimits";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
@@ -16,7 +17,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     const body = await request.json();
-    const { app_id, target_type, target_id, store, store_identifier } = body;
+    const { app_id, target_type, target_id, store, store_identifier, fetch_limit } = body;
 
     // Validate ownership
     const { data: appData, error: appError } = await supabase
@@ -38,12 +39,20 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     let sourceName = '';
 
     try {
+      const planData = await getUserPlanLimits(cookies, supabase, user.id);
+      const maxLimit = planData.limits.appStoreReviewsPerMonth;
+      
       const cleanId = store_identifier.trim();
+      const requestedLimit = typeof fetch_limit === 'number' ? fetch_limit : 300;
+      const limit = Math.min(requestedLimit, maxLimit);
+      
       if (store === 'playstore') {
-        reviews = await scrapePlayStoreReviews(cleanId, 300);
+        reviews = await scrapePlayStoreReviews(cleanId, limit);
         sourceName = 'Google Play';
       } else if (store === 'appstore') {
-        reviews = await scrapeAppStoreReviews(cleanId, 300);
+        const match = cleanId.match(/id(\d+)/i);
+        const appleId = match ? match[1] : cleanId;
+        reviews = await scrapeAppStoreReviews(app_id, appleId, limit);
         sourceName = 'App Store';
       } else if (store === 'reddit') {
         reviews = await scrapeReddit(cleanId);
@@ -90,7 +99,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           author: review.author ?? null,
           url: review.url ?? null,
           score: review.score ?? null,
-          version: review.version ?? null
+          version: review.version ?? null,
+          country: review.country ?? null
         })
         .select('id')
         .single();

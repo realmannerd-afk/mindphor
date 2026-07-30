@@ -4,39 +4,27 @@ import { createClient } from '@supabase/supabase-js';
 
 const { id } = Astro.params;
 
-const mockTraces = [
-  { id: 'tr_8f9a21', trace_id: 'tr_8f9a21', input: 'Extract JSON parameters from this invoice', output: '```json\n{\n  "amount": 120.50,\n  "date": "2023-10-12"\n}\n```', model: 'gpt-4o', status: 'active', score: 95, created_at: new Date().toISOString(), latency_ms: 1240, user_id: 'usr_abc123' },
-  { id: 'tr_3b1c88', trace_id: 'tr_3b1c88', input: 'Write a python script to parse CSV files', output: 'import csv\n\nwith open("data.csv") as f:\n    reader = csv.reader(f)', model: 'claude-3.5-sonnet', status: 'active', score: 88, created_at: new Date().toISOString(), latency_ms: 850, user_id: 'usr_def456' },
-  { id: 'tr_7d4e99', trace_id: 'tr_7d4e99', input: 'Summarize the latest product requirements', output: 'The new requirements emphasize faster load times and offline support.', model: 'gpt-4o', status: 'stale', score: 62, created_at: new Date().toISOString(), latency_ms: 2100, user_id: 'usr_ghi789' },
-  { id: 'tr_1a2b3c', trace_id: 'tr_1a2b3c', input: 'Generate a SQL query for daily active users', output: 'SELECT date(created_at), count(distinct user_id) FROM events GROUP BY 1;', model: 'llama-3-70b', status: 'active', score: 45, created_at: new Date().toISOString(), latency_ms: 450, user_id: 'usr_jkl012' },
-  { id: 'tr_9f8e7d', trace_id: 'tr_9f8e7d', input: 'Debug this React useEffect infinite loop', output: 'You are missing a dependency array in your useEffect hook.', model: 'gpt-4o', status: 'active', score: null, created_at: new Date().toISOString(), latency_ms: 1800, user_id: 'usr_mno345' },
-];
+// Use Service Key to fetch the specific trace
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-let trace = mockTraces.find(t => t.id === id || t.trace_id === id);
+// Determine if id is a UUID to avoid Postgres type errors
+const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-if (!trace) {
-  // Use Service Key to fetch the specific trace
-  const supabaseUrl = import.meta.env.SUPABASE_URL;
-  const supabaseKey = import.meta.env.SUPABASE_SERVICE_KEY;
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  // Determine if id is a UUID to avoid Postgres type errors
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  
-  const query = supabase.from('traces').select('*');
-  if (isUuid) {
-    query.eq('id', id);
-  } else {
-    query.eq('trace_id', id);
-  }
-
-  const { data, error } = await query.single();
-
-  if (error || !data) {
-    return Astro.redirect('/dashboard');
-  }
-  trace = data;
+const query = supabase.from('traces').select('*');
+if (isUuid) {
+  query.eq('id', id);
+} else {
+  query.eq('trace_id', id);
 }
+
+const { data, error } = await query.single();
+
+if (error || !data) {
+  return Astro.redirect('/dashboard');
+}
+const trace = data;
 
 // Format the date
 const date = new Date(trace.created_at).toLocaleString('en-US', {

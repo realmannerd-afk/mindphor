@@ -238,7 +238,6 @@
           >
             <div class="flex-shrink-0 w-[40px] h-[40px] flex items-center justify-center">
               <Logo
-                client:load
                 domain={mem.domain}
                 alt={mem.domain}
                 title={mem.domain}
@@ -328,7 +327,7 @@
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center gap-3">
                 <div class="w-11 h-11 flex items-center justify-center flex-shrink-0">
-                  <Logo client:load domain={mem.domain} alt={mem.domain} title={mem.domain} className="w-full h-full object-contain" />
+                  <Logo domain={mem.domain} alt={mem.domain} title={mem.domain} className="w-full h-full object-contain" />
                 </div>
                 <div class="flex flex-col">
                   <span class="text-[15px] font-semibold text-text-primary leading-tight">{mem.domain}</span>
@@ -368,7 +367,7 @@
   </div>
 {/if}
 
-<!-- Add Competitor Modal (real inserts + guest mocks) -->
+<!-- Add Competitor Modal -->
 {#if showAddModal}
   <div class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[100] flex items-center justify-center p-4" on:click={() => (showAddModal = false)}>
     <div class="bg-bg-surface border border-border-default rounded-[16px] w-full max-w-[400px] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col z-[101]" on:click|stopPropagation>

@@ -9,28 +9,44 @@ import {
 const faqItems = [
   {
     value: "item-1",
-    question: "Which app stores do you currently support?",
-    answer: "Mindphor supports fully automated review tracking for both the Google Play Store and the Apple App Store. You can monitor unlimited Android apps, and track up to 3,000 iOS reviews per month depending on your plan."
+    question: "Which app stores do you support?",
+    answer: "Mindphor tracks both the Google Play Store and Apple App Store, covering reviews from every country/storefront, so you see the full global picture of what users are saying about your app."
   },
   {
     value: "item-2",
-    question: "How does Competitor Intelligence work?",
-    answer: "Simply paste the app store URL of any competitor app. Mindphor instantly begins tracking their reviews and analyzing what their users love or hate, sending you alerts when they experience bugs or negative sentiment spikes."
+    question: "How many reviews can I track?",
+    answer: "Both Google Play Store and Apple App Store reviews are unlimited on every plan."
   },
   {
     value: "item-3",
-    question: "What exactly are AI Action Plans?",
-    answer: "Instead of just showing you raw data, our AI engine synthesizes thousands of user reviews into prioritized, step-by-step action plans. It tells your engineering and product teams exactly which bugs to fix and which features to build next."
+    question: "Can I track competitors, not just my own app?",
+    answer: "Yes, add any competitor's app or public changelog and Mindphor monitors it alongside your own, so you always know how you compare."
   },
   {
     value: "item-4",
-    question: "How do I receive anomaly alerts?",
-    answer: "You can view real-time anomaly alerts directly in your Mindphor dashboard, or you can route them straight to your team's workflow using our native Slack, Discord, and Custom HMAC webhook integrations."
+    question: "How does Mindphor generate insights from reviews?",
+    answer: "We use AI to analyze sentiment and surface the key themes across your reviews automatically, so you can spot what's working and what needs attention without reading every review yourself."
   },
   {
     value: "item-5",
-    question: "Do I need technical skills to set this up?",
-    answer: "Not at all. You can get started by just pasting your app's store link. No SDKs, no code, and no complex engineering integrations are required to start tracking sentiment."
+    question: "Do you store my payment information?",
+    answer: "No. Payments are securely processed by Paddle, our payment partner, and we never see or store your card details."
+  },
+  {
+    value: "item-6",
+    question: "Can I cancel anytime?",
+    answer: "Yes. Cancel anytime from your account settings and you will keep access until the end of your current billing period."
+  },
+
+  {
+    value: "item-8",
+    question: "How often are reviews synced?",
+    answer: "You are fully in control. You can set your apps to sync automatically every 6 hours, daily, or weekly. You can also set them to manual only if you prefer to trigger syncs yourself!"
+  },
+  {
+    value: "item-9",
+    question: "Do I need to install anything to track my app or a competitor's?",
+    answer: "No installation needed, just add the app's store URL and Mindphor starts tracking it automatically."
   }
 ];
 

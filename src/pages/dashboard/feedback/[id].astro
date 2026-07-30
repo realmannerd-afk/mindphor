@@ -4,12 +4,13 @@ import { getSupabaseClient } from '../../../lib/supabase';
 import UserAvatar from '../../../components/islands/UserAvatar.svelte';
 import Logo from '../../../components/islands/Logo.svelte';
 import ReviewTranslator from '../../../components/islands/ReviewTranslator.svelte';
+import AIReviewActionPlan from '../../../components/islands/AIReviewActionPlan.svelte';
+import ReviewReply from '../../../components/islands/ReviewReply.svelte';
 
 const { id } = Astro.params;
 
 const supabase = getSupabaseClient(Astro.cookies);
 const { data: userData } = await supabase.auth.getUser();
-
 if (!userData?.user) {
   return Astro.redirect('/login');
 }
@@ -213,6 +214,16 @@ if (tags.length === 0) tags.push('General Feedback');
         </div>
       </div>
 
+    </div>
+
+    <!-- AI Action Plan for this specific review -->
+    <div class="mt-6">
+      <AIReviewActionPlan client:load feedbackId={id} />
+    </div>
+
+    <!-- Developer Reply Simulator -->
+    <div class="mt-6">
+      <ReviewReply client:load feedbackId={id} existingReply={entry.reply_text || ''} />
     </div>
 
   </div>

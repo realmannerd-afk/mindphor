@@ -1,14 +1,15 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   export let projectId: string = '';
-  export let playStoreUrl: string = '';
-  export let overviewLink: boolean = false;
   export let date: string = '';
   export let expanded: boolean = false;
+  export let overviewLink: boolean = false;
 
   let alerts: any[] = [];
+  let visibleCount = 9;
   let loading = true;
   let isRefreshing = false;
+  let syncError: string | null = null;
   let pollInterval: any;
   let unreadCount = 0;
   let checkedIds: string[] = [];
@@ -20,11 +21,16 @@
     let lastSeen = 0;
     for (let c of cookies) {
       const [key, val] = c.trim().split('=');
-      if (key === 'last_seen_alerts_count') {
+      if (key === `last_seen_alerts_count_${projectId}`) {
         lastSeen = parseInt(val || '0');
       }
     }
-    unreadCount = Math.max(0, alerts.length - lastSeen);
+    if (expanded) {
+      unreadCount = 0;
+      document.cookie = `last_seen_alerts_count_${projectId}=${alerts.length}; path=/; max-age=31536000`;
+    } else {
+      unreadCount = Math.max(0, alerts.length - lastSeen);
+    }
   }
 
   $: {
@@ -41,25 +47,49 @@
 
   let isSyncing = false;
   async function syncNow() {
-    if (isSyncing || !projectId || !playStoreUrl) return;
+    if (isSyncing || !projectId) return;
     isSyncing = true;
     try {
-      const res = await fetch('/api/ingest/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          app_id: projectId,
-          target_type: 'app',
-          target_id: projectId,
-          store: 'playstore',
-          store_identifier: playStoreUrl
-        })
+      const res = await fetch(`/api/apps/sync-reviews?app_id=${projectId}`, {
+        method: 'POST'
       });
-      if (res.ok) {
-        await manualReload();
+      
+      const reader = res.body?.getReader();
+      if (reader) {
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let done = false;
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          if (value) {
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.substring(6));
+                  if (data.error) {
+                    syncError = data.error;
+                    isSyncing = false;
+                    return;
+                  }
+                  if (data.status === 'complete') {
+                    syncError = null;
+                    await manualReload();
+                  }
+                } catch(e) {}
+              }
+            }
+          }
+        }
+      } else {
+        syncError = 'Failed to read response stream.';
       }
-    } catch (e) {
-      console.error('Failed to sync alerts:', e);
+    } catch (e: any) {
+      console.error(e);
+      syncError = 'Failed to sync alerts';
     } finally {
       isSyncing = false;
     }
@@ -78,10 +108,11 @@
 
   async function loadData() {
     if (!projectId) {
-      alerts = (window as any).mockAlerts || [];
+      alerts = [];
       loading = false;
       return;
     }
+
     try {
       const url = `/api/alerts?app_id=${projectId}${date ? `&date=${date}` : ''}`;
       const res = await fetch(url);
@@ -97,27 +128,57 @@
       }
     } catch (e) {
       console.error(e);
-      alerts = (window as any).mockAlerts || [];
+      alerts = [];
+      visibleCount = 9;
     } finally {
       loading = false;
     }
+  }
+
+  function infiniteScroll(node: HTMLElement) {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        if (visibleCount < alerts.length) {
+          visibleCount += 9;
+        }
+      }
+    }, { rootMargin: '100px' });
+    
+    observer.observe(node);
+    return {
+      destroy() { observer.disconnect(); }
+    };
   }
 
 
 
   let isOptionsOpen = false;
 
-  async function markAllAsRead() {
+  async function markAsRead() {
     isOptionsOpen = false;
     if (!projectId) return;
+    
+    const isSelected = checkedIds.length > 0;
+    
     try {
-      await fetch('/api/alerts', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ app_id: projectId, all: true })
-      });
-      alerts = alerts.map(a => ({ ...a, is_read: true }));
-      unreadCount = 0;
+        const body = isSelected 
+          ? { ids: checkedIds } 
+          : { app_id: projectId, all: true };
+          
+        await fetch('/api/alerts', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+      
+      if (isSelected) {
+        alerts = alerts.map(a => checkedIds.includes(a.id) ? { ...a, is_read: true } : a);
+        checkedIds = [];
+      } else {
+        alerts = alerts.map(a => ({ ...a, is_read: true }));
+      }
+      
+      updateUnreadCount();
     } catch (e) { console.error(e); }
   }
 
@@ -125,11 +186,11 @@
     isOptionsOpen = false;
     if (!projectId || checkedIds.length === 0) return;
     try {
-      await fetch('/api/alerts', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: checkedIds })
-      });
+        await fetch('/api/alerts', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: checkedIds })
+        });
       alerts = alerts.filter(a => !checkedIds.includes(a.id));
       checkedIds = [];
       updateUnreadCount();
@@ -199,7 +260,21 @@
       <div class="w-8 h-8 border-[3px] border-border-default border-t-text-muted rounded-full animate-spin mb-4"></div>
       <span class="text-[13px] text-text-muted font-medium animate-pulse">Loading alerts...</span>
     </div>
-  {:else if !expanded}
+  {:else}
+    {#if syncError}
+      <div class="w-full bg-[#A32D2D]/10 border border-[#A32D2D]/30 text-[#A32D2D] rounded-[8px] p-3 mb-4 flex items-start gap-3">
+        <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="flex-1">
+          <h4 class="text-[13px] font-semibold">Sync Failed</h4>
+          <p class="text-[12px] opacity-90 mt-0.5 leading-relaxed">{syncError}</p>
+        </div>
+        <button aria-label="Dismiss error" class="text-[#A32D2D] opacity-70 hover:opacity-100 transition-opacity focus:outline-none" on:click={() => syncError = null}>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+    {/if}
+
+    {#if !expanded}
     {#if !overviewLink}
       <div class="flex flex-col gap-2">
         <!-- Widget View (Compact) -->
@@ -243,14 +318,7 @@
           </div>
           
           <div class="relative group/tooltip flex items-center gap-2">
-            <button on:click={syncNow} disabled={isSyncing} class="text-[11px] font-medium text-text-primary bg-bg-elevated hover:bg-bg-subtle border border-border-default rounded-md px-2 py-1 transition-colors flex items-center gap-1 focus:outline-none" aria-label="Sync Now">
-              {#if isSyncing}
-                <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-              {:else}
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m-8-8h16" /></svg>
-              {/if}
-              Sync Now
-            </button>
+
             <button on:click={manualReload} class="p-1.5 text-text-muted hover:text-text-primary transition-colors rounded-md hover:bg-bg-elevated focus:outline-none" aria-label="Refresh alerts">
               <svg class={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-text-primary' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><polyline points="21 3 21 8 16 8"></polyline></svg>
             </button>
@@ -321,18 +389,7 @@
         </div>
         
         <div class="relative flex items-center gap-2">
-          <button 
-            class={`flex items-center h-8 px-3 gap-1.5 rounded-full border transition-all focus:outline-none ${isSyncing ? 'bg-bg-subtle text-text-muted border-border-default cursor-wait' : 'bg-text-primary text-bg-base hover:opacity-90 border-transparent'}`}
-            on:click={syncNow}
-            disabled={isSyncing}
-          >
-            {#if isSyncing}
-              <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-              <span class="text-[13px] font-medium">Syncing...</span>
-            {:else}
-              <span class="text-[13px] font-medium">Sync Now</span>
-            {/if}
-          </button>
+
           
           <button 
             class={`flex items-center h-8 px-3 gap-1.5 rounded-full border transition-all focus-within:ring-2 focus-within:ring-border-strong/50 focus:outline-none ${
@@ -349,7 +406,9 @@
           {#if isOptionsOpen}
             <div class="fixed inset-0 z-40" aria-label="Close dropdown" role="button" tabindex="0" on:keydown={(e) => e.key === 'Escape' && (isOptionsOpen = false)} on:click={() => isOptionsOpen = false}></div>
             <div class="absolute right-0 top-full mt-2 w-48 bg-bg-surface border border-border-default rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] py-1.5 z-50 overflow-hidden flex flex-col font-normal normal-case tracking-normal text-[13px]">
-              <button class="w-full text-left px-4 py-2 text-text-primary hover:bg-bg-subtle transition-colors focus:outline-none" on:click={markAllAsRead}>Mark all as read</button>
+              <button class="w-full text-left px-4 py-2 text-text-primary hover:bg-bg-subtle transition-colors focus:outline-none" on:click={markAsRead}>
+                {checkedIds.length > 0 ? `Mark selected as read (${checkedIds.length})` : 'Mark all as read'}
+              </button>
               <button class={`w-full text-left px-4 py-2 transition-colors focus:outline-none ${checkedIds.length > 0 ? 'text-text-primary hover:bg-bg-subtle' : 'text-text-muted opacity-50 cursor-not-allowed'}`} disabled={checkedIds.length === 0} on:click={deleteSelected}>Delete selected ({checkedIds.length})</button>
               <div class="h-px w-full bg-border-faint my-1"></div>
               <a href="/dashboard/settings" class="w-full text-left px-4 py-2 text-text-primary hover:bg-bg-subtle transition-colors focus:outline-none block" on:click={() => isOptionsOpen = false}>Alert settings</a>
@@ -358,7 +417,7 @@
         </div>
       </div>
       
-      <div class="flex flex-col w-full bg-bg-surface border border-border-default rounded-[12px] overflow-hidden">
+      <div class="flex flex-col w-full h-full flex-1 min-h-0 bg-bg-surface border border-border-default rounded-[12px] overflow-hidden">
         <!-- Table Header -->
         <div class="grid grid-cols-[16px_24px_100px_1fr_120px] gap-4 items-center px-4 py-3 border-b border-border-default bg-bg-subtle/30 text-[11px] font-semibold tracking-[0.05em] uppercase text-text-muted">
           <!-- Checkbox Col -->
@@ -385,8 +444,8 @@
           <div class="text-right">Date</div>
         </div>
         
-        <div class="flex flex-col w-full bg-bg-surface">
-          {#each alerts as alert}
+        <div class="flex flex-col w-full bg-bg-surface flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+          {#each alerts.slice(0, visibleCount) as alert}
             {@const msgFormatted = formatAlertMessage(alert.message)}
             {@const msgParts = msgFormatted.split(':')}
             {@const subject = msgParts.length > 1 ? msgParts[0].trim() : msgFormatted}
@@ -441,10 +500,15 @@
               </div>
             </div>
           {/each}
+          
+          {#if visibleCount < alerts.length}
+            <div use:infiniteScroll class="py-8 flex justify-center items-center w-full">
+              <svg class="animate-spin h-6 w-6 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </div>
+          {/if}
         </div>
       </div>
     {/if}
   {/if}
+  {/if}
 </div>
-
-

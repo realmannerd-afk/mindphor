@@ -9,17 +9,11 @@ export const GET: APIRoute = async ({ request }) => {
     const sentimentParam = url.searchParams.get('sentiment'); // 'positive' | 'negative' | 'neutral'
     const sourceParam = url.searchParams.get('source');       // 'Reddit' | 'Google Play' | 'App Store' etc.
     const searchParam = url.searchParams.get('search');       // free-text search on content
+    const countryParam = url.searchParams.get('country');     // 'us', 'gb', etc.
+    const dateRangeParam = url.searchParams.get('date_range'); // 'all', 'today', 'last_7', 'last_30'
 
     if (!appId) {
       return new Response(JSON.stringify({ error: "Missing app_id" }), { status: 400, headers: { "Content-Type": "application/json" } });
-    }
-
-    // Guest mock data block removed to prevent fake data confusion
-
-    let targetDate = new Date();
-    if (dateParam) {
-      targetDate = new Date(dateParam);
-      targetDate.setUTCHours(23, 59, 59, 999);
     }
 
     let limit = 30;
@@ -37,11 +31,32 @@ export const GET: APIRoute = async ({ request }) => {
 
     let query = supabase
       .from('feedback')
-      .select('id, content, source, sentiment, created_at, author, url, score')
+      .select('id, content, source, sentiment, created_at, author, url, score, country, reply_text')
       .eq('app_id', appId)
-      .lte('created_at', targetDate.toISOString())
-      .or('score.not.is.null,and(source.not.ilike.*play*,source.not.ilike.*app store*)')
-      .order('created_at', { ascending: false });
+      .is('competitor_id', null)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false });
+
+    // Only filter by date when an explicit date param is provided
+    if (dateParam) {
+      const targetDate = new Date(dateParam);
+      targetDate.setUTCHours(23, 59, 59, 999);
+      query = query.lte('date', targetDate.toISOString());
+    }
+
+    if (dateRangeParam && dateRangeParam !== 'all') {
+      const now = new Date();
+      if (dateRangeParam === 'today') {
+        now.setUTCHours(0, 0, 0, 0);
+        query = query.gte('date', now.toISOString());
+      } else if (dateRangeParam === 'last_7') {
+        now.setDate(now.getDate() - 7);
+        query = query.gte('date', now.toISOString());
+      } else if (dateRangeParam === 'last_30') {
+        now.setDate(now.getDate() - 30);
+        query = query.gte('date', now.toISOString());
+      }
+    }
 
     // Server-side filters
     if (sentimentParam && sentimentParam !== 'all') {
@@ -50,7 +65,14 @@ export const GET: APIRoute = async ({ request }) => {
       else if (sentimentParam === 'positive') query = query.gt('score', 3);
     }
     if (sourceParam && sourceParam !== 'all') {
-      query = query.ilike('source', `%${sourceParam}%`);
+      if (sourceParam === 'google play') {
+        query = query.or('source.ilike.%google play%,source.ilike.%play store%');
+      } else {
+        query = query.ilike('source', `%${sourceParam}%`);
+      }
+    }
+    if (countryParam && countryParam !== 'all') {
+      query = query.eq('country', countryParam);
     }
     if (searchParam && searchParam.trim()) {
       query = query.ilike('content', `%${searchParam.trim()}%`);
@@ -82,6 +104,8 @@ export const GET: APIRoute = async ({ request }) => {
         url: fb.url,
         score: fb.score,
         created_at: fb.created_at,
+        country: fb.country,
+        reply_text: fb.reply_text || null,
       };
     });
 

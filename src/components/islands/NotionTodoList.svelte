@@ -14,55 +14,98 @@
     { id: '2', text: 'Analyze latest pricing changes', completed: true },
   ];
 
-  function saveTasks() {
-    localStorage.setItem('mindphor_todos', JSON.stringify(tasks));
-  }
-
+  export let appId: string | null = null;
+  let loading = true;
   let newTaskText = '';
 
-  onMount(() => {
-    // Load existing tasks
-    const saved = localStorage.getItem('mindphor_todos');
-    if (saved) {
-      try {
-        tasks = JSON.parse(saved);
-      } catch (e) {
+  async function loadTasks() {
+    if (!appId) {
+      tasks = [...defaultTasks];
+      loading = false;
+      return;
+    }
+    try {
+      const res = await fetch(`/api/action_tasks?app_id=${appId}`);
+      if (res.ok) {
+        const data = await res.json();
+        tasks = data.tasks || [];
+      } else {
         tasks = [...defaultTasks];
       }
-    } else {
+    } catch (e) {
+      console.error(e);
       tasks = [...defaultTasks];
+    } finally {
+      loading = false;
     }
+  }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const taskParam = urlParams.get('task');
-    if (taskParam) {
-      const exists = tasks.some(t => t.text === taskParam);
-      if (!exists) {
-        tasks = [...tasks, { id: Date.now().toString(), text: taskParam, completed: false }];
-        saveTasks();
-      }
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-    }
+  onMount(() => {
+    loadTasks();
   });
 
-  function addTask(e?: KeyboardEvent) {
+  async function addTask(e?: KeyboardEvent) {
     if (e && e.key !== 'Enter') return;
     if (!newTaskText.trim()) return;
     
-    tasks = [...tasks, { id: Date.now().toString(), text: newTaskText, completed: false }];
-    saveTasks();
+    const tempId = Date.now().toString();
+    const newTask = { id: tempId, text: newTaskText, completed: false };
+    tasks = [...tasks, newTask];
     newTaskText = '';
+    
+    if (appId) {
+      try {
+        const res = await fetch('/api/action_tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            app_id: appId,
+            text: newTask.text,
+            completed: false,
+            order_index: tasks.length
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Update temp ID with real DB ID
+          tasks = tasks.map(t => t.id === tempId ? { ...t, id: data.task.id } : t);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 
-  function toggleTask(id: string) {
+  async function toggleTask(id: string) {
     tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
-    saveTasks();
+    const updatedTask = tasks.find(t => t.id === id);
+    
+    if (appId && updatedTask) {
+      try {
+        await fetch('/api/action_tasks', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tasks: [{ id, completed: updatedTask.completed }]
+          })
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 
-  function removeTask(id: string) {
+  async function removeTask(id: string) {
     tasks = tasks.filter(t => t.id !== id);
-    saveTasks();
+    if (appId) {
+      try {
+        await fetch(`/api/action_tasks?id=${id}`, {
+          method: 'DELETE'
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 </script>
 

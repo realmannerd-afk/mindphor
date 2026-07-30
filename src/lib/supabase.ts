@@ -1,8 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 
 export const getSupabaseClient = (cookies: any) => {
-  const url = import.meta.env.SUPABASE_URL || "https://dummy-url.supabase.co";
-  const key = import.meta.env.SUPABASE_ANON_KEY || "dummy-anon-key";
+  const url = import.meta.env.SUPABASE_URL;
+  const key = import.meta.env.SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error("Missing required Supabase environment variables (SUPABASE_URL, SUPABASE_ANON_KEY). Deploy misconfigured.");
+  }
   console.log('Initializing Supabase with URL:', url);
   return createServerClient(
     url,

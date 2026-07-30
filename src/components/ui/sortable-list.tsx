@@ -19,15 +19,15 @@ import { cn } from "@/lib/utils"
 export type Item = {
   text: string
   checked: boolean
-  id: number
-  description: string
+  id: number | string
+  description?: string
 }
 
 interface SortableListItemProps {
   item: Item
   order: number
-  onCompleteItem: (id: number) => void
-  onRemoveItem: (id: number) => void
+  onCompleteItem: (id: string | number) => void
+  onRemoveItem: (id: string | number) => void
   renderExtra?: (item: Item) => React.ReactNode
   isExpanded?: boolean
   className?: string
@@ -125,7 +125,7 @@ function SortableListItem({
                     animate={{ opacity: 1, filter: "blur(0px)" }}
                     exit={{ opacity: 0, filter: "blur(4px)" }}
                     transition={{ duration: 0.001 }}
-                    className="flex items-center space-x-3 w-full pl-1"
+                    className="flex items-center space-x-3 w-full pl-1 py-1.5"
                   >
                     {/* List Order */}
                     <p className="text-xs text-text-muted/60 min-w-[1.2rem]">
@@ -207,7 +207,7 @@ function SortableList({
           axis="y"
           values={items}
           onReorder={setItems}
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-5"
         >
           <AnimatePresence>
             {items?.map((item, index) =>

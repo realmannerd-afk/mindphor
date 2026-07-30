@@ -18,7 +18,6 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
 
-
     const { data, error } = await getSupabase()
       .from('alerts')
       .select('*')
@@ -42,6 +41,8 @@ export const PATCH: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
     const supabase = getSupabase();
+
+
 
     if (body.all && body.app_id) {
       // Mark all for this app
@@ -84,6 +85,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     if (!body.ids || !Array.isArray(body.ids) || body.ids.length === 0) {
       return new Response(JSON.stringify({ error: "Provide ids[] to delete" }), { status: 400 });
     }
+
 
     const { error } = await supabase
       .from('alerts')

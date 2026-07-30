@@ -19,7 +19,7 @@ const pageTitle = title || (frontmatter && frontmatter.title) || 'Dashboard';
 
 const supabase = getSupabaseClient(Astro.cookies);
 let user = null;
-let profileName = "User";
+let profileName = "Sarah";
 
 try {
   const { data } = await supabase.auth.getUser();

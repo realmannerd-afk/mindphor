@@ -6,15 +6,17 @@
   export let date: string = '';
   export let playStoreUrl: string = '';
 
-  let range = '7';
+  export let range: string = '7';
 
   let data = {
     avgScore: 0,
     avgScoreTrend: '-',
+    avgRatingStars: '0.0',
     memoryAccuracy: 0,
     memoryAccuracyTrend: '-',
     regressions: 0,
     regressionsTrend: '-',
+    totalCalls: 0,
     totalCallsTrend: '-',
     downloads: '0'
   };
@@ -33,6 +35,7 @@
         const json = await res.json();
         data = {
           avgScore: json.avg_score || 0,
+          avgRatingStars: ((json.avg_score || 0) / 100 * 5).toFixed(1),
           avgScoreTrend: json.avg_score_trend || '-',
           memoryAccuracy: json.memory_accuracy || 0,
           memoryAccuracyTrend: json.memory_accuracy_trend || '-',
@@ -61,10 +64,6 @@
 
   onMount(() => {
     loadData();
-    pollInterval = setInterval(loadData, 5000);
-    return () => {
-      if (pollInterval) clearInterval(pollInterval);
-    };
   });
 </script>
 
@@ -78,15 +77,15 @@
       </div>
     {/each}
   </div>
-{:else}
+{:else if projectId}
 
 <div class="bg-bg-surface border border-border-default rounded-[16px] overflow-hidden flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-border-faint mb-10">
   <!-- Card 1 -->
   <div class="flex-1 p-5 lg:p-[24px]">
     <div class="text-[11px] uppercase tracking-wider text-text-muted mb-2">Avg Rating</div>
     <div class="text-[28px] font-medium text-text-primary mt-2"><RollingNumber value={data.avgScore} />%</div>
-    {#if data.totalCalls !== '0'}
-      <div class={`text-[12px] mt-1 ${data.avgScoreTrend.startsWith('↑') ? 'text-[#2D5A0E]' : data.avgScoreTrend.startsWith('↓') ? 'text-[#A32D2D]' : 'text-text-muted'}`}>{data.avgScoreTrend}</div>
+    {#if data.totalCalls !== 0}
+      <div class={`text-[12px] mt-1 ${data.avgScoreTrend.startsWith('↑') ? 'text-emerald-500' : data.avgScoreTrend.startsWith('↓') ? 'text-rose-500' : 'text-text-muted'}`}>{data.avgScoreTrend}</div>
     {:else}
       <div class="text-[12px] mt-1 text-text-muted">-</div>
     {/if}
@@ -96,8 +95,8 @@
   <div class="flex-1 p-5 lg:p-[24px]">
     <div class="text-[11px] uppercase tracking-wider text-text-muted mb-2">Positive Feedback</div>
     <div class="text-[28px] font-medium text-text-primary mt-2"><RollingNumber value={data.memoryAccuracy} />%</div>
-    {#if data.totalCalls !== '0'}
-      <div class={`text-[12px] mt-1 ${data.memoryAccuracyTrend.startsWith('↑') ? 'text-[#2D5A0E]' : data.memoryAccuracyTrend.startsWith('↓') ? 'text-[#A32D2D]' : 'text-text-muted'}`}>{data.memoryAccuracyTrend}</div>
+    {#if data.totalCalls !== 0}
+      <div class={`text-[12px] mt-1 ${data.memoryAccuracyTrend.startsWith('↑') ? 'text-emerald-500' : data.memoryAccuracyTrend.startsWith('↓') ? 'text-rose-500' : 'text-text-muted'}`}>{data.memoryAccuracyTrend}</div>
     {:else}
       <div class="text-[12px] mt-1 text-text-muted">-</div>
     {/if}
@@ -107,8 +106,8 @@
   <div class="flex-1 p-5 lg:p-[24px]">
     <div class="text-[11px] uppercase tracking-wider text-text-muted mb-2">Critical Alerts</div>
     <div class="text-[28px] font-medium text-text-primary mt-2"><RollingNumber value={data.regressions} /></div>
-    {#if data.totalCalls !== '0'}
-      <div class={`text-[12px] mt-1 ${data.regressionsTrend.startsWith('↑') ? 'text-[#2D5A0E]' : data.regressionsTrend.startsWith('↓') ? 'text-[#A32D2D]' : 'text-text-muted'}`}>{data.regressionsTrend}</div>
+    {#if data.totalCalls !== 0}
+      <div class={`text-[12px] mt-1 ${data.regressionsTrend.startsWith('↑') ? 'text-rose-500' : data.regressionsTrend.startsWith('↓') ? 'text-emerald-500' : 'text-text-muted'}`}>{data.regressionsTrend}</div>
     {:else}
       <div class="text-[12px] mt-1 text-text-muted">-</div>
     {/if}
@@ -118,8 +117,8 @@
   <div class="flex-1 p-5 lg:p-[24px]">
     <div class="text-[11px] uppercase tracking-wider text-text-muted mb-2">Total Reviews</div>
     <div class="text-[28px] font-medium text-text-primary mt-2"><RollingNumber value={data.totalCalls} /></div>
-    {#if data.totalCalls !== '0'}
-      <div class={`text-[12px] mt-1 ${data.totalCallsTrend.startsWith('↑') ? 'text-[#2D5A0E]' : data.totalCallsTrend.startsWith('↓') ? 'text-[#A32D2D]' : 'text-text-muted'}`}>{data.totalCallsTrend}</div>
+    {#if data.totalCalls !== 0}
+      <div class={`text-[12px] mt-1 ${data.totalCallsTrend.startsWith('↑') ? 'text-emerald-500' : data.totalCallsTrend.startsWith('↓') ? 'text-rose-500' : 'text-text-muted'}`}>{data.totalCallsTrend}</div>
     {:else}
       <div class="text-[12px] mt-1 text-text-muted">-</div>
     {/if}

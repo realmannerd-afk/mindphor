@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   
   export let rawText: string = "";
   export let isAnalyzing: boolean = false;
@@ -21,14 +21,16 @@
     typeCommand();
   }
 
+  let typingInterval: ReturnType<typeof setInterval>;
   function typeCommand() {
     let i = 0;
-    const interval = setInterval(() => {
+    if (typingInterval) clearInterval(typingInterval);
+    typingInterval = setInterval(() => {
       if (i < fullCommand.length) {
         typedCommand += fullCommand.charAt(i);
         i++;
       } else {
-        clearInterval(interval);
+        clearInterval(typingInterval);
         isTyping = false;
       }
     }, 40);
@@ -36,6 +38,10 @@
   
   onMount(() => {
     typeCommand();
+  });
+
+  onDestroy(() => {
+    if (typingInterval) clearInterval(typingInterval);
   });
 </script>
 

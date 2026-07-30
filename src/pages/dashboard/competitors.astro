@@ -8,17 +8,20 @@ const { data: userData } = await supabase.auth.getUser();
 
 let projectId = null;
 if (userData?.user) {
-  projectId = Astro.cookies.get('mindphor_app_id')?.value;
+  const cookieVal = Astro.cookies.get('mindphor_app_id')?.value;
+  projectId = cookieVal === 'all' ? null : cookieVal;
   
-  let query = supabase.from('apps').select('id').eq('user_id', userData.user.id);
-  if (projectId) {
-    query = query.eq('id', projectId);
-  } else {
-    query = query.order('created_at', { ascending: false });
+  if (projectId !== null) {
+    let query = supabase.from('apps').select('id').eq('user_id', userData.user.id);
+    if (projectId) {
+      query = query.eq('id', projectId);
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+    
+    let { data: app } = await query.limit(1);
+    projectId = app?.[0]?.id || null;
   }
-  
-  let { data: app } = await query.limit(1);
-  projectId = app?.[0]?.id;
 } else {
   return Astro.redirect('/login');
 }
@@ -28,6 +31,16 @@ const selectedDate = Astro.url.searchParams.get('date') || '';
 
 <DashboardLayout title="Competitors">
   <div class="w-full flex-1 flex flex-col">
-    <MemoryViewer client:load projectId={projectId} date={selectedDate} />
+    {projectId ? (
+      <MemoryViewer client:load projectId={projectId} date={selectedDate} />
+    ) : (
+      <div class="w-full h-[80vh] flex flex-col items-center justify-center text-center px-4">
+        <div class="w-16 h-16 bg-bg-elevated text-text-muted rounded-2xl flex items-center justify-center mb-4">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+        </div>
+        <h2 class="text-[18px] font-semibold text-text-primary mb-2">No App Selected</h2>
+        <p class="text-[13px] text-text-secondary max-w-sm">Please select an app from the sidebar to view competitor data.</p>
+      </div>
+    )}
   </div>
 </DashboardLayout>

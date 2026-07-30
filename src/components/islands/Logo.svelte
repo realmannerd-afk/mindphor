@@ -35,7 +35,8 @@
 <span class="logo-container w-full h-full" data-domain={domain?.toLowerCase().trim()}>
   <img 
     src={urls[currentIdx]} 
-    {alt} 
+    {alt}
+    {title}
     class={className} 
     onerror={handleError} 
   />

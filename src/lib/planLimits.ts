@@ -20,12 +20,15 @@ export async function getUserPlanLimits(cookies: any, overrideSupabase?: any, ov
       return { plan: 'starter', limits: PLAN_LIMITS.starter };
     }
 
-    const { data: sub } = await supabase
+    const { data: subs } = await supabase
       .from('subscriptions')
       .select('plan, status')
       .eq('user_id', userId)
       .eq('status', 'active')
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    const sub = subs?.[0];
 
     if (sub && sub.plan && PLAN_LIMITS[sub.plan as keyof typeof PLAN_LIMITS]) {
       return { plan: sub.plan, limits: PLAN_LIMITS[sub.plan as keyof typeof PLAN_LIMITS] };

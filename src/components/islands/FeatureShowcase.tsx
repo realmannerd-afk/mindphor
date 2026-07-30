@@ -7,25 +7,25 @@ const features = [
     id: "feedback-traceability",
     title: "Feedback Traceability",
     description: "Aggregate and filter raw user feedback from the Play Store and Reddit in a single intuitive table. Slice data by sentiment, source, or specific competitor.",
-    imageSrc: "/features/explorer-mockup.png",
+    imageSrc: "/localhost_4321_dashboard_feedback(High pro) (1).png",
   },
   {
     id: "competitor-intelligence",
     title: "Competitor Intelligence",
     description: "Monitor your closest rivals with side-by-side sentiment tracking and dedicated competitor profiles to see exactly where they are failing and how you can capitalize.",
-    imageSrc: "/features/trends-mockup.png",
+    imageSrc: "/localhost_4321_dashboard_competitors(High pro) (1).png",
   },
   {
-    id: "actionable-ai-insights",
-    title: "Actionable AI Insights",
-    description: "Every piece of negative feedback is automatically analyzed to generate a specific, tactical action plan. Stop just reading complaints and start fixing them.",
-    imageSrc: "/features/tagging-mockup.png",
+    id: "automated-tagging",
+    title: "Automated Feedback Tagging",
+    description: "Every piece of feedback is automatically analyzed and categorized with AI-generated tags, helping you instantly identify core topics and recurring issues at a glance.",
+    imageSrc: "/localhost_4321_dashboard_feedback_mock-filler-6(High pro).png",
   },
   {
     id: "real-time-alerts",
     title: "Deep Alert Analysis",
     description: "Stay ahead of the curve with deep contextual alerts. Instantly view affected sources, raw evidence, and automated action plans for critical issues.",
-    imageSrc: "/features/alerts-mockup.png",
+    imageSrc: "/localhost_4321_dashboard_alerts(High pro).png",
   }
 ];
 

@@ -1,6 +1,5 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import RootLayout from '../../layouts/RootLayout.astro';
 import MetricCards from '../../components/islands/MetricCards.svelte';
 import { ScoreChartReact } from '../../components/islands/ScoreChartReact';
 import TraceTable from '../../components/islands/TraceTable.svelte';
@@ -14,41 +13,37 @@ const { data: userData } = await supabase.auth.getUser();
 
 let hasTraces = false;
 let projectId = null;
-let apiKey = null;
 let playStoreUrl = null;
+let appStoreUrl = null;
 
 if (userData?.user) {
   // Get active project from cookie or default to latest
-  projectId = Astro.cookies.get('mindphor_app_id')?.value;
+  const cookieVal = Astro.cookies.get('mindphor_app_id')?.value;
+  projectId = cookieVal === 'all' ? null : cookieVal;
   
-  let query = supabase.from('apps').select('id, api_key, play_store_url').eq('user_id', userData.user.id);
-  if (projectId) {
-    query = query.eq('id', projectId);
-  } else {
-    query = query.order('created_at', { ascending: false });
-  }
-  
-  let { data: apps } = await query.limit(1);
-  let project = apps?.[0];
-  
-  if (!project) {
-    return Astro.redirect('/dashboard/onboarding');
-  }
-  if (project) {
-    projectId = project.id;
-    apiKey = project.api_key;
-    playStoreUrl = project.play_store_url;
+  if (projectId !== null) {
+    let query = supabase.from('apps').select('id, play_store_url, app_store_url').eq('user_id', userData.user.id);
+    if (projectId) {
+      query = query.eq('id', projectId);
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
     
-    // Check if any traces exist
-    const { count } = await supabase.from('feedback').select('*', { count: 'exact', head: true }).eq('app_id', project.id);
-    hasTraces = (count || 0) > 0;
+    let { data: apps } = await query.limit(1);
+    let project = apps?.[0];
+    
+    if (project) {
+      playStoreUrl = project.play_store_url;
+      appStoreUrl = project.app_store_url;
+      
+      const { count } = await supabase.from('feedback').select('*', { count: 'exact', head: true }).eq('app_id', project.id);
+      hasTraces = (count || 0) > 0;
+    } else {
+      projectId = null;
+    }
   }
 } else {
-        if (isGuest) {
-    projectId = "guest_project";
-    apiKey = "sk_guest_demo_key";
-    hasTraces = true;
-  }
+  return Astro.redirect('/login');
 }
 
 const selectedDate = Astro.url.searchParams.get('date') || '';
@@ -57,9 +52,9 @@ const selectedDate = Astro.url.searchParams.get('date') || '';
 <DashboardLayout title="Overview">
   {hasTraces ? (
     <Fragment>
-      <MetricCards client:load projectId={projectId} date={selectedDate} playStoreUrl={playStoreUrl} />
+      <MetricCards client:load projectId={projectId} date={selectedDate} playStoreUrl={playStoreUrl} appStoreUrl={appStoreUrl} />
       <ScoreChartReact client:load projectId={projectId} date={selectedDate} />
-      <TraceTable client:load projectId={projectId} overviewLink={true} date={selectedDate} />
+      <TraceTable client:load projectId={projectId} overviewLink={true} date={selectedDate} playStoreUrl={playStoreUrl} appStoreUrl={appStoreUrl} />
 
       <!-- Memory + Alerts Row -->
       <div class="flex flex-col lg:flex-row gap-[16px] mb-2 w-full">
@@ -70,13 +65,21 @@ const selectedDate = Astro.url.searchParams.get('date') || '';
         
         <!-- Right: Alerts feed (45%) -->
         <div class="w-full lg:w-[45%] h-[364px]">
-          <AlertsFeed client:load projectId={projectId} playStoreUrl={playStoreUrl} overviewLink={true} date={selectedDate} />
+          <AlertsFeed client:load projectId={projectId} playStoreUrl={playStoreUrl} appStoreUrl={appStoreUrl} overviewLink={true} date={selectedDate} />
         </div>
       </div>
     </Fragment>
-  ) : (
+  ) : projectId ? (
     <div class="w-full h-[80vh] flex items-center justify-center">
-      <EmptyStateOnboarding client:load projectId={projectId} playStoreUrl={playStoreUrl} />
+      <EmptyStateOnboarding client:load projectId={projectId} playStoreUrl={playStoreUrl} appStoreUrl={appStoreUrl} />
+    </div>
+  ) : (
+    <div class="w-full h-[80vh] flex flex-col items-center justify-center text-center px-4">
+      <div class="w-16 h-16 bg-bg-elevated text-text-muted rounded-2xl flex items-center justify-center mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+      </div>
+      <h2 class="text-[18px] font-semibold text-text-primary mb-2">No App Selected</h2>
+      <p class="text-[13px] text-text-secondary max-w-sm">Please select an app from the sidebar to view your metrics and feedback.</p>
     </div>
   )}
 </DashboardLayout>

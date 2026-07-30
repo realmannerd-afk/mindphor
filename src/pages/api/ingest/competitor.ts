@@ -34,7 +34,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     let summary = { newReviews: 0, newUpdates: 0, newLaunches: 0 };
     
     // Helper to insert feedback rows safely
-    const insertFeedback = async (source: string, content: string, sentiment: string, date: Date, url: string = '', author: string | null = null, score: number | null = null) => {
+    const insertFeedback = async (source: string, content: string, sentiment: string, date: Date, url: string = '', author: string | null = null, score: number | null = null, country: string | null = null) => {
       const { data: existing } = await supabase.from('feedback')
         .select('id').eq('competitor_id', comp.id).eq('content', content).eq('date', date.toISOString()).maybeSingle();
       if (!existing) {
@@ -48,7 +48,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           date: date.toISOString(),
           url,
           author,
-          score
+          score,
+          country
         });
         if (error) {
           console.error("DB Insert Error:", error.message);
@@ -73,7 +74,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         const redditMentions = await scrapeReddit(searchTerm);
         for (const mention of redditMentions) {
           const sent = classifySentiment(mention.content);
-          if (await insertFeedback('Reddit', mention.content, sent, mention.date, mention.url, mention.author, mention.score)) summary.newReviews++;
+          if (await insertFeedback('Reddit', mention.content, sent, mention.date, mention.url, mention.author, (mention as any).score)) summary.newReviews++;
         }
       }
     } catch(e) { console.error("Reddit sync failed", e); }
@@ -95,10 +96,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       if (comp.domain) {
         const appId = comp.domain.split('.')[0]; // naive guess
         const { scrapeAppStoreReviews } = await import('../../../lib/scrapers/appstore');
-        const appReviews = await scrapeAppStoreReviews(appId);
+        const appReviews = await scrapeAppStoreReviews(comp.app_id, appId);
         for (const review of appReviews) {
           const sent = classifySentiment(review.content);
-          if (await insertFeedback('App Store', review.content, sent, review.date, review.url, review.author, review.score)) summary.newReviews++;
+          if (await insertFeedback('App Store', review.content, sent, review.date, review.url, review.author, review.score, review.country)) summary.newReviews++;
         }
       }
     } catch(e) { console.error("App Store sync failed", e); }
@@ -109,7 +110,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         const reviews = await scrapeG2Reviews(comp.g2_url);
         for (const review of reviews) {
           const sent = classifySentiment(review.content);
-          if (await insertFeedback('G2', review.content, sent, review.date, review.url, review.author, review.score)) summary.newReviews++;
+          if (await insertFeedback('G2', review.content, sent, review.date, review.url, review.author, (review as any).score)) summary.newReviews++;
         }
       } catch (e) { console.error("G2 sync failed", e); }
     }
@@ -120,7 +121,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         const reviews = await scrapeCapterraReviews(comp.capterra_url);
         for (const review of reviews) {
           const sent = classifySentiment(review.content);
-          if (await insertFeedback('Capterra', review.content, sent, review.date, review.url, review.author, review.score)) summary.newReviews++;
+          if (await insertFeedback('Capterra', review.content, sent, review.date, review.url, review.author, (review as any).score)) summary.newReviews++;
         }
       } catch (e) { console.error("Capterra sync failed", e); }
     }

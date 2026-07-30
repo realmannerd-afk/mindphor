@@ -6,13 +6,13 @@
   let inputValue = value;
   let saving = false;
   let saved = false;
-  let error = false;
+  let errorMsg = "";
 
   $: domains = value.split(',').map(d => d.trim()).filter(Boolean);
 
   async function save() {
     saving = true;
-    error = false;
+    errorMsg = "";
     const newDomains = inputValue.split(',').map(d => d.trim()).filter(Boolean);
 
     try {
@@ -26,7 +26,11 @@
         // Delete ones not in the new list
         for (const comp of existing) {
           if (!newDomains.includes(comp.domain)) {
-            await fetch(`/api/competitors?id=${comp.id}`, { method: 'DELETE' });
+            await fetch('/api/competitors', { 
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ app_id: appId, domain: comp.domain })
+            });
           }
         }
 
@@ -34,11 +38,15 @@
         const existingDomains = existing.map((c: any) => c.domain);
         for (const domain of newDomains) {
           if (!existingDomains.includes(domain)) {
-            await fetch('/api/competitors', {
+            const res = await fetch('/api/competitors', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ app_id: appId, domain })
+              body: JSON.stringify({ app_id: appId, domain, description: "" })
             });
+            if (!res.ok) {
+              const errData = await res.json();
+              throw new Error(errData.error || 'Failed to add competitor');
+            }
           }
         }
       }
@@ -47,10 +55,13 @@
       editing = false;
       saved = true;
       setTimeout(() => saved = false, 2000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save competitors', err);
-      error = true;
-      setTimeout(() => error = false, 3000);
+      errorMsg = err.message || 'Error saving';
+      setTimeout(() => errorMsg = "", 5000);
+      // Reload the existing values since saving failed
+      inputValue = value;
+      return;
     } finally {
       saving = false;
     }
@@ -72,7 +83,6 @@
       bind:value={inputValue} 
       on:keydown={handleKeydown}
       class="w-[260px] bg-bg-subtle border border-border-default rounded-[6px] px-3 py-1.5 text-[13px] text-text-primary focus:outline-none focus:border-border-strong shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]" 
-      autofocus
     />
     
     <button on:click={save} class="px-3 py-1.5 bg-text-primary text-bg-base text-[12px] font-medium rounded-md hover:opacity-90 transition-opacity disabled:opacity-50" disabled={saving}>
@@ -102,7 +112,7 @@
   {#if saved && !editing}
     <span class="text-green-500 text-[12px] font-medium ml-2">Saved!</span>
   {/if}
-  {#if error}
-    <span class="text-red-500 text-[12px] font-medium ml-2">Error saving</span>
+  {#if errorMsg}
+    <span class="text-red-500 text-[12px] font-medium ml-2">{errorMsg}</span>
   {/if}
 </div>
