@@ -32,7 +32,7 @@
   }
 </script>
 
-<div class="relative overflow-hidden rounded-2xl border border-border-default bg-bg-base p-8 md:p-12 text-center max-w-4xl mx-auto my-24">
+<div class="relative overflow-hidden rounded-2xl border border-border-default bg-bg-base p-8 md:p-12 text-center max-w-4xl mx-auto w-full shadow-sm">
   <!-- Decorative background elements -->
   <div class="absolute -top-24 -left-24 w-64 h-64 bg-accent/10 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>
   <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-accent/5 rounded-full blur-3xl mix-blend-screen pointer-events-none"></div>

@@ -8,7 +8,6 @@ import { IconAlertTriangle, IconTrendingUp, IconDevices, IconSearch, IconSparkle
 import FAQAccordionReact from "../components/islands/FAQAccordionReact.tsx";
 import HowItWorksInteractive from "../components/islands/HowItWorksInteractive.svelte";
 import FeatureShowcase from "../components/islands/FeatureShowcase.tsx";
-import NewsletterForm from "../components/islands/NewsletterForm.svelte";
 
 import { Highlighter } from "../components/magicui/highlighter";
 import { StraightHighlighter } from "../components/magicui/straight-highlighter";
@@ -324,9 +323,6 @@ if (userData?.user) {
       </div>
     </div>
   </div>
-
-  <!-- NEWSLETTER -->
-  <NewsletterForm client:load />
 
   <!-- FOOTER -->
   <div class="w-full bg-bg-subtle pt-16 pb-6 border-t border-border-faint">
