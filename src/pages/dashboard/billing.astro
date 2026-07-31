@@ -38,7 +38,7 @@ const PADDLE_API_KEY = import.meta.env.PADDLE_API_KEY || process.env.PADDLE_API_
 let scheduledChange = null;
 if (sub?.paddle_subscription_id) {
   if (PADDLE_API_KEY) {
-    const apiUrl = import.meta.env.PADDLE_API_URL;
+    const apiUrl = import.meta.env.PADDLE_API_URL || process.env.PADDLE_API_URL;
     if (!apiUrl) throw new Error("PADDLE_API_URL environment variable is missing.");
     const res = await fetch(`${apiUrl}/subscriptions/${sub.paddle_subscription_id}`, {
       headers: { Authorization: `Bearer ${PADDLE_API_KEY}` }

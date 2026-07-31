@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: "Paddle API Key is missing. Please set PADDLE_API_KEY in .env" }), { status: 500 });
     }
 
-    const paddleApiUrl = import.meta.env.PADDLE_API_URL;
+    const paddleApiUrl = import.meta.env.PADDLE_API_URL || process.env.PADDLE_API_URL;
     if (!paddleApiUrl) {
       return new Response(JSON.stringify({ error: "Paddle API URL is missing. Please set PADDLE_API_URL in .env" }), { status: 500 });
     }
