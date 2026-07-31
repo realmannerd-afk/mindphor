@@ -36,7 +36,7 @@ if (userData?.user) {
       playStoreUrl = project.play_store_url;
       appStoreUrl = project.app_store_url;
       
-      const { count } = await supabase.from('feedback').select('*', { count: 'exact', head: true }).eq('app_id', project.id);
+      const { count } = await supabase.from('feedback').select('*', { count: 'exact', head: true }).eq('app_id', project.id).is('competitor_id', null);
       hasTraces = (count || 0) > 0;
     } else {
       projectId = null;

@@ -32,12 +32,55 @@ let allFeedback = [];
 let signalStats = { relevant: 0, high: 0 };
 let categoryStats = [];
 
+if (appId && domain) {
+  const { data: comp } = await supabase
+    .from('competitors')
+    .select('*')
+    .eq('app_id', appId)
+    .eq('domain', domain)
+    .maybeSingle();
+
+  if (comp) {
+    competitorData = comp;
+    
+    const { data: feedbackData } = await supabase
+      .from('feedback')
+      .select('*')
+      .eq('competitor_id', comp.id)
+      .order('date', { ascending: false });
+      
+    if (feedbackData) {
+      allFeedback = feedbackData;
+      latestFeedback = feedbackData;
+      
+      // Calculate signalStats from feedbackData
+      signalStats.relevant = feedbackData.length;
+      signalStats.high = feedbackData.filter(f => f.sentiment === 'negative' || f.score <= 3).length;
+      
+      // Calculate categoryStats (sources)
+      const sources = {};
+      feedbackData.forEach(f => {
+        sources[f.source] = (sources[f.source] || 0) + 1;
+      });
+      const total = feedbackData.length || 1;
+      categoryStats = Object.entries(sources).map(([name, count]) => ({
+        name,
+        count: count as number,
+        percentage: Math.round(((count as number) / total) * 100)
+      })).sort((a, b) => b.count - a.count);
+    }
+  }
+}
 
 if (!competitorData) {
     return Astro.redirect(`/dashboard/competitors`);
 }
 
 const isActive = competitorData.is_stale === false || competitorData.status === 'fresh';
+
+const monitoringSinceStr = competitorData?.created_at 
+  ? new Date(competitorData.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  : 'recently';
 
 const displayCategories = categoryStats.map((cat, index) => {
   const colors = [
@@ -198,7 +241,7 @@ let pieStyle = "background: conic-gradient(" + conicGradientString + "); transfo
           <span class="px-2.5 py-1 rounded-[6px] bg-[#ECFDF5] text-[#059669] flex items-center gap-1.5 font-medium border border-[#D1FAE5]">
              <div class="w-1.5 h-1.5 bg-[#10B981] rounded-full"></div> Active monitoring
           </span>
-          <span class="text-text-muted">Monitoring since May 10, 2026</span>
+          <span class="text-text-muted">Monitoring since {monitoringSinceStr}</span>
         </div>
       </div>
     </div>
@@ -223,7 +266,7 @@ let pieStyle = "background: conic-gradient(" + conicGradientString + "); transfo
           {latestFeedback.length > 0 ? (
             <div class="mt-8">
               <div class="flex items-center justify-between mb-6">
-                <h3 class="text-[14px] font-semibold text-text-primary">Timeline & Activities</h3>
+                <h3 class="text-[14px] font-semibold text-text-primary">Product Updates & Reviews</h3>
               </div>
               <div class="relative flex flex-col gap-8 pb-4 overflow-y-auto overflow-x-hidden pr-2 min-h-0 max-h-[700px] hide-scrollbar" style="-ms-overflow-style: none; scrollbar-width: none;">
                  <style>

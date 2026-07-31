@@ -38,7 +38,9 @@ const PADDLE_API_KEY = import.meta.env.PADDLE_API_KEY || process.env.PADDLE_API_
 let scheduledChange = null;
 if (sub?.paddle_subscription_id) {
   if (PADDLE_API_KEY) {
-    const res = await fetch(`https://sandbox-api.paddle.com/subscriptions/${sub.paddle_subscription_id}`, {
+    const apiUrl = import.meta.env.PADDLE_API_URL;
+    if (!apiUrl) throw new Error("PADDLE_API_URL environment variable is missing.");
+    const res = await fetch(`${apiUrl}/subscriptions/${sub.paddle_subscription_id}`, {
       headers: { Authorization: `Bearer ${PADDLE_API_KEY}` }
     });
     if (res.ok) {
@@ -364,6 +366,7 @@ if (sub?.paddle_subscription_id) {
   <script src="https://cdn.paddle.com/paddle/v2/paddle.js" is:inline></script>
   <script define:vars={{
     paddleToken,
+    paddleEnv: import.meta.env.PUBLIC_PADDLE_ENV,
     starterPrice,
     growthPrice,
     proPrice,
@@ -372,7 +375,10 @@ if (sub?.paddle_subscription_id) {
     currentPlanName: planName,
     formattedEndDate: sub?.current_period_end ? new Date(sub.current_period_end).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'your next renewal date'
   }}>
-    Paddle.Environment.set('sandbox');
+    if (paddleEnv === 'sandbox') {
+      Paddle.Environment.set('sandbox');
+    }
+    
     Paddle.Initialize({ 
       token: paddleToken,
       eventCallback: function(data) {

@@ -46,6 +46,7 @@ export const GET: APIRoute = async ({ request }) => {
         .from('feedback')
         .select('id, content, source, sentiment, created_at, date, url, score, version, reply_text')
         .eq('app_id', appId)
+        .is('competitor_id', null)
         .gte('date', previousPeriodStart.toISOString())
         .lte('date', targetDate.toISOString())
         .order('date', { ascending: true }); // ascending for version tracking
