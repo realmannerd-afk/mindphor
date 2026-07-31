@@ -36,6 +36,8 @@ const isPro = planName === 'pro' && isActive;
 const PADDLE_API_KEY = import.meta.env.PADDLE_API_KEY || process.env.PADDLE_API_KEY;
 
 let scheduledChange = null;
+let adminWarning = null;
+
 if (sub?.paddle_subscription_id) {
   if (PADDLE_API_KEY) {
     const apiUrl = import.meta.env.PADDLE_API_URL || process.env.PADDLE_API_URL;
@@ -47,13 +49,19 @@ if (sub?.paddle_subscription_id) {
         if (res.ok) {
           const pData = await res.json();
           scheduledChange = pData.data?.scheduled_change;
+        } else {
+          adminWarning = `Failed to fetch Paddle data. API responded with status ${res.status}.`;
         }
       } catch (e) {
         console.error("Failed to fetch Paddle subscription:", e);
+        adminWarning = `Failed to fetch Paddle data. Network error or invalid URL.`;
       }
     } else {
       console.warn("PADDLE_API_URL is missing, skipping subscription fetch");
+      adminWarning = `PADDLE_API_URL environment variable is missing. Cannot fetch scheduled changes.`;
     }
+  } else {
+    adminWarning = `PADDLE_API_KEY environment variable is missing. Cannot authenticate with Paddle.`;
   }
 }
 ---
@@ -64,6 +72,15 @@ if (sub?.paddle_subscription_id) {
       <h1 class="text-[clamp(18px,2vw,24px)] font-semibold text-text-primary leading-tight tracking-tight mb-2">Manage your subscription</h1>
       <p class="text-[13px] text-text-secondary">Upgrade your plan to track more apps, monitor competitors, and unlock real-time anomaly alerts.</p>
     </div>
+
+    {adminWarning && (
+      <div class="mb-8 flex items-center gap-3 py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-[8px]">
+        <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <p class="text-[13px] text-red-500 font-medium">
+          <strong>Configuration Error:</strong> {adminWarning}
+        </p>
+      </div>
+    )}
 
     {scheduledChange && (
       <div class="mb-8 flex items-center justify-between py-3 px-4 bg-bg-base border border-border-default rounded-[8px]">
