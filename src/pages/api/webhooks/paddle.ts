@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
 import { createClient } from '@supabase/supabase-js';
-import { loadEnv } from 'vite';
 import crypto from 'crypto';
 
 // Verify Paddle webhook signature
@@ -50,14 +49,13 @@ export const POST: APIRoute = async ({ request }) => {
     const data = event.data;
 
     // Use service role for DB writes to bypass RLS for server-side webhook processing
-    const env = loadEnv(import.meta.env.MODE, process.cwd(), '');
-    const supabaseUrl = env.SUPABASE_URL || import.meta.env.SUPABASE_URL;
-    const supabaseServiceKey = env.SUPABASE_SERVICE_KEY || import.meta.env.SUPABASE_SERVICE_KEY;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseUrl = import.meta.env.SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY;
+    const supabase = createClient(supabaseUrl as string, supabaseServiceKey as string);
 
-    const starterPriceId = env.PADDLE_STARTER_PRICE_ID || import.meta.env.PADDLE_STARTER_PRICE_ID;
-    const growthPriceId = env.PADDLE_GROWTH_PRICE_ID || import.meta.env.PADDLE_GROWTH_PRICE_ID;
-    const proPriceId = env.PADDLE_PRO_PRICE_ID || import.meta.env.PADDLE_PRO_PRICE_ID;
+    const starterPriceId = import.meta.env.PADDLE_STARTER_PRICE_ID || process.env.PADDLE_STARTER_PRICE_ID;
+    const growthPriceId = import.meta.env.PADDLE_GROWTH_PRICE_ID || process.env.PADDLE_GROWTH_PRICE_ID;
+    const proPriceId = import.meta.env.PADDLE_PRO_PRICE_ID || process.env.PADDLE_PRO_PRICE_ID;
 
     const determinePlan = (priceId: string) => {
       if (priceId === starterPriceId) return 'starter';

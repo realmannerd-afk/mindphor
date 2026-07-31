@@ -1,7 +1,6 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import { getSupabaseClient } from '../../lib/supabase';
-import { loadEnv } from 'vite';
 
 const supabase = getSupabaseClient(Astro.cookies);
 const { data: userData } = await supabase.auth.getUser();
@@ -32,8 +31,7 @@ const growthActive = planName === 'growth' && isActive;
 const isPro = planName === 'pro' && isActive;
 
 
-const env = loadEnv(import.meta.env.MODE, process.cwd(), '');
-const PADDLE_API_KEY = import.meta.env.PADDLE_API_KEY || process.env.PADDLE_API_KEY || env.PADDLE_API_KEY;
+const PADDLE_API_KEY = import.meta.env.PADDLE_API_KEY || process.env.PADDLE_API_KEY;
 
 let scheduledChange = null;
 if (sub?.paddle_subscription_id) {
