@@ -10,9 +10,11 @@ if (!userData?.user) {
 }
 
 const paddleToken = import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN;
-const starterPrice = import.meta.env.PADDLE_STARTER_PRICE_ID;
-const growthPrice = import.meta.env.PADDLE_GROWTH_PRICE_ID;
-const proPrice = import.meta.env.PADDLE_PRO_PRICE_ID;
+const starterPrice = import.meta.env.PUBLIC_PADDLE_STARTER_PRICE_ID || import.meta.env.PADDLE_STARTER_PRICE_ID || process.env.PUBLIC_PADDLE_STARTER_PRICE_ID || process.env.PADDLE_STARTER_PRICE_ID;
+const growthPrice = import.meta.env.PUBLIC_PADDLE_GROWTH_PRICE_ID || import.meta.env.PADDLE_GROWTH_PRICE_ID || process.env.PUBLIC_PADDLE_GROWTH_PRICE_ID || process.env.PADDLE_GROWTH_PRICE_ID;
+const proPrice = import.meta.env.PUBLIC_PADDLE_PRO_PRICE_ID || import.meta.env.PADDLE_PRO_PRICE_ID || process.env.PUBLIC_PADDLE_PRO_PRICE_ID || process.env.PADDLE_PRO_PRICE_ID;
+
+console.log("SERVER SIDE RESOLVED PRICE IDS:", { starterPrice, growthPrice, proPrice });
 
 // Fetch the user's latest subscription from the database
 const { data: subs } = await supabase
