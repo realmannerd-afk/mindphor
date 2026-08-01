@@ -1,0 +1,46 @@
+---
+import RootLayout from "../layouts/RootLayout.astro";
+import PublicNav from "../components/layout/PublicNav.astro";
+---
+
+<RootLayout title="Refund & Cancellation Policy - Mindphor">
+  <PublicNav hideLinks={true} />
+  
+  <div class="w-full max-w-[800px] mx-auto px-[clamp(20px,5vw,80px)] pt-[140px] pb-[120px]">
+    <h1 class="text-[clamp(24px,3vw,34px)] font-semibold text-text-primary leading-[1.15] mb-[20px] tracking-tight">Refund & Cancellation Policy</h1>
+    <p class="text-[14px] text-text-muted mb-8 font-medium"><strong>Last updated: July 24, 2026</strong></p>
+
+    <div class="space-y-6 text-[14px] text-text-secondary leading-relaxed">
+      <p>We want you to be happy with Mindphor Intelligence. This policy explains how refunds and cancellations work.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">Cancellations</h2>
+      <p>You can cancel your subscription at any time from your account's Billing settings. When you cancel, you keep access to your current plan until the end of your current billing period — you won't be charged again after that, and there's no penalty for cancelling.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">Refunds</h2>
+      <p>If you're unhappy with your purchase, contact us within 14 days of being charged at <a href="mailto:realmannerd@gmail.com" class="text-text-primary hover:underline">realmannerd@gmail.com</a> and we'll issue a full refund, no questions asked.</p>
+      <p>Outside of this 14-day window, charges are non-refundable, since your subscription grants access for the billing period you've already paid for.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">How refunds are processed</h2>
+      <p>All payments are processed by Paddle.com, our payment provider and Merchant of Record. Approved refunds are issued by Paddle back to your original payment method and typically appear within 5-10 business days, depending on your bank or card provider.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">Downgrades</h2>
+      <p>If you downgrade to a lower-priced plan, the change takes effect at the start of your next billing period — you keep your current plan's features until then, and you won't be charged or refunded for the difference mid-cycle.</p>
+
+      <h2 class="text-[18px] font-semibold text-text-primary mt-8 mb-4">Contact</h2>
+      <p>Questions about a charge or refund? Email us at <a href="mailto:realmannerd@gmail.com" class="text-text-primary hover:underline">realmannerd@gmail.com</a>.</p>
+    </div>
+  </div>
+  
+  <div class="w-full bg-bg-subtle pt-16 pb-6 border-t border-border-faint mt-12">
+    <footer class="max-w-[1400px] mx-auto px-[clamp(20px,5vw,80px)]">
+      <div class="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[12px] text-text-muted border-t border-border-faint">
+        <div>&copy; 2026 Mindphor Intelligence. All rights reserved.</div>
+        <div class="flex items-center gap-6">
+          <a href="/terms" class="hover:text-text-primary transition-colors">Terms of Service</a>
+          <a href="/privacy" class="hover:text-text-primary transition-colors">Privacy Policy</a>
+          <a href="/refunds" class="hover:text-text-primary transition-colors">Refund & Cancellation Policy</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</RootLayout>
