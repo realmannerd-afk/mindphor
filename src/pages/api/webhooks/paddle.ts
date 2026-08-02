@@ -31,6 +31,24 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Missing Paddle signature' }), { status: 401 });
     }
 
+    // IP Allowlisting
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip');
+    if (clientIp) {
+      try {
+        const ipRes = await fetch('https://api.paddle.com/ips');
+        if (ipRes.ok) {
+          const ipData = await ipRes.json();
+          const allowedIps = ipData.data?.ipv4_cidrs?.map((cidr: string) => cidr.split('/')[0]) || [];
+          if (!allowedIps.includes(clientIp)) {
+            console.error(`Rejected webhook from unauthorized IP: ${clientIp}`);
+            return new Response(JSON.stringify({ error: 'Unauthorized IP' }), { status: 403 });
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch Paddle IPs for verification, continuing with signature verification fallback', err);
+      }
+    }
+
     const rawBody = await request.text();
     const webhookSecret = import.meta.env.PADDLE_WEBHOOK_SECRET;
 
