@@ -153,6 +153,29 @@ export const POST: APIRoute = async ({ request }) => {
         }
       }
       console.log(`Transaction completed: ${data.id}`);
+    } else if (eventType === 'adjustment.created' || eventType === 'adjustment.updated') {
+      if (data.action === 'refund' && data.status === 'approved') {
+        const subId = data.subscription_id;
+        if (subId) {
+          const { error } = await supabase.from('subscriptions')
+            .update({
+              status: 'canceled',
+              plan: 'starter',
+              updated_at: new Date().toISOString()
+            })
+            .eq('paddle_subscription_id', subId);
+            
+          if (error) {
+            console.error('DB Update Error on Refund:', error);
+            return new Response(JSON.stringify({ error: 'Database write failed' }), { status: 500 });
+          }
+          console.log(`Refund processed: Downgraded sub ${subId} to starter/canceled`);
+        } else {
+          console.log(`Refund processed, but no subscription_id attached (tx: ${data.transaction_id})`);
+        }
+      } else {
+        console.log(`Adjustment received but skipped (action: ${data.action}, status: ${data.status})`);
+      }
     } else {
       console.log(`Unhandled event type: ${eventType}`);
     }
