@@ -24,6 +24,9 @@ function verifyPaddleSignature(rawBody: string, signatureHeader: string, secret:
   return computedHash === h1;
 }
 
+let cachedIps: string[] = [];
+let ipsLastFetched = 0;
+
 export const POST: APIRoute = async ({ request }) => {
   try {
     const signatureHeader = request.headers.get('paddle-signature');
@@ -34,18 +37,23 @@ export const POST: APIRoute = async ({ request }) => {
     // IP Allowlisting
     const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip');
     if (clientIp) {
-      try {
-        const ipRes = await fetch('https://api.paddle.com/ips');
-        if (ipRes.ok) {
-          const ipData = await ipRes.json();
-          const allowedIps = ipData.data?.ipv4_cidrs?.map((cidr: string) => cidr.split('/')[0]) || [];
-          if (!allowedIps.includes(clientIp)) {
-            console.error(`Rejected webhook from unauthorized IP: ${clientIp}`);
-            return new Response(JSON.stringify({ error: 'Unauthorized IP' }), { status: 403 });
+      const CACHE_TTL = 1000 * 60 * 60 * 6; // 6 hours
+      if (Date.now() - ipsLastFetched > CACHE_TTL) {
+        try {
+          const ipRes = await fetch('https://api.paddle.com/ips');
+          if (ipRes.ok) {
+            const ipData = await ipRes.json();
+            cachedIps = ipData.data?.ipv4_cidrs?.map((cidr: string) => cidr.split('/')[0]) || [];
+            ipsLastFetched = Date.now();
           }
+        } catch (err) {
+          console.warn('Failed to fetch Paddle IPs for verification, continuing with cached IPs or signature verification', err);
         }
-      } catch (err) {
-        console.warn('Failed to fetch Paddle IPs for verification, continuing with signature verification fallback', err);
+      }
+
+      if (cachedIps.length > 0 && !cachedIps.includes(clientIp)) {
+        console.error(`Rejected webhook from unauthorized IP: ${clientIp}`);
+        return new Response(JSON.stringify({ error: 'Unauthorized IP' }), { status: 403 });
       }
     }
 
