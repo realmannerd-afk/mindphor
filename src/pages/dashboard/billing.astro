@@ -210,7 +210,7 @@ if (sub?.paddle_subscription_id) {
           disabled={isStarter}
           class={`mt-auto block w-full border rounded-full py-3 text-[13px] font-medium transition-colors text-center ${isStarter ? 'bg-bg-subtle text-text-muted border-transparent cursor-not-allowed' : 'bg-transparent border-border-default text-text-primary hover:bg-bg-elevated'}`}
         >
-          {sub?.plan === 'starter' && sub?.status === 'canceled' ? 'Resubscribe to Starter' : (isStarter ? 'Current Plan' : 'Downgrade to Starter')}
+          {sub?.plan === 'starter' && sub?.status === 'canceled' ? 'Resubscribe to Starter' : (isStarter ? 'Current Plan' : (sub ? 'Downgrade to Starter' : 'Get Started'))}
         </button>
       </div>
 

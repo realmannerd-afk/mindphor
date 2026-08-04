@@ -3,6 +3,7 @@
   import Logo from './Logo.svelte';
   export let forceShow = false;
   export let wideMode = false;
+  export let hasPlan = true;
   $: if (forceShow) wideMode = true;
   let show = forceShow;
   
@@ -66,7 +67,7 @@
   }
 
   async function fetchPlayStorePreview(url: string) {
-    if (!url.trim() || url.length < 5) return;
+    if (!hasPlan || !url.trim() || url.length < 5) return;
     fetchingPlay = true;
     try {
       const res = await fetch(`/api/apps/playstore-info?url=${encodeURIComponent(url)}`);
@@ -85,7 +86,7 @@
   }
 
   async function fetchAppStorePreview(url: string) {
-    if (!url.trim() || url.length < 5) return;
+    if (!hasPlan || !url.trim() || url.length < 5) return;
     fetchingApple = true;
     try {
       const res = await fetch(`/api/apps/appstore-info?url=${encodeURIComponent(url)}`);
@@ -154,7 +155,11 @@
         return;
       }
       error = '';
-      step = 2;
+      if (hasPlan) {
+        step = 2;
+      } else {
+        submit();
+      }
     } else if (step === 2) {
       submit();
     }
