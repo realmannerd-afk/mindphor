@@ -67,7 +67,7 @@
   }
 
   async function fetchPlayStorePreview(url: string) {
-    if (!hasPlan || !url.trim() || url.length < 5) return;
+    if (!url.trim() || url.length < 5) return;
     fetchingPlay = true;
     try {
       const res = await fetch(`/api/apps/playstore-info?url=${encodeURIComponent(url)}`);
@@ -86,7 +86,7 @@
   }
 
   async function fetchAppStorePreview(url: string) {
-    if (!hasPlan || !url.trim() || url.length < 5) return;
+    if (!url.trim() || url.length < 5) return;
     fetchingApple = true;
     try {
       const res = await fetch(`/api/apps/appstore-info?url=${encodeURIComponent(url)}`);
