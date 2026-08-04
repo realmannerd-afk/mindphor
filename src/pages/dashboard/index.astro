@@ -46,6 +46,12 @@ if (userData?.user) {
   return Astro.redirect('/login');
 }
 
+let hasPlan = false;
+if (userData?.user) {
+  const { data: sub } = await supabase.from('subscriptions').select('status').eq('user_id', userData.user.id).single();
+  hasPlan = sub?.status === 'active';
+}
+
 const selectedDate = Astro.url.searchParams.get('date') || '';
 ---
 
@@ -71,7 +77,7 @@ const selectedDate = Astro.url.searchParams.get('date') || '';
     </Fragment>
   ) : projectId ? (
     <div class="w-full h-[80vh] flex items-center justify-center">
-      <EmptyStateOnboarding client:load projectId={projectId} playStoreUrl={playStoreUrl} appStoreUrl={appStoreUrl} />
+      <EmptyStateOnboarding client:load projectId={projectId} playStoreUrl={playStoreUrl} appStoreUrl={appStoreUrl} hasPlan={hasPlan} />
     </div>
   ) : (
     <div class="w-full h-[80vh] flex flex-col items-center justify-center text-center px-4">

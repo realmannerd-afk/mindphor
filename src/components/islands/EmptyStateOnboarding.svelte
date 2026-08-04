@@ -5,6 +5,7 @@
   export let projectId: string;
   export let playStoreUrl: string = '';
   export let appStoreUrl: string = '';
+  export let hasPlan: boolean = false;
 
   let syncing = false;
   let error = '';
@@ -260,23 +261,34 @@
           </span>
         {:else if missingUrlMessage}
           <span class="text-red-400">{missingUrlMessage}</span>
+        {:else if !hasPlan}
+          <span class="text-amber-500 font-semibold">Upgrade to a paid plan to fetch app details and analyze feedback.</span>
         {:else}
           Ready to fetch application data.
         {/if}
       </div>
       
-      <button 
-        on:click={fetchDetails}
-        disabled={syncing || !!missingUrlMessage}
-        class="px-5 py-2 bg-text-primary hover:opacity-90 text-bg-base rounded-full font-medium text-[13px] transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none min-w-[140px]"
-      >
-        {#if syncing}
-          <svg class="animate-spin w-4 h-4 text-bg-base" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-          {progressText}
-        {:else}
-          Fetch Details
-        {/if}
-      </button>
+      {#if !hasPlan}
+        <a 
+          href="/dashboard/billing"
+          class="px-5 py-2 bg-accent hover:opacity-90 text-white rounded-full font-medium text-[13px] transition-opacity flex items-center justify-center min-w-[140px]"
+        >
+          View Plans
+        </a>
+      {:else}
+        <button 
+          on:click={fetchDetails}
+          disabled={syncing || !!missingUrlMessage}
+          class="px-5 py-2 bg-text-primary hover:opacity-90 text-bg-base rounded-full font-medium text-[13px] transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none min-w-[140px]"
+        >
+          {#if syncing}
+            <svg class="animate-spin w-4 h-4 text-bg-base" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            {progressText}
+          {:else}
+            Fetch Details
+          {/if}
+        </button>
+      {/if}
     </div>
   </div>
 </div>
