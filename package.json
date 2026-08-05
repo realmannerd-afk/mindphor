@@ -15,7 +15,7 @@
     "@astrojs/check": "^0.9.9",
     "@astrojs/mdx": "^6.0.2",
     "@astrojs/react": "^5.0.7",
-    "@astrojs/sitemap": "^3.1.6",
+    "@astrojs/sitemap": "^3.7.3",
     "@astrojs/svelte": "^8.1.2",
     "@astrojs/vercel": "^10.0.8",
     "@internationalized/date": "^3.12.2",
