@@ -62,12 +62,12 @@ if (userData?.user) {
     <div class="w-full mt-20 relative p-4 md:p-12 rounded-[12px] overflow-hidden flex items-center justify-center border border-border-default/50 aspect-[16/10]">
       <!-- Background Image -->
       <div class="absolute inset-0 z-0 rounded-[12px] overflow-hidden">
-        <img src="/ascii-magic-21.png" alt="" class="w-full h-full object-cover opacity-90" />
+        <img src="/ascii-magic-21.png" alt="" fetchpriority="high" decoding="async" class="w-full h-full object-cover opacity-90" />
       </div>
 
       <!-- Centered Widescreen Showcase Image -->
       <div class="relative z-10 w-full h-full flex items-center justify-center">
-        <img src="/localhost_4321_dashboard(High pro) (2).png" alt="Mindphor Platform Showcase" class="max-w-full max-h-full object-contain rounded-[8px] border border-border-default/30" />
+        <img src="/localhost_4321_dashboard(High pro) (2).png" alt="Mindphor Platform Showcase" fetchpriority="high" decoding="async" class="max-w-full max-h-full object-contain rounded-[8px] border border-border-default/30" />
       </div>
     </div>
   </div>
@@ -77,25 +77,25 @@ if (userData?.user) {
     <div class="max-w-[1400px] mx-auto px-[clamp(20px,5vw,80px)]">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-0 md:divide-x divide-border-faint">
         <div class="flex flex-col items-center justify-center text-center h-full">
-          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={12.4} decimalPlaces={1} client:load />k</div>
+          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={12.4} decimalPlaces={1} client:visible />k</div>
           <div class="text-[12px] text-text-muted mt-2 min-h-[36px] flex items-start justify-center">
             feedbacks tracked today
           </div>
         </div>
         <div class="flex flex-col items-center justify-center text-center h-full">
-          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={91} client:load />%</div>
+          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={91} client:visible />%</div>
           <div class="text-[12px] text-text-muted mt-2 min-h-[36px] flex items-start justify-center">
             avg positive sentiment
           </div>
         </div>
         <div class="flex flex-col items-center justify-center text-center h-full">
-          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={84} client:load />%</div>
+          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={84} client:visible />%</div>
           <div class="text-[12px] text-text-muted mt-2 min-h-[36px] flex items-start justify-center">
             avg rating score
           </div>
         </div>
         <div class="flex flex-col items-center justify-center text-center h-full">
-          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={100} client:load />%</div>
+          <div class="text-[28px] leading-none font-medium text-text-primary tracking-tighter"><NumberTicker value={100} client:visible />%</div>
           <div class="text-[12px] text-text-muted mt-2 min-h-[36px] flex items-start justify-center">automated tracking</div>
         </div>
       </div>
@@ -107,7 +107,7 @@ if (userData?.user) {
     <div id="how-it-works" class="w-full max-w-[1400px] mx-auto px-[clamp(20px,5vw,80px)]">
       <div class="text-[11px] uppercase tracking-[0.1em] text-text-muted mb-4 font-medium font-mono">HOW IT WORKS</div>
       <h2 class="text-[clamp(18px,2vw,24px)] font-semibold text-text-primary leading-tight tracking-tight mb-16">Three steps to customer alignment</h2>
-      <HowItWorksInteractive client:load />
+      <HowItWorksInteractive client:visible />
     </div>
   </div>
 
@@ -159,7 +159,7 @@ if (userData?.user) {
     </div>
     
     <div class="w-full max-w-[1400px] mx-auto px-[clamp(20px,5vw,80px)]">
-      <FeatureShowcase client:load />
+      <FeatureShowcase client:visible />
     </div>
   </div>
 
@@ -318,7 +318,7 @@ if (userData?.user) {
 
         <!-- Right Side -->
         <div class="lg:col-span-7">
-          <FAQAccordionReact client:load />
+          <FAQAccordionReact client:visible />
         </div>
       </div>
     </div>
