@@ -6,9 +6,11 @@ import vercel from '@astrojs/vercel';
 import mdx from '@astrojs/mdx';
 
 import react from '@astrojs/react';
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://www.mindphor.com',
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
@@ -16,7 +18,7 @@ export default defineConfig({
     }
   },
 
-  integrations: [svelte(), mdx(), react()],
+  integrations: [svelte(), mdx(), react(), sitemap()],
   prefetch: true,
   output: 'server',
   adapter: vercel()
