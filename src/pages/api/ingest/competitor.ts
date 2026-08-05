@@ -17,6 +17,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .single();
+
+    if (sub?.status !== 'active') {
+      return new Response(
+        JSON.stringify({ error: 'An active subscription is required to sync competitors.' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { competitor_id } = await request.json();
     if (!competitor_id) return new Response(JSON.stringify({ error: "Missing competitor_id" }), { status: 400 });
 

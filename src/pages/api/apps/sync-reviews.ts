@@ -61,6 +61,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           return;
         }
 
+        const { data: sub } = await supabase
+          .from('subscriptions')
+          .select('status')
+          .eq('user_id', user.id)
+          .single();
+
+        if (sub?.status !== 'active') {
+          sendEvent({ error: 'An active subscription is required to sync reviews.' });
+          controller.close();
+          return;
+        }
+
         let reviews: any[] = [];
         
         if (appData.play_store_url && (!sourceParam || sourceParam === 'playstore' || sourceParam === 'both')) {

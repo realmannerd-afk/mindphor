@@ -96,6 +96,23 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
     for (const app of apps) {
+      // ── Check subscription status ──────────────────────────────────────────
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('status')
+        .eq('user_id', app.user_id)
+        .single();
+
+      if (sub?.status !== 'active') {
+        results.push({
+          app_id: app.id,
+          app_name: app.name,
+          skipped: true,
+          reason: 'App owner does not have an active subscription',
+        });
+        continue;
+      }
+
       // ── Check if enough time has elapsed ─────────────────────────────────
       const freq = app.sync_frequency ?? "daily";
       const thresholdHours = FREQUENCY_HOURS[freq] ?? 24;
