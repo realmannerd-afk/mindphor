@@ -1,6 +1,6 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g clip-path="url(#clip0_108_90)">
-<rect width="512" height="512" fill="white" fill-opacity="0.1"/>
+<rect width="512" height="512" rx="256" fill="white" fill-opacity="0.1"/>
 <g clip-path="url(#clip1_108_90)">
 <rect width="1920" height="1920" transform="translate(0 -189)" fill="white"/>
 <rect y="-189" width="1920" height="1920" fill="#98DEFF"/>
@@ -38,7 +38,7 @@
 <use xlink:href="#image0_108_90" transform="scale(0.001)"/>
 </pattern>
 <clipPath id="clip0_108_90">
-<rect width="512" height="512" fill="white"/>
+<rect width="512" height="512" rx="256" fill="white"/>
 </clipPath>
 <clipPath id="clip1_108_90">
 <rect width="1920" height="1920" fill="white" transform="translate(0 -189)"/>
