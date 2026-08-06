@@ -21,5 +21,9 @@ export default defineConfig({
   integrations: [svelte(), mdx(), react(), sitemap()],
   prefetch: true,
   output: 'server',
-  adapter: vercel()
+  adapter: vercel({
+    webAnalytics: {
+      enabled: true
+    }
+  })
 });
