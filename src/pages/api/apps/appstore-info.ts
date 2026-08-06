@@ -10,11 +10,6 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    const { data: sub } = await supabase.from('subscriptions').select('status').eq('user_id', user.id).eq('status', 'active').maybeSingle();
-    if (!sub || sub.status !== 'active') {
-      return new Response(JSON.stringify({ error: "An active subscription is required to add apps." }), { status: 403 });
-    }
-
     const url = new URL(request.url);
     const appStoreUrl = url.searchParams.get('url');
 
