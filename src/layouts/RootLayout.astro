@@ -22,7 +22,18 @@ const { title, description = "Mindphor - Customer Intelligence & Competitor Watc
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 		<title>{title} | Mindphor</title>
-
+		
+		<!-- OpenGraph Meta Tags -->
+		<meta property="og:title" content={`${title} | Mindphor`} />
+		<meta property="og:description" content={description} />
+		<meta property="og:type" content="website" />
+		<meta property="og:image" content="https://www.mindphor.com/og-image.jpg" />
+		
+		<!-- Twitter Card Meta Tags -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={`${title} | Mindphor`} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content="https://www.mindphor.com/og-image.jpg" />
 	</head>
 	<body>
     <div class="w-full overflow-x-hidden relative min-h-screen">
