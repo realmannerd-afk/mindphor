@@ -1,8 +1,21 @@
 import type { APIRoute } from "astro";
 import gplay from '../../../lib/scrapers/vendor/index.js';
+import { getSupabaseClient } from "../../../lib/supabase";
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, cookies }) => {
   try {
+    const supabase = getSupabaseClient(cookies);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
+
+    const { data: sub } = await supabase.from('subscriptions').select('status').eq('user_id', user.id).eq('status', 'active').maybeSingle();
+    if (!sub || sub.status !== 'active') {
+      return new Response(JSON.stringify({ error: "An active subscription is required to add apps." }), { status: 403 });
+    }
+
     const url = new URL(request.url);
     const playStoreUrl = url.searchParams.get('url');
 

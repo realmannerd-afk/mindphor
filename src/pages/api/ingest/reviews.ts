@@ -16,6 +16,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
+    const { data: sub } = await supabase.from('subscriptions').select('status').eq('user_id', user.id).eq('status', 'active').maybeSingle();
+    if (!sub || sub.status !== 'active') {
+      return new Response(JSON.stringify({ error: "An active subscription is required to fetch reviews." }), { status: 403 });
+    }
+
     const body = await request.json();
     const { app_id, target_type, target_id, store, store_identifier, fetch_limit } = body;
 
