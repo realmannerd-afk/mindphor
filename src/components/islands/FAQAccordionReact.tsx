@@ -41,7 +41,7 @@ const faqItems = [
   {
     value: "item-8",
     question: "How often are reviews synced?",
-    answer: "You are fully in control. You can set your apps to sync automatically every 6 hours, daily, or weekly. You can also set them to manual only if you prefer to trigger syncs yourself!"
+    answer: "Mindphor automatically syncs your app reviews and competitor data every 24 hours to ensure your dashboard is always up to date with the latest feedback."
   },
   {
     value: "item-9",
