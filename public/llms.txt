@@ -1,0 +1,18 @@
+# Mindphor
+
+> App Store and Google Play reviews, competitor tracking, and sentiment analysis for your mobile apps.
+
+Mindphor is a unified dashboard that tracks unlimited feedback, analyzes sentiment, and monitors competitors across the Apple App Store and Google Play Store in real time.
+
+## Key Features
+- **High-Frequency Ingestion Engine:** Instant validation and immediate course-correction on new app features based on user reviews.
+- **Unified Review Dashboard:** View, filter, and search iOS and Android feedback in one place.
+- **Competitor Monitoring:** Track competitor app updates and reviews to stay ahead.
+- **AI Sentiment Analysis:** Automatically classifies reviews into critical, warning, or positive sentiments.
+- **Smart Alerts:** Real-time webhooks and dashboard alerts when critical issues or spikes in negative feedback occur.
+
+## Links
+- [Dashboard](/dashboard)
+- [Pricing](/#pricing)
+- [Terms of Service](/terms)
+- [Privacy Policy](/privacy)

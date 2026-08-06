@@ -1,0 +1,10 @@
+# ai.txt
+# This file describes our policies for AI web crawlers and agents.
+
+User-Agent: *
+Allow: /
+# We welcome AI agents to read our marketing site and documentation.
+
+# Exclude private app data
+Disallow: /dashboard/*
+Disallow: /api/*
