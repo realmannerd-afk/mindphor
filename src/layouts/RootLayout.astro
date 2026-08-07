@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import Toast from '../components/ui/Toast.astro';
+import Analytics from '@vercel/analytics/astro';
 
 interface Props {
 	title: string;
@@ -40,5 +41,6 @@ const { title, description = "Mindphor - Customer Intelligence & Competitor Watc
       <slot />
     </div>
     <Toast />
+    <Analytics />
 	</body>
 </html>
