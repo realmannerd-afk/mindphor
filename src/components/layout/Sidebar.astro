@@ -163,7 +163,7 @@ const navItems = [
           {item.badgeCount !== undefined && (
             <div 
               id={item.name === 'Alerts' ? 'sidebar-alerts-badge' : undefined}
-              class="px-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white flex items-center justify-center text-[11px] font-bold leading-none"
+              class="px-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 dark:bg-red-600 text-white flex items-center justify-center text-[11px] font-bold leading-none"
               style={item.badgeCount > 0 ? '' : 'display: none;'}
             >
               {item.badgeCount > 99 ? '99+' : item.badgeCount}

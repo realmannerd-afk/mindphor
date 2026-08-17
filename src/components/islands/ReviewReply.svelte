@@ -25,9 +25,9 @@
 
       if (res.ok) {
         successMessage = "Reply posted successfully!";
-        // In a real app with API keys, it would be sent to the store.
       } else {
-        errorMessage = "Failed to post reply. Please try again.";
+        const errorData = await res.json().catch(() => ({}));
+        errorMessage = errorData.error || "Failed to post reply. Please try again.";
       }
     } catch (e) {
       errorMessage = "An error occurred.";

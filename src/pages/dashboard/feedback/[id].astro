@@ -90,7 +90,7 @@ if (tags.length === 0) tags.push('General Feedback');
   <div class="w-full flex flex-col pt-0 pb-6 pr-6 max-w-[1400px]">
     <!-- Top Nav / Header Toolbar -->
     <div class="flex items-center justify-between mb-6">
-      <a href="/dashboard/feedback" class="text-[13px] font-medium text-text-primary hover:text-accent transition-colors flex items-center gap-2">
+      <a href="/dashboard/feedback" class="text-[13px] font-medium text-text-primary dark:text-zinc-300 hover:text-accent dark:hover:text-white transition-colors flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         Back to feedback
       </a>
@@ -221,7 +221,7 @@ if (tags.length === 0) tags.push('General Feedback');
       <AIReviewActionPlan client:load feedbackId={id} />
     </div>
 
-    <!-- Developer Reply Simulator -->
+    <!-- Developer Reply UI -->
     <div class="mt-6">
       <ReviewReply client:load feedbackId={id} existingReply={entry.reply_text || ''} />
     </div>
