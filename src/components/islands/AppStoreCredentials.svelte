@@ -73,7 +73,7 @@
         Google Play Console
       </h4>
       <p class="text-[12px] text-text-secondary mb-3">Paste the contents of your Google Cloud Service Account JSON file with `androidpublisher` API access.</p>
-      <textarea bind:value={playConsoleJson} placeholder='{"type": "service_account", "project_id": "..."}' class="w-full h-32 bg-bg-base border border-border-default rounded-lg p-3 text-[12px] font-mono text-text-primary focus:outline-none focus:border-border-strong"></textarea>
+      <textarea bind:value={playConsoleJson} placeholder="Paste your Service Account JSON here..." class="w-full h-32 bg-bg-base border border-border-default rounded-lg p-3 text-[12px] font-mono text-text-primary focus:outline-none focus:border-border-strong"></textarea>
     </div>
 
     <!-- Apple App Store -->
