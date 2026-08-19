@@ -40,7 +40,9 @@ export const POST: APIRoute = async ({ request }) => {
       const CACHE_TTL = 1000 * 60 * 60 * 6; // 6 hours
       if (Date.now() - ipsLastFetched > CACHE_TTL) {
         try {
-          const ipRes = await fetch('https://api.paddle.com/ips');
+          const paddleEnv = import.meta.env.PUBLIC_PADDLE_ENV || process.env.PUBLIC_PADDLE_ENV;
+          const apiUrl = paddleEnv === 'sandbox' ? 'https://sandbox-api.paddle.com/ips' : 'https://api.paddle.com/ips';
+          const ipRes = await fetch(apiUrl);
           if (ipRes.ok) {
             const ipData = await ipRes.json();
             cachedIps = ipData.data?.ipv4_cidrs?.map((cidr: string) => cidr.split('/')[0]) || [];
